@@ -1090,11 +1090,40 @@ const STATE = {
   currentCycleStart: null,
   todayKey: '',
   mgmtUnlocked: false,
+  pinnedDate: false,  // true when user is viewing a non-today day
 };
 
+// Compute the "operational" date for the crew.
+// "Today" means tonight's planned run. The crew works overnight (11 PM → early AM),
+// so we keep showing yesterday's date through the morning while they finish + Elio
+// reviews completions. We flip to the next day at 11 AM, just before prep time.
+function getOperationalDate() {
+  const now = new Date();
+  if (now.getHours() < 11) {
+    // Before 11 AM → still last night's shift / morning review window
+    const yest = new Date(now);
+    yest.setDate(yest.getDate() - 1);
+    yest.setHours(12, 0, 0, 0);
+    return yest;
+  }
+  return now;
+}
+
+function refreshOperationalDate() {
+  if (STATE.pinnedDate) return; // user is viewing a different day, leave alone
+  const today = getOperationalDate();
+  const newKey = dateKey(today);
+  if (newKey !== STATE.todayKey) {
+    STATE.todayKey = newKey;
+    STATE.currentCycleStart = getCycleStart(today);
+    STATE.calMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    ensureCycle(STATE.currentCycleStart);
+    renderAll();
+  }
+}
+
 function init() {
-  const realToday = new Date();
-  const today = realToday < CYCLE_ANCHOR ? new Date(2026, 4, 20) : realToday;
+  const today = getOperationalDate();
   STATE.todayKey = dateKey(today);
   STATE.currentCycleStart = getCycleStart(today);
   STATE.calMonth = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -1102,6 +1131,10 @@ function init() {
   ensureCycle(STATE.currentCycleStart);
   renderAll();
   populateEmergStores();
+
+  // Re-check the operational date every minute so the dashboard auto-flips
+  // at 12 PM without requiring a refresh.
+  setInterval(refreshOperationalDate, 60 * 1000);
 }
 
 function dateKey(d) {
@@ -1367,11 +1400,14 @@ function openDay(dk) {
     return;
   }
 
+  // Check if the tapped day is actually today (operational date)
+  const opToday = dateKey(getOperationalDate());
+  STATE.pinnedDate = (dk !== opToday);
   STATE.currentCycleStart = cycleStart;
   STATE.todayKey = dk;
   switchView('dash');
   renderAll();
-  toast(`Viendo ${formatDate(dt, 'EEE d MMM')}`);
+  toast(STATE.pinnedDate ? `Viendo ${formatDate(dt, 'EEE d MMM')}` : 'Volviendo a hoy');
 }
 
 function setFilter(btn) {
