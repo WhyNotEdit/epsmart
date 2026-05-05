@@ -1,0 +1,1822 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#020a1f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>EP Smart Ops · Ciclo Taco Bell</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+
+:root{
+  /* EP Smart palette - extracted from logo */
+  --navy-deep:#020a1f;
+  --navy:#04153a;
+  --navy-1:#072054;
+  --navy-2:#0a2d70;
+  --navy-3:#0f3d8f;
+
+  --blue-electric:#00a8ff;
+  --blue-bright:#1ec5ff;
+  --blue-pale:#7ddfff;
+  --blue-glow:rgba(0,168,255,0.5);
+
+  --chrome-1:#e8f4ff;
+  --chrome-2:#b8d8ff;
+  --chrome-3:#7ab0e8;
+  --chrome-4:#4a82c4;
+
+  --line:rgba(120,180,255,0.08);
+  --line-2:rgba(120,180,255,0.18);
+
+  --ink:#eef4ff;
+  --ink-2:#a8bedb;
+  --ink-3:#6a82a8;
+  --ink-4:#3d5278;
+
+  --signal:#00e8a0;
+  --warn:#ffb22e;
+  --danger:#ff4757;
+  --emerg:#ff2d6f;
+
+  --font-display:'Bricolage Grotesque',sans-serif;
+  --font-mono:'JetBrains Mono',monospace;
+
+  --pad:14px;
+  --safe-top:env(safe-area-inset-top,0);
+  --safe-bot:env(safe-area-inset-bottom,0);
+}
+
+html,body{height:100%;background:var(--navy-deep);color:var(--ink);font-family:var(--font-display);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+body{
+  background:
+    radial-gradient(ellipse 90% 60% at 50% -10%,rgba(0,168,255,0.18) 0%,transparent 60%),
+    radial-gradient(ellipse 70% 50% at 100% 80%,rgba(15,61,143,0.35) 0%,transparent 60%),
+    radial-gradient(ellipse 60% 40% at 0% 100%,rgba(0,168,255,0.08) 0%,transparent 60%),
+    linear-gradient(180deg,var(--navy-deep) 0%,#010717 100%);
+  background-attachment:fixed;
+  min-height:100vh;
+  padding-bottom:calc(76px + var(--safe-bot));
+}
+::selection{background:var(--blue-electric);color:white}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit;font-size:inherit}
+input,textarea,select{font-family:inherit;font-size:inherit}
+
+/* ═══════ TOP BAR ═══════ */
+.topbar{
+  position:sticky;top:0;z-index:50;
+  padding:calc(var(--safe-top) + 11px) var(--pad) 11px;
+  background:linear-gradient(180deg,rgba(2,10,31,0.95) 0%,rgba(2,10,31,0.82) 100%);
+  backdrop-filter:blur(24px) saturate(180%);
+  -webkit-backdrop-filter:blur(24px) saturate(180%);
+  border-bottom:1px solid var(--line);
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+}
+.topbar::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--blue-electric),transparent);
+  opacity:0.3;
+}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+
+/* CHROME EP SHIELD MARK */
+.brand-mark{
+  width:40px;height:40px;flex-shrink:0;position:relative;
+  border-radius:11px;overflow:hidden;
+  box-shadow:
+    0 4px 14px rgba(0,168,255,0.55),
+    0 0 0 1px rgba(120,180,255,0.25),
+    inset 0 1px 0 rgba(255,255,255,0.15);
+}
+.brand-mark img{
+  width:100%;height:100%;object-fit:cover;display:block;
+}
+
+.brand-text{display:flex;flex-direction:column;line-height:1;min-width:0}
+.brand-name{
+  font-size:14px;font-weight:700;letter-spacing:-0.01em;white-space:nowrap;
+  background:linear-gradient(180deg,#ffffff 0%,#b8d8ff 100%);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+}
+.brand-sub{font-family:var(--font-mono);font-size:9px;color:var(--blue-bright);letter-spacing:0.18em;text-transform:uppercase;margin-top:3px;opacity:0.85}
+
+.cycle-pill{
+  display:inline-flex;align-items:center;gap:6px;flex-shrink:0;
+  padding:7px 11px;
+  background:linear-gradient(135deg,rgba(0,232,160,0.15) 0%,rgba(0,232,160,0.05) 100%);
+  border:1px solid rgba(0,232,160,0.3);
+  border-radius:99px;
+  font-family:var(--font-mono);font-size:10px;font-weight:600;color:var(--signal);
+  letter-spacing:0.05em;
+  box-shadow:0 0 12px rgba(0,232,160,0.15);
+}
+.cycle-dot{width:6px;height:6px;border-radius:50%;background:var(--signal);box-shadow:0 0 10px var(--signal);animation:livePulse 2s ease-in-out infinite}
+@keyframes livePulse{0%,100%{opacity:1}50%{opacity:0.4}}
+
+/* ═══════ MAIN ═══════ */
+main{padding:14px var(--pad) 22px}
+.view{display:none;animation:fadeIn .3s ease}
+.view.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ═══════ HERO ═══════ */
+.hero{
+  position:relative;border-radius:20px;padding:18px;
+  background:
+    radial-gradient(circle at 15% 0%,rgba(0,168,255,0.32) 0%,transparent 55%),
+    radial-gradient(circle at 100% 100%,rgba(30,197,255,0.18) 0%,transparent 55%),
+    linear-gradient(135deg,var(--navy-1) 0%,var(--navy) 100%);
+  border:1px solid var(--line-2);
+  overflow:hidden;margin-bottom:16px;
+  box-shadow:
+    0 8px 32px rgba(0,0,0,0.4),
+    inset 0 1px 0 rgba(120,180,255,0.15);
+}
+.hero::before{
+  content:'';position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(0,168,255,0.04) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,168,255,0.04) 1px,transparent 1px);
+  background-size:24px 24px;pointer-events:none;
+}
+.hero::after{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--blue-electric),transparent);
+  opacity:0.6;
+}
+.hero-head{display:flex;align-items:start;justify-content:space-between;margin-bottom:16px;position:relative;gap:12px}
+.hero-label{font-family:var(--font-mono);font-size:9px;letter-spacing:0.22em;text-transform:uppercase;color:var(--blue-bright);margin-bottom:5px;opacity:0.9}
+.hero-title{
+  font-size:17px;font-weight:600;letter-spacing:-0.02em;line-height:1.15;
+  background:linear-gradient(180deg,#ffffff 0%,#c8e0ff 100%);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+}
+.hero-cycle-tag{
+  background:linear-gradient(135deg,rgba(0,168,255,0.15) 0%,rgba(0,168,255,0.05) 100%);
+  padding:5px 10px;border-radius:99px;
+  font-family:var(--font-mono);font-size:10px;letter-spacing:0.1em;color:var(--blue-bright);
+  border:1px solid rgba(0,168,255,0.25);white-space:nowrap;font-weight:600;
+}
+
+.progress-ring-wrap{display:flex;align-items:center;gap:16px;position:relative}
+.ring{position:relative;width:88px;height:88px;flex-shrink:0;
+  filter:drop-shadow(0 0 18px rgba(0,168,255,0.4));
+}
+.ring svg{transform:rotate(-90deg);width:100%;height:100%}
+.ring-bg{stroke:rgba(120,180,255,0.1);fill:none;stroke-width:7}
+.ring-fg{stroke:url(#ringGrad);fill:none;stroke-width:7;stroke-linecap:round;transition:stroke-dashoffset .6s cubic-bezier(0.65,0,0.35,1)}
+.ring-text{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring-pct{
+  font-family:var(--font-mono);font-size:21px;font-weight:700;letter-spacing:-0.04em;line-height:1;
+  background:linear-gradient(180deg,#ffffff 0%,#7ddfff 100%);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+}
+.ring-pct sup{font-size:11px;color:var(--ink-3);margin-left:2px;-webkit-text-fill-color:var(--ink-3)}
+.ring-lbl{font-family:var(--font-mono);font-size:8px;letter-spacing:0.18em;color:var(--blue-bright);text-transform:uppercase;margin-top:2px;opacity:0.8}
+
+.hero-stats{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.stat-cell{
+  padding:9px 11px;
+  background:linear-gradient(135deg,rgba(120,180,255,0.06) 0%,rgba(120,180,255,0.02) 100%);
+  border-radius:10px;border:1px solid var(--line);
+  position:relative;overflow:hidden;
+}
+.stat-cell::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(120,180,255,0.3),transparent);
+}
+.stat-num{font-family:var(--font-mono);font-size:19px;font-weight:700;letter-spacing:-0.03em;line-height:1}
+.stat-num.signal{color:var(--signal);text-shadow:0 0 12px rgba(0,232,160,0.4)}
+.stat-num.warn{color:var(--warn);text-shadow:0 0 12px rgba(255,178,46,0.3)}
+.stat-num.bright{color:var(--blue-bright);text-shadow:0 0 12px rgba(30,197,255,0.4)}
+.stat-lbl{font-size:9px;color:var(--ink-3);letter-spacing:0.08em;margin-top:4px;text-transform:uppercase;font-family:var(--font-mono);font-weight:500}
+
+/* ═══════ SECTION HEAD ═══════ */
+.sec-head{display:flex;align-items:center;justify-content:space-between;margin:20px 0 10px;padding:0 2px;gap:8px}
+.sec-title{font-size:13px;font-weight:600;letter-spacing:-0.01em;display:flex;align-items:center;gap:8px;color:var(--ink)}
+.sec-tag{
+  font-family:var(--font-mono);font-size:9px;color:var(--blue-bright);
+  background:rgba(0,168,255,0.08);padding:3px 7px;border-radius:99px;
+  border:1px solid rgba(0,168,255,0.2);letter-spacing:0.05em;
+}
+.sec-action{font-family:var(--font-mono);font-size:11px;color:var(--blue-bright);display:inline-flex;align-items:center;gap:4px;font-weight:500;letter-spacing:0.02em}
+
+/* ═══════ TONIGHT'S RUN ═══════ */
+.tonight{
+  background:linear-gradient(135deg,var(--navy-1) 0%,var(--navy) 100%);
+  border:1px solid var(--line-2);border-radius:16px;overflow:hidden;margin-bottom:16px;
+  box-shadow:0 6px 24px rgba(0,0,0,0.3);
+}
+.tonight-head{
+  padding:13px 14px;
+  background:
+    linear-gradient(135deg,rgba(0,168,255,0.22) 0%,rgba(15,61,143,0.12) 100%);
+  border-bottom:1px solid var(--line);
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  position:relative;
+}
+.tonight-head::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--blue-electric),transparent);
+  opacity:0.6;
+}
+.tonight-title{display:flex;align-items:center;gap:10px;min-width:0}
+.tonight-icon{
+  width:30px;height:30px;border-radius:9px;flex-shrink:0;
+  background:
+    linear-gradient(135deg,#5fd5ff 0%,var(--blue-electric) 50%,#0080d0 100%);
+  display:grid;place-items:center;
+  box-shadow:
+    0 4px 14px rgba(0,168,255,0.55),
+    inset 0 1px 0 rgba(255,255,255,0.4),
+    inset 0 -1px 0 rgba(0,0,0,0.2);
+}
+.tonight-meta{line-height:1.2;min-width:0}
+.tonight-meta .lbl{font-family:var(--font-mono);font-size:9px;letter-spacing:0.18em;color:var(--blue-bright);text-transform:uppercase;opacity:0.9}
+.tonight-meta .val{font-size:14px;font-weight:600;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:white}
+.tonight-time{font-family:var(--font-mono);font-size:10px;color:var(--ink-2);text-align:right;line-height:1.4;flex-shrink:0;letter-spacing:0.04em}
+.tonight-time strong{color:white;display:block;font-size:13px;font-weight:700}
+
+/* ═══════ STOPS ═══════ */
+.stops{list-style:none}
+.stop{
+  position:relative;padding:13px 14px 13px 46px;border-top:1px solid var(--line);
+  display:grid;grid-template-columns:1fr auto;gap:12px;transition:background .18s;
+}
+.stop:first-child{border-top:none}
+.stop:active{background:rgba(0,168,255,0.04)}
+.stop::before{content:'';position:absolute;left:22px;top:0;bottom:0;width:2px;background:rgba(120,180,255,0.15)}
+.stop:first-child::before{top:50%}
+.stop:last-child::before{bottom:50%}
+.stop-node{
+  position:absolute;left:13px;top:16px;
+  width:20px;height:20px;border-radius:50%;
+  background:var(--navy);border:2px solid rgba(120,180,255,0.25);
+  display:grid;place-items:center;z-index:1;
+  font-family:var(--font-mono);font-size:9px;font-weight:700;color:var(--ink-2);
+}
+.stop.complete .stop-node{
+  background:linear-gradient(135deg,#00ffb4,var(--signal));
+  border-color:var(--signal);color:var(--navy-deep);
+  box-shadow:0 0 14px rgba(0,232,160,0.5);
+}
+.stop.emergency .stop-node{
+  background:linear-gradient(135deg,#ff5582,var(--emerg));
+  border-color:var(--emerg);color:white;
+  box-shadow:0 0 0 4px rgba(255,45,111,0.18),0 0 14px rgba(255,45,111,0.4);
+}
+.stop-info{min-width:0}
+.stop-no{font-family:var(--font-mono);font-size:10px;color:var(--blue-bright);letter-spacing:0.08em;margin-bottom:3px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;opacity:0.9;font-weight:500}
+.stop-name{font-size:14px;font-weight:600;letter-spacing:-0.01em;display:flex;align-items:center;gap:6px;flex-wrap:wrap;color:white}
+.stop-addr{font-size:12px;color:var(--ink-2);margin-top:3px;line-height:1.4}
+.stop.complete .stop-name,.stop.complete .stop-addr{color:var(--ink-3)}
+.stop.complete .stop-name{text-decoration:line-through;text-decoration-color:var(--ink-4)}
+.stop-rgm{font-size:11px;color:var(--ink-3);margin-top:4px;font-family:var(--font-mono);letter-spacing:0.02em}
+.stop-actions{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.icon-btn{
+  width:34px;height:34px;border-radius:10px;
+  background:rgba(120,180,255,0.06);border:1px solid var(--line-2);
+  display:grid;place-items:center;transition:all .15s;
+  color:var(--ink-2);
+}
+.icon-btn:active{transform:scale(0.94)}
+.icon-btn.nav{
+  background:linear-gradient(135deg,#5fd5ff 0%,var(--blue-electric) 50%,#0080d0 100%);
+  border-color:transparent;color:white;
+  box-shadow:
+    0 4px 12px rgba(0,168,255,0.45),
+    inset 0 1px 0 rgba(255,255,255,0.35),
+    inset 0 -1px 0 rgba(0,0,0,0.15);
+}
+.icon-btn.done{
+  background:rgba(0,232,160,0.1);
+  border-color:rgba(0,232,160,0.3);
+  color:var(--signal);
+}
+.stop.complete .icon-btn.done{
+  background:linear-gradient(135deg,#00ffb4,var(--signal));
+  color:var(--navy-deep);border-color:var(--signal);
+  box-shadow:0 0 14px rgba(0,232,160,0.4);
+}
+.emerg-badge{
+  font-family:var(--font-mono);font-size:8px;letter-spacing:0.2em;
+  color:var(--emerg);font-weight:700;
+  background:rgba(255,45,111,0.12);padding:2px 6px;border-radius:4px;
+  border:1px solid rgba(255,45,111,0.35);
+}
+
+/* ═══════ CALENDAR — TIGHT MOBILE ═══════ */
+.cal-controls{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:10px}
+.cal-btn{
+  width:34px;height:34px;border-radius:10px;
+  background:rgba(120,180,255,0.06);border:1px solid var(--line-2);
+  display:grid;place-items:center;color:var(--blue-bright);
+}
+.cal-btn:active{background:rgba(120,180,255,0.12)}
+.cal-month{
+  font-size:15px;font-weight:600;letter-spacing:-0.01em;flex:1;text-align:center;
+  background:linear-gradient(180deg,#ffffff 0%,#c8e0ff 100%);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+}
+.cal-cycle-info{
+  font-family:var(--font-mono);font-size:10px;color:var(--ink-3);
+  text-align:center;margin-bottom:10px;letter-spacing:0.05em;
+}
+.cal-cycle-info strong{color:var(--blue-bright)}
+.cal-grid{
+  background:var(--navy-1);border:1px solid var(--line-2);
+  border-radius:12px;overflow:hidden;
+  box-shadow:0 4px 18px rgba(0,0,0,0.3);
+}
+.cal-dow{
+  display:grid;grid-template-columns:repeat(7,1fr);
+  background:linear-gradient(180deg,rgba(0,168,255,0.1) 0%,transparent 100%);
+  border-bottom:1px solid var(--line);
+}
+.cal-dow div{
+  text-align:center;padding:6px 0;
+  font-family:var(--font-mono);font-size:9px;letter-spacing:0.15em;
+  color:var(--blue-bright);text-transform:uppercase;font-weight:600;opacity:0.85;
+}
+.cal-days{display:grid;grid-template-columns:repeat(7,1fr)}
+/* Compressed cells - shorter than aspect-ratio:1 to fit on screen */
+.cal-day{
+  height:46px;padding:4px 4px 3px;
+  border-right:1px solid var(--line);border-bottom:1px solid var(--line);
+  position:relative;display:flex;flex-direction:column;
+  font-size:12px;color:var(--ink-2);
+  transition:background .15s;cursor:pointer;
+}
+.cal-day:nth-child(7n){border-right:none}
+.cal-day.empty{cursor:default;background:rgba(0,0,0,0.15)}
+.cal-day.empty span{color:var(--ink-4)}
+.cal-day.workday{color:var(--ink)}
+.cal-day.workday:active{background:rgba(0,168,255,0.08)}
+.cal-day.today{
+  background:
+    radial-gradient(circle at 50% 50%,rgba(0,168,255,0.25) 0%,transparent 80%),
+    rgba(0,168,255,0.08);
+  color:white;font-weight:700;
+  box-shadow:inset 0 0 0 1.5px var(--blue-electric);
+}
+.cal-day.today::after{
+  content:'';position:absolute;top:3px;right:3px;
+  width:5px;height:5px;border-radius:50%;background:var(--blue-bright);
+  box-shadow:0 0 6px var(--blue-bright);
+}
+.cal-day-num{font-weight:600;font-size:12px;line-height:1}
+.cal-day-bar{
+  display:flex;gap:1px;margin-top:auto;height:3px;border-radius:2px;overflow:hidden;
+}
+.cal-day-bar div{flex:1;background:rgba(120,180,255,0.18)}
+.cal-day-bar div.done{background:var(--signal);box-shadow:0 0 4px rgba(0,232,160,0.6)}
+.cal-day-bar div.emerg{background:var(--emerg);box-shadow:0 0 4px rgba(255,45,111,0.6)}
+
+.legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px;justify-content:center}
+.legend div{display:flex;align-items:center;gap:5px;font-family:var(--font-mono);font-size:9px;color:var(--ink-3);letter-spacing:0.05em;text-transform:uppercase}
+.legend-dot{width:7px;height:7px;border-radius:2px}
+
+/* ═══════ STORES VIEW ═══════ */
+.search-bar{
+  display:flex;align-items:center;gap:10px;
+  background:var(--navy-1);border:1px solid var(--line-2);
+  border-radius:12px;padding:10px 14px;margin-bottom:12px;
+  transition:border-color .15s;
+}
+.search-bar:focus-within{border-color:var(--blue-electric);box-shadow:0 0 0 3px rgba(0,168,255,0.12)}
+.search-bar input{
+  flex:1;background:none;border:none;color:var(--ink);outline:none;font-size:14px;
+}
+.search-bar input::placeholder{color:var(--ink-3)}
+.filter-chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:12px;scrollbar-width:none}
+.filter-chips::-webkit-scrollbar{display:none}
+.chip{
+  flex-shrink:0;padding:7px 12px;border-radius:99px;
+  background:var(--navy-1);border:1px solid var(--line-2);
+  font-size:11px;color:var(--ink-2);font-weight:500;
+  font-family:var(--font-mono);letter-spacing:0.03em;
+  transition:all .15s;
+}
+.chip.active{
+  background:linear-gradient(135deg,var(--blue-electric) 0%,#0080d0 100%);
+  border-color:var(--blue-electric);color:white;
+  box-shadow:0 4px 12px rgba(0,168,255,0.4);
+}
+.store-card{
+  display:flex;align-items:center;gap:12px;padding:12px 14px;
+  background:var(--navy-1);border:1px solid var(--line);border-radius:12px;
+  margin-bottom:8px;transition:all .15s;
+}
+.store-card:active{transform:scale(0.99);background:var(--navy-2);border-color:var(--line-2)}
+.store-unit{
+  font-family:var(--font-mono);font-size:11px;font-weight:700;
+  background:linear-gradient(135deg,var(--navy-2) 0%,var(--navy-1) 100%);
+  color:var(--blue-bright);
+  padding:6px 9px;border-radius:7px;letter-spacing:0.03em;flex-shrink:0;
+  border:1px solid var(--line-2);
+}
+.store-info{flex:1;min-width:0}
+.store-name{font-size:13px;font-weight:600;letter-spacing:-0.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:white}
+.store-meta{font-size:11px;color:var(--ink-3);margin-top:2px;font-family:var(--font-mono);letter-spacing:0.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.store-status{
+  font-family:var(--font-mono);font-size:9px;letter-spacing:0.1em;
+  padding:4px 8px;border-radius:99px;flex-shrink:0;font-weight:700;
+}
+.store-status.done{background:rgba(0,232,160,0.12);color:var(--signal);border:1px solid rgba(0,232,160,0.3)}
+.store-status.pending{background:rgba(255,178,46,0.1);color:var(--warn);border:1px solid rgba(255,178,46,0.25)}
+.store-status.upcoming{background:rgba(120,180,255,0.06);color:var(--ink-3);border:1px solid var(--line-2)}
+
+/* ═══════ BOTTOM NAV ═══════ */
+.botnav{
+  position:fixed;bottom:0;left:0;right:0;z-index:50;
+  padding:7px var(--pad) calc(var(--safe-bot) + 7px);
+  background:linear-gradient(180deg,rgba(2,10,31,0.85) 0%,rgba(2,10,31,0.97) 100%);
+  backdrop-filter:blur(24px) saturate(180%);
+  -webkit-backdrop-filter:blur(24px) saturate(180%);
+  border-top:1px solid var(--line-2);
+  display:grid;grid-template-columns:repeat(4,1fr);gap:4px;
+}
+.botnav::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--blue-electric),transparent);
+  opacity:0.4;
+}
+.botnav-btn{
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:7px 4px;border-radius:10px;
+  font-size:10px;color:var(--ink-3);font-weight:500;letter-spacing:0.02em;transition:color .15s;
+}
+.botnav-btn.active{color:white}
+.botnav-btn.active svg{color:var(--blue-bright);filter:drop-shadow(0 0 6px rgba(30,197,255,0.6))}
+
+/* ═══════ MODAL ═══════ */
+.modal-overlay{
+  position:fixed;inset:0;z-index:100;
+  background:rgba(0,5,20,0.85);backdrop-filter:blur(10px);
+  display:none;align-items:flex-end;justify-content:center;
+  animation:fadeIn .2s ease;
+}
+.modal-overlay.show{display:flex}
+@media(min-width:600px){.modal-overlay{align-items:center}}
+.modal{
+  width:100%;max-width:480px;
+  background:linear-gradient(180deg,var(--navy-1) 0%,var(--navy) 100%);
+  border:1px solid var(--line-2);
+  border-radius:20px 20px 0 0;
+  padding:18px;padding-bottom:calc(18px + var(--safe-bot));
+  max-height:88vh;overflow-y:auto;
+  animation:slideUp .3s cubic-bezier(0.32,0.72,0,1);
+  position:relative;
+  box-shadow:0 -10px 40px rgba(0,0,0,0.6);
+}
+.modal::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--blue-electric),transparent);
+}
+@media(min-width:600px){.modal{border-radius:20px}}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-handle{
+  width:40px;height:4px;border-radius:2px;background:var(--line-2);
+  margin:0 auto 14px;
+}
+.modal-head{display:flex;align-items:start;justify-content:space-between;gap:12px;margin-bottom:16px}
+.modal-title{
+  font-size:17px;font-weight:600;letter-spacing:-0.01em;color:white;
+}
+.modal-sub{font-family:var(--font-mono);font-size:10px;color:var(--blue-bright);letter-spacing:0.12em;margin-top:4px;text-transform:uppercase;opacity:0.85}
+.modal-close{
+  width:32px;height:32px;border-radius:50%;
+  background:var(--navy-2);display:grid;place-items:center;
+  flex-shrink:0;color:var(--ink-2);
+  border:1px solid var(--line-2);
+}
+.field{margin-bottom:12px}
+.field label{
+  display:block;font-family:var(--font-mono);font-size:10px;
+  color:var(--blue-bright);letter-spacing:0.12em;text-transform:uppercase;
+  margin-bottom:6px;font-weight:600;opacity:0.85;
+}
+.field input,.field textarea,.field select{
+  width:100%;padding:11px 13px;
+  background:var(--navy);border:1px solid var(--line-2);
+  border-radius:10px;color:white;outline:none;
+  font-size:14px;transition:all .15s;
+}
+.field input:focus,.field textarea:focus,.field select:focus{
+  border-color:var(--blue-electric);
+  box-shadow:0 0 0 3px rgba(0,168,255,0.15);
+}
+.field textarea{min-height:72px;resize:vertical}
+.modal-detail-row{
+  display:flex;justify-content:space-between;padding:8px 0;
+  border-bottom:1px solid var(--line);font-size:13px;gap:10px;
+}
+.modal-detail-row:last-child{border-bottom:none}
+.modal-detail-row .lbl{color:var(--ink-3);font-family:var(--font-mono);font-size:10px;letter-spacing:0.08em;flex-shrink:0;text-transform:uppercase;font-weight:500}
+.modal-detail-row .val{color:white;font-weight:500;text-align:right;word-break:break-word}
+.btn-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+.btn{
+  padding:13px 16px;border-radius:11px;font-size:13px;font-weight:600;
+  letter-spacing:0.02em;transition:all .15s;display:inline-flex;
+  align-items:center;justify-content:center;gap:6px;
+  font-family:var(--font-display);
+}
+.btn:active{transform:scale(0.98)}
+.btn-primary{
+  background:linear-gradient(135deg,#5fd5ff 0%,var(--blue-electric) 50%,#0080d0 100%);
+  color:white;
+  box-shadow:
+    0 4px 14px rgba(0,168,255,0.5),
+    inset 0 1px 0 rgba(255,255,255,0.3),
+    inset 0 -1px 0 rgba(0,0,0,0.15);
+}
+.btn-success{
+  background:linear-gradient(135deg,#00ffb4,var(--signal));
+  color:var(--navy-deep);
+  box-shadow:
+    0 4px 12px rgba(0,232,160,0.4),
+    inset 0 1px 0 rgba(255,255,255,0.4);
+}
+.btn-secondary{background:var(--navy-2);color:var(--ink);border:1px solid var(--line-2)}
+.btn-danger{background:rgba(255,71,87,0.15);color:var(--danger);border:1px solid rgba(255,71,87,0.35)}
+.btn-full{grid-column:1/-1}
+
+/* ═══════ MAP CHOICE ═══════ */
+.map-options{display:grid;gap:8px;margin-top:6px}
+.map-option{
+  display:flex;align-items:center;gap:12px;padding:12px 14px;
+  background:var(--navy-2);border:1px solid var(--line-2);border-radius:11px;
+  text-decoration:none;color:white;font-size:14px;font-weight:500;
+}
+.map-option:active{background:var(--navy-3)}
+.map-option-icon{
+  width:36px;height:36px;border-radius:9px;
+  display:grid;place-items:center;flex-shrink:0;color:white;font-size:14px;font-weight:700;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.25);
+}
+
+/* ═══════ MGMT ═══════ */
+.mgmt-locked{
+  text-align:center;padding:44px 20px;
+  background:linear-gradient(180deg,var(--navy-1) 0%,var(--navy) 100%);
+  border:1px solid var(--line-2);border-radius:16px;
+  box-shadow:0 6px 24px rgba(0,0,0,0.3);
+}
+.mgmt-locked-icon{
+  width:60px;height:60px;border-radius:50%;
+  background:
+    radial-gradient(circle at 30% 30%,rgba(0,168,255,0.4),transparent 70%),
+    linear-gradient(135deg,var(--navy-2),var(--navy));
+  display:grid;place-items:center;margin:0 auto 14px;
+  border:1px solid var(--line-2);color:var(--blue-bright);
+  box-shadow:0 0 24px rgba(0,168,255,0.25),inset 0 1px 0 rgba(120,180,255,0.2);
+}
+.mgmt-locked h3{font-size:18px;font-weight:600;letter-spacing:-0.01em;margin-bottom:5px;color:white}
+.mgmt-locked p{font-size:13px;color:var(--ink-3);margin-bottom:18px}
+.mgmt-section{
+  background:linear-gradient(180deg,var(--navy-1) 0%,var(--navy) 100%);
+  border:1px solid var(--line-2);border-radius:14px;
+  padding:14px;margin-bottom:12px;
+  box-shadow:0 4px 18px rgba(0,0,0,0.25);
+}
+.mgmt-section h4{font-size:13px;font-weight:600;letter-spacing:-0.01em;margin-bottom:10px;display:flex;align-items:center;gap:8px;color:white}
+.mgmt-section h4 .badge{
+  font-family:var(--font-mono);font-size:9px;color:var(--blue-bright);
+  background:rgba(0,168,255,0.12);padding:3px 7px;border-radius:99px;
+  border:1px solid rgba(0,168,255,0.3);font-weight:600;letter-spacing:0.08em;
+}
+.mgmt-row{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line);font-size:13px;gap:10px}
+.mgmt-row:last-child{border-bottom:none}
+.mgmt-row .lbl{color:var(--ink-2);font-size:12px}
+.mgmt-row .val{font-family:var(--font-mono);font-size:11px;color:white;text-align:right;letter-spacing:0.02em}
+
+/* ═══════ TOAST ═══════ */
+.toast{
+  position:fixed;bottom:calc(78px + var(--safe-bot) + 12px);
+  left:50%;transform:translateX(-50%) translateY(100px);
+  background:linear-gradient(135deg,var(--navy-2) 0%,var(--navy-1) 100%);
+  border:1px solid var(--line-2);
+  padding:11px 18px;border-radius:99px;
+  font-size:13px;font-weight:500;color:white;
+  display:flex;align-items:center;gap:8px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.6),0 0 0 1px rgba(0,168,255,0.15);
+  z-index:200;opacity:0;transition:all .3s cubic-bezier(0.32,0.72,0,1);
+  white-space:nowrap;max-width:90vw;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.success{border-color:rgba(0,232,160,0.45);box-shadow:0 8px 32px rgba(0,0,0,0.6),0 0 24px rgba(0,232,160,0.15)}
+.toast.error{border-color:rgba(255,71,87,0.45);box-shadow:0 8px 32px rgba(0,0,0,0.6),0 0 24px rgba(255,71,87,0.2)}
+.toast-dot{width:6px;height:6px;border-radius:50%;background:var(--blue-bright)}
+.toast.success .toast-dot{background:var(--signal);box-shadow:0 0 6px var(--signal)}
+.toast.error .toast-dot{background:var(--danger)}
+
+/* ═══════ EMPTY ═══════ */
+.empty{text-align:center;padding:50px 20px;color:var(--ink-3)}
+.empty-icon{font-size:36px;margin-bottom:10px;opacity:0.5}
+.empty h3{font-size:15px;font-weight:600;color:var(--ink-2);margin-bottom:4px}
+.empty p{font-size:12px}
+
+/* ═══════ UPCOMING ═══════ */
+.upcoming-card{
+  background:linear-gradient(180deg,var(--navy-1) 0%,var(--navy) 100%);
+  border:1px solid var(--line);border-radius:13px;padding:13px;margin-bottom:9px;
+}
+.upcoming-card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}
+.upcoming-date{font-weight:600;font-size:13px;color:white;letter-spacing:-0.01em}
+.upcoming-count{font-family:var(--font-mono);font-size:10px;color:var(--blue-bright);letter-spacing:0.05em;font-weight:600}
+.upcoming-stores{display:flex;flex-wrap:wrap;gap:5px}
+.upcoming-pill{
+  font-family:var(--font-mono);font-size:10px;padding:4px 8px;border-radius:6px;
+  background:rgba(120,180,255,0.06);color:var(--ink-2);
+  border:1px solid var(--line);letter-spacing:0.02em;font-weight:500;
+}
+.upcoming-pill.done{background:rgba(0,232,160,0.1);color:var(--signal);border-color:rgba(0,232,160,0.3)}
+
+/* sync pill states */
+#syncPill{cursor:pointer;border:1px solid rgba(0,232,160,0.3);transition:all 0.2s}
+#syncPill:active{transform:scale(0.96)}
+#syncPill.syncing{border-color:rgba(30,197,255,0.4);background:linear-gradient(135deg,rgba(30,197,255,0.15) 0%,rgba(30,197,255,0.05) 100%);color:var(--blue-bright)}
+#syncPill.syncing .cycle-dot{background:var(--blue-bright);box-shadow:0 0 10px var(--blue-bright)}
+#syncPill.offline{border-color:rgba(255,71,87,0.4);background:rgba(255,71,87,0.08);color:var(--danger)}
+#syncPill.offline .cycle-dot{background:var(--danger);box-shadow:0 0 8px var(--danger);animation:none}
+#syncPill.offline #syncStatus::before{content:"⚠ "}
+
+/* Pull-to-refresh indicator */
+.ptr{
+  position:fixed;top:calc(var(--safe-top) + 64px);left:50%;transform:translateX(-50%) translateY(-100%);
+  z-index:60;
+  background:linear-gradient(135deg,var(--navy-2) 0%,var(--navy-1) 100%);
+  border:1px solid rgba(30,197,255,0.4);
+  padding:8px 16px;border-radius:99px;
+  font-family:var(--font-mono);font-size:11px;font-weight:600;color:var(--blue-bright);
+  letter-spacing:0.05em;
+  box-shadow:0 6px 20px rgba(0,0,0,0.5),0 0 24px rgba(0,168,255,0.15);
+  display:flex;align-items:center;gap:8px;
+  transition:transform 0.25s cubic-bezier(0.32,0.72,0,1),opacity 0.2s;
+  opacity:0;pointer-events:none;
+}
+.ptr.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.ptr-spin{
+  width:14px;height:14px;border-radius:50%;
+  border:2px solid rgba(30,197,255,0.25);
+  border-top-color:var(--blue-bright);
+  animation:spin 0.7s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+
+</head>
+<body>
+<div class="ptr" id="ptr"><span class="ptr-spin"></span><span id="ptrLabel">Sincronizando...</span></div>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-mark"><img src="data:image/jpeg;base64,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" alt="EP Smart" /></div>
+    <div class="brand-text">
+      <span class="brand-name">EP Smart Ops</span>
+      <span class="brand-sub">Taco Bell · Ciclo Activo</span>
+    </div>
+  </div>
+  <button class="cycle-pill" id="syncPill" onclick="manualSync()" aria-label="Sync"><span class="cycle-dot" id="syncDot"></span><span id="syncStatus">Conectando...</span></button>
+</header>
+
+<main>
+
+  <section class="view active" id="view-dash">
+    <div class="hero">
+      <div class="hero-head">
+        <div>
+          <div class="hero-label">Ciclo Actual</div>
+          <div class="hero-title" id="cycleRange">May 20 → Jun 16, 2026</div>
+        </div>
+        <div class="hero-cycle-tag" id="cycleTag">CICLO 1</div>
+      </div>
+      <div class="progress-ring-wrap">
+        <div class="ring">
+          <svg viewBox="0 0 100 100">
+            <defs>
+              <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#5fd5ff"/>
+                <stop offset="50%" stop-color="#1ec5ff"/>
+                <stop offset="100%" stop-color="#0080d0"/>
+              </linearGradient>
+            </defs>
+            <circle class="ring-bg" cx="50" cy="50" r="42"/>
+            <circle class="ring-fg" id="ringFg" cx="50" cy="50" r="42" stroke-dasharray="263.9" stroke-dashoffset="263.9"/>
+          </svg>
+          <div class="ring-text">
+            <div class="ring-pct" id="ringPct">0<sup>%</sup></div>
+            <div class="ring-lbl">Listo</div>
+          </div>
+        </div>
+        <div class="hero-stats">
+          <div class="stat-cell"><div class="stat-num signal" id="statDone">0</div><div class="stat-lbl">Completadas</div></div>
+          <div class="stat-cell"><div class="stat-num warn" id="statPending">55</div><div class="stat-lbl">Restantes</div></div>
+          <div class="stat-cell"><div class="stat-num" id="statNights">14</div><div class="stat-lbl">Noches</div></div>
+          <div class="stat-cell"><div class="stat-num" id="statMiles">~0</div><div class="stat-lbl">Millas</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec-head">
+      <div class="sec-title">Recorrido de Hoy <span class="sec-tag" id="tonightTag">—</span></div>
+      <button class="sec-action" onclick="switchView('cal')">Ver calendario →</button>
+    </div>
+    <div class="tonight" id="tonightCard"></div>
+
+    <div class="sec-head">
+      <div class="sec-title">Próximas <span class="sec-tag">Siguientes 3 noches</span></div>
+    </div>
+    <div id="upcomingList"></div>
+  </section>
+
+  <section class="view" id="view-cal">
+    <div class="cal-controls">
+      <button class="cal-btn" onclick="calNav(-1)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m15 18-6-6 6-6"/></svg></button>
+      <div class="cal-month" id="calMonth">May 2026</div>
+      <button class="cal-btn" onclick="calNav(1)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m9 18 6-6-6-6"/></svg></button>
+    </div>
+    <div class="cal-cycle-info" id="calCycleInfo">Inicio del ciclo · <strong>20 May → 16 Jun</strong></div>
+    <div class="cal-grid">
+      <div class="cal-dow"><div>Dom</div><div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div></div>
+      <div class="cal-days" id="calDays"></div>
+    </div>
+    <div class="legend">
+      <div><span class="legend-dot" style="background:var(--signal)"></span>Listo</div>
+      <div><span class="legend-dot" style="background:var(--ink-4)"></span>Pendiente</div>
+      <div><span class="legend-dot" style="background:var(--emerg)"></span>Urgencia</div>
+      <div><span class="legend-dot" style="background:rgba(123,63,242,0.4)"></span>Hoy</div>
+    </div>
+  </section>
+
+  <section class="view" id="view-stores">
+    <div class="search-bar">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="color:var(--ink-3)"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" id="storeSearch" placeholder="Buscar por número, dirección, RGM, ciudad..." oninput="renderStores()">
+    </div>
+    <div class="filter-chips" id="filterChips">
+      <button class="chip active" data-filter="all" onclick="setFilter(this)">Todas · <span id="cntAll">55</span></button>
+      <button class="chip" data-filter="done" onclick="setFilter(this)">Listas · <span id="cntDone">0</span></button>
+      <button class="chip" data-filter="pending" onclick="setFilter(this)">Pendientes · <span id="cntPending">55</span></button>
+      <button class="chip" data-filter="A40201" onclick="setFilter(this)">Gonzalez · 7</button>
+      <button class="chip" data-filter="A40202" onclick="setFilter(this)">Juarez · 8</button>
+      <button class="chip" data-filter="A40204" onclick="setFilter(this)">Paulino · 8</button>
+      <button class="chip" data-filter="A40206" onclick="setFilter(this)">Cabrera · 7</button>
+      <button class="chip" data-filter="A40207" onclick="setFilter(this)">Sosa · 7</button>
+      <button class="chip" data-filter="A40208" onclick="setFilter(this)">Menjivar · 6</button>
+      <button class="chip" data-filter="A40209" onclick="setFilter(this)">Hernandez · 6</button>
+      <button class="chip" data-filter="A40210" onclick="setFilter(this)">Silvera · 6</button>
+    </div>
+    <div id="storesList"></div>
+  </section>
+
+  <section class="view" id="view-mgmt">
+    <div id="mgmtLockedView">
+      <div class="mgmt-locked">
+        <div class="mgmt-locked-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </div>
+        <h3>Administración EP</h3>
+        <p>Acceso restringido · Solo Elio y Pablo</p>
+        <div style="max-width:280px;margin:0 auto">
+          <div class="field">
+            <input type="password" id="mgmtPass" placeholder="Ingresa la contraseña" onkeydown="if(event.key==='Enter')mgmtUnlock()">
+          </div>
+          <button class="btn btn-primary btn-full" onclick="mgmtUnlock()">Desbloquear</button>
+          
+        </div>
+      </div>
+    </div>
+
+    <div id="mgmtPanel" style="display:none">
+      <div class="mgmt-section">
+        <h4>Configuración del Ciclo <span class="badge">ACTIVO</span></h4>
+        <div class="mgmt-row"><span class="lbl">Inicio del ciclo</span><span class="val">Mié 20 May, 2026</span></div>
+        <div class="mgmt-row"><span class="lbl">Duración</span><span class="val">28 días</span></div>
+        <div class="mgmt-row"><span class="lbl">Noches de trabajo</span><span class="val">Lun–Jue (14 noches)</span></div>
+        <div class="mgmt-row"><span class="lbl">Tiendas por noche</span><span class="val">4 (último Mar = 3)</span></div>
+        <div class="mgmt-row"><span class="lbl">Total de tiendas</span><span class="val">55</span></div>
+        <div class="mgmt-row"><span class="lbl">Punto de inicio</span><span class="val">18709 SW 105th Pl</span></div>
+        <div class="mgmt-row"><span class="lbl">Tienda más al sur</span><span class="val">26551 S Dixie Hwy</span></div>
+      </div>
+
+      <div class="mgmt-section">
+        <h4>Reprogramar de Urgencia</h4>
+        <p style="font-size:12px;color:var(--ink-3);margin-bottom:14px;line-height:1.5">Cuando un gerente pide servicio adelantado, mueve esa tienda a una noche más temprana. La tienda desplazada toma el lugar de la fecha original.</p>
+        <div class="field">
+          <label>Tienda a adelantar</label>
+          <select id="emergStore"></select>
+        </div>
+        <div class="field">
+          <label>Nueva fecha (Lun–Jue)</label>
+          <input type="date" id="emergDate">
+        </div>
+        <div class="field">
+          <label>Motivo / notas (opcional)</label>
+          <textarea id="emergNotes" placeholder="El gerente pidió servicio adelantado porque..."></textarea>
+        </div>
+        <button class="btn btn-primary btn-full" onclick="emergencyReschedule()">⚡ Aplicar Cambio de Urgencia</button>
+      </div>
+
+      <div class="mgmt-section">
+        <h4>Datos y Sincronización</h4>
+        <p style="font-size:12px;color:var(--ink-3);margin-bottom:14px;line-height:1.5">Datos guardados en memoria. Conectar a Vercel KV para sincronización en vivo entre todos los teléfonos del equipo.</p>
+        <div class="btn-row">
+          <button class="btn btn-secondary" onclick="exportData()">Exportar JSON</button>
+          <button class="btn btn-danger" onclick="resetCycle()">Reiniciar Ciclo</button>
+        </div>
+        <button class="btn btn-secondary btn-full" style="margin-top:8px" onclick="mgmtLock()">Bloquear y Salir</button>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<nav class="botnav">
+  <button class="botnav-btn active" data-view="dash" onclick="switchView('dash')">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+    Inicio
+  </button>
+  <button class="botnav-btn" data-view="cal" onclick="switchView('cal')">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+    Calendario
+  </button>
+  <button class="botnav-btn" data-view="stores" onclick="switchView('stores')">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    Tiendas
+  </button>
+  <button class="botnav-btn" data-view="mgmt" onclick="switchView('mgmt')">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    Admin
+  </button>
+</nav>
+
+<div class="modal-overlay" id="storeModal" onclick="if(event.target===this)closeModal('storeModal')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-head">
+      <div>
+        <div class="modal-title" id="modalStoreName">Store Name</div>
+        <div class="modal-sub" id="modalStoreSub">UNIT —</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('storeModal')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div id="modalStoreBody"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="mapModal" onclick="if(event.target===this)closeModal('mapModal')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-head">
+      <div>
+        <div class="modal-title">Abrir en Mapas</div>
+        <div class="modal-sub" id="mapModalAddr">—</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('mapModal')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="map-options">
+      <a class="map-option" id="mapApple" target="_blank">
+        <div class="map-option-icon" style="background:linear-gradient(135deg,#3478f6,#1c5acd)">A</div>
+        <div>Apple Maps</div>
+      </a>
+      <a class="map-option" id="mapGoogle" target="_blank">
+        <div class="map-option-icon" style="background:linear-gradient(135deg,#4285f4,#34a853)">G</div>
+        <div>Google Maps</div>
+      </a>
+      <a class="map-option" id="mapWaze" target="_blank">
+        <div class="map-option-icon" style="background:linear-gradient(135deg,#33ccff,#0099cc)">W</div>
+        <div>Waze</div>
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="toast-dot"></span><span id="toastMsg">Guardado</span></div>
+
+<script>
+// EP Route Ops — Store Database
+// Source: Taco Bell DMA 528 store list (55 stores)
+// HQ: 18709 SW 105th Pl, Miami, FL 33157
+// Coords approximated from ZIP centroids + street geocoding
+
+const HQ = {
+  name: "EP HQ",
+  address: "18709 SW 105th Pl, Miami, FL 33157",
+  lat: 25.5908,
+  lng: -80.3858
+};
+
+const STORES = [
+  // A40201 — Raul Gonzalez (7 stores)
+  {unit:"4258",  dma:"A40201", rgm:"Marielys Morales",      addr:"18407 S Dixie Hwy",                  city:"Miami",          state:"FL", zip:"33157", phone:"305-254-3914", lat:25.591, lng:-80.378},
+  {unit:"5555",  dma:"A40201", rgm:"Miguel Garcia",         addr:"8699 SW 24th St",                    city:"Miami",          state:"FL", zip:"33155", phone:"305-262-4959", lat:25.747, lng:-80.328},
+  {unit:"15451", dma:"A40201", rgm:"Carmen Hevia Lanier",   addr:"7350 SW 117th Avenue",               city:"Miami",          state:"FL", zip:"33183", phone:"305-271-7222", lat:25.726, lng:-80.388},
+  {unit:"17108", dma:"A40201", rgm:"Jasmine Vargas",        addr:"7745 SW 40th Street",                city:"Miami",          state:"FL", zip:"33155", phone:"305-267-9393", lat:25.732, lng:-80.313},
+  {unit:"42907", dma:"A40201", rgm:"Daliset Pellegrini",    addr:"15295 S Dixie Hwy",                  city:"Miami",          state:"FL", zip:"33157", phone:"305-233-2827", lat:25.620, lng:-80.355},
+  {unit:"42909", dma:"A40201", rgm:"Maria Ramirez",         addr:"3190 Coral Way",                     city:"Miami",          state:"FL", zip:"33145", phone:"305-445-1122", lat:25.749, lng:-80.247},
+  {unit:"42910", dma:"A40201", rgm:"Elizabeth Boulanger",   addr:"6310 S Dixie Hwy",                   city:"Miami",          state:"FL", zip:"33143", phone:"305-663-9064", lat:25.704, lng:-80.296},
+
+  // A40202 — Giovanny Juarez (8 stores)
+  {unit:"18554", dma:"A40202", rgm:"Natalie Estevez",       addr:"15201 SW 104th Street",              city:"Miami",          state:"FL", zip:"33196", phone:"305-408-0858", lat:25.674, lng:-80.451},
+  {unit:"27690", dma:"A40202", rgm:"Giraldo Garrido Lambert",addr:"13710 SW 88th Street",              city:"Miami",          state:"FL", zip:"33186", phone:"305-382-1858", lat:25.688, lng:-80.435},
+  {unit:"29742", dma:"A40202", rgm:"Yanessa Diaz",          addr:"12001 SW 129th Ct",                  city:"Miami",          state:"FL", zip:"33186", phone:"305-235-9429", lat:25.668, lng:-80.413},
+  {unit:"29865", dma:"A40202", rgm:"Zagma Somonte",         addr:"20925 S. Dixie Hwy",                 city:"Miami",          state:"FL", zip:"33186", phone:"786-471-3615", lat:25.578, lng:-80.397},
+  {unit:"39119", dma:"A40202", rgm:"Steven Gonzalez",       addr:"10975 SW 40th Street (Bird Road)",   city:"Miami",          state:"FL", zip:"33165", phone:"786-598-2785", lat:25.736, lng:-80.378},
+  {unit:"42940", dma:"A40202", rgm:"Tong Estrada",          addr:"17950 NW 27 Ave",                    city:"Miami Gardens",  state:"FL", zip:"33056", phone:"786-769-9907", lat:25.945, lng:-80.245},
+  {unit:"42938", dma:"A40202", rgm:"Takaysha Bogan",        addr:"1830 South Federal Highway",         city:"Ft Lauderdale",  state:"FL", zip:"33316", phone:"786-301-5944", lat:26.105, lng:-80.135},
+  {unit:"42939", dma:"A40202", rgm:"Maria Ubiera",          addr:"640 NE 125th Street",                city:"North Miami",    state:"FL", zip:"33161", phone:"786-440-9592", lat:25.888, lng:-80.187},
+
+  // A40204 — Betty Paulino (8 stores)
+  {unit:"2936",  dma:"A40204", rgm:"Maria Moreno",          addr:"710 NW 37th Ave",                    city:"Miami",          state:"FL", zip:"33125", phone:"305-541-8767", lat:25.778, lng:-80.255},
+  {unit:"3669",  dma:"A40204", rgm:"Roberto De Marcos",     addr:"3595 Biscayne Blvd",                 city:"Miami",          state:"FL", zip:"33137", phone:"305-576-5832", lat:25.811, lng:-80.187},
+  {unit:"4467",  dma:"A40204", rgm:"Abel Correa Javier",    addr:"2935 SW 32nd Ave",                   city:"Miami",          state:"FL", zip:"33133", phone:"305-447-0397", lat:25.754, lng:-80.247},
+  {unit:"41779", dma:"A40204", rgm:"Arianne Rodriguez",     addr:"1624 Washington Ave",                city:"Miami Beach",    state:"FL", zip:"33139", phone:"645-225-4301", lat:25.787, lng:-80.132},
+  {unit:"42934", dma:"A40204", rgm:"Xiomara Mendez",        addr:"1650 NE 163st",                      city:"North Miami Beach",state:"FL",zip:"33162",phone:"305-956-9666", lat:25.928, lng:-80.165},
+  {unit:"42906", dma:"A40204", rgm:"Christianne Iarochelle",addr:"630 NE 79th st",                     city:"Miami",          state:"FL", zip:"33138", phone:"305-751-7458", lat:25.847, lng:-80.187},
+  {unit:"31772", dma:"A40204", rgm:"Fe Sobrino",            addr:"966 SW 8th St",                      city:"Miami",          state:"FL", zip:"33130", phone:"305-854-3331", lat:25.766, lng:-80.213},
+  {unit:"36400", dma:"A40204", rgm:"Daniela Sanchez",       addr:"3750 West 85th Street",              city:"Hialeah",        state:"FL", zip:"33018", phone:"786-558-1595", lat:25.870, lng:-80.323},
+
+  // A40206 — Heberto Cabrera (7 stores)
+  {unit:"3599",  dma:"A40206", rgm:"Nohelia Silva",         addr:"18750 NW 67th Ave",                  city:"Hialeah",        state:"FL", zip:"33015", phone:"786-361-8985", lat:25.953, lng:-80.298},
+  {unit:"3684",  dma:"A40206", rgm:"Karen Maldonado",       addr:"10580 SW 8th St",                    city:"Miami",          state:"FL", zip:"33174", phone:"305-559-8816", lat:25.766, lng:-80.371},
+  {unit:"5485",  dma:"A40206", rgm:"Brigitte Calle Tapia",  addr:"599 NE 167 St",                      city:"Miami",          state:"FL", zip:"33162", phone:"305-655-3115", lat:25.933, lng:-80.187},
+  {unit:"17721", dma:"A40206", rgm:"Scott Thresher",        addr:"2690 West 68th Street",              city:"Hialeah",        state:"FL", zip:"33016", phone:"305-819-9208", lat:25.890, lng:-80.301},
+  {unit:"20206", dma:"A40206", rgm:"Kodene Plummer",        addr:"18885 NW 2nd Ave",                   city:"Miami",          state:"FL", zip:"33169", phone:"305-493-4369", lat:25.954, lng:-80.205},
+  {unit:"28507", dma:"A40206", rgm:"Henry Garcia",          addr:"11890 Hialeah Gardens Blvd",         city:"Hialeah Gardens",state:"FL", zip:"33018", phone:"305-557-4004", lat:25.873, lng:-80.339},
+  {unit:"42975", dma:"A40206", rgm:"Jean Josue",            addr:"7900 NW 27th Ave",                   city:"Miami Gardens",  state:"FL", zip:"33147", phone:"786-388-0321", lat:25.852, lng:-80.245},
+
+  // A40207 — Yaime Sosa (7 stores)
+  {unit:"243",   dma:"A40207", rgm:"Cheylilis Morales",     addr:"1075 W 49th St",                     city:"Hialeah",        state:"FL", zip:"33012", phone:"305-558-9422", lat:25.851, lng:-80.305},
+  {unit:"20501", dma:"A40207", rgm:"Heily Gonzalez",        addr:"785 East 9th Street",                city:"Hialeah",        state:"FL", zip:"33010", phone:"305-885-2337", lat:25.835, lng:-80.275},
+  {unit:"28066", dma:"A40207", rgm:"Irisdalis Perez",       addr:"501 East 49th Street",               city:"Hialeah",        state:"FL", zip:"33013", phone:"305-685-2031", lat:25.851, lng:-80.281},
+  {unit:"30358", dma:"A40207", rgm:"Ibis Nunez",            addr:"390 West 29th Street",               city:"Hialeah",        state:"FL", zip:"33010", phone:"305-883-8530", lat:25.837, lng:-80.288},
+  {unit:"31023", dma:"A40207", rgm:"Rafael Mompie",         addr:"7405 West 4th Ave.",                 city:"Hialeah",        state:"FL", zip:"33014", phone:"305-828-6276", lat:25.882, lng:-80.292},
+  {unit:"42979", dma:"A40207", rgm:"Noel Hernandez",        addr:"2915 W 16th Ave",                    city:"Hialeah",        state:"FL", zip:"33012", phone:"786-607-2820", lat:25.842, lng:-80.297},
+  {unit:"42978", dma:"A40207", rgm:"Juan Placencia",        addr:"2440 NW 119 St",                     city:"Miami",          state:"FL", zip:"33167", phone:"786-688-0885", lat:25.886, lng:-80.235},
+
+  // A40208 — Griselda Menjivar (6 stores)
+  {unit:"42905", dma:"A40208", rgm:"Kirenia Aguilar",       addr:"6740 SW Eighth St",                  city:"Miami",          state:"FL", zip:"33144", phone:"305-261-4772", lat:25.766, lng:-80.328},
+  {unit:"42911", dma:"A40208", rgm:"Ghylbert Aparicio",     addr:"987 North Homestead Blvd",           city:"Homestead",      state:"FL", zip:"33030", phone:"305-242-1159", lat:25.482, lng:-80.477},
+  {unit:"42966", dma:"A40208", rgm:"Yanaris Carballosa",    addr:"13610 SW 288 St",                    city:"Homestead",      state:"FL", zip:"33033", phone:"305-245-2412", lat:25.503, lng:-80.434},
+  {unit:"42908", dma:"A40208", rgm:"Leodan Pita",           addr:"3750 NW 79 Av",                      city:"Doral",          state:"FL", zip:"33166", phone:"305-593-9039", lat:25.811, lng:-80.317},
+  {unit:"42912", dma:"A40208", rgm:"Kely Rivera",           addr:"13720 SW 8 St",                      city:"Miami",          state:"FL", zip:"33184", phone:"305-553-2307", lat:25.764, lng:-80.412},
+  {unit:"42982", dma:"A40208", rgm:"Julymar Battistini",    addr:"26551 S Dixie Hwy",                  city:"Naranja",        state:"FL", zip:"33032", phone:"786-465-6740", lat:25.510, lng:-80.422},
+
+  // A40209 — Mildred Hernandez (6 stores)
+  {unit:"18574", dma:"A40209", rgm:"Jeanne Alfonso",        addr:"5705 NW 163rd Street",               city:"Miami Lakes",    state:"FL", zip:"33014", phone:"305-558-0102", lat:25.928, lng:-80.288},
+  {unit:"20192", dma:"A40209", rgm:"Delly Barrero",         addr:"6835 Taft Street",                   city:"Hollywood",      state:"FL", zip:"33024", phone:"954-981-7119", lat:26.012, lng:-80.235},
+  {unit:"30524", dma:"A40209", rgm:"Angella Mahbeer",       addr:"3606 Red Road",                      city:"Miramar",        state:"FL", zip:"33025", phone:"954-438-4447", lat:25.985, lng:-80.245},
+  {unit:"24746", dma:"A40209", rgm:"Dayanis Lemus",         addr:"4870 NW 183 st",                     city:"Miami Gardens",  state:"FL", zip:"33055", phone:"305-628-4798", lat:25.947, lng:-80.262},
+  {unit:"42937", dma:"A40209", rgm:"Ashley Mendez",         addr:"1425 N Park",                        city:"Weston",         state:"FL", zip:"33326", phone:"954-389-9029", lat:26.107, lng:-80.388},
+  {unit:"42974", dma:"A40209", rgm:"Dolores Enriquez",      addr:"6961 Miramar Parkway",               city:"Miramar",        state:"FL", zip:"33023", phone:"754-202-2953", lat:25.978, lng:-80.236},
+
+  // A40210 — Yadira Silvera (6 stores)
+  {unit:"16100", dma:"A40210", rgm:"Jessica Gonzalez",      addr:"13550 SW 152nd Street",              city:"Miami",          state:"FL", zip:"33177", phone:"305-254-6141", lat:25.633, lng:-80.434},
+  {unit:"31588", dma:"A40210", rgm:"Carol Valles",          addr:"15715 SW 72 Street",                 city:"Miami",          state:"FL", zip:"33196", phone:"305-387-7117", lat:25.703, lng:-80.456},
+  {unit:"31630", dma:"A40210", rgm:"Walter Soriano",        addr:"4185 SW 147th Avenue",               city:"Miami",          state:"FL", zip:"33185", phone:"305-225-8955", lat:25.728, lng:-80.443},
+  {unit:"42935", dma:"A40210", rgm:"Francis Dupuis",        addr:"3970 W Oakland Park",                city:"Lauderdale Lakes",state:"FL",zip:"33311", phone:"954-739-8612", lat:26.169, lng:-80.205},
+  {unit:"42936", dma:"A40210", rgm:"Naquisha William",      addr:"12575 Sunrise Blvd",                 city:"Sunrise",        state:"FL", zip:"33323", phone:"954-846-1303", lat:26.151, lng:-80.302},
+  {unit:"42964", dma:"A40210", rgm:"Lourde Lambert",        addr:"1040 W Hallandale Beach Blvd",       city:"Hallandale Beach",state:"FL",zip:"33009",phone:"954-456-7748", lat:25.985, lng:-80.156},
+];
+
+// Cycle anchor: Wed May 20, 2026 — every 4 weeks (28 days)
+const CYCLE_ANCHOR = new Date(2026, 4, 20); // Month is 0-indexed: 4=May
+const CYCLE_LENGTH_DAYS = 28;
+const STORES_PER_NIGHT = 4;
+const WORK_DAYS = [1, 2, 3, 3]; // not used directly; we filter Mon-Thu via getDay()
+// getDay(): 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat
+// Crew works Wed, Thu, Mon, Tue (skipping Fri/Sat/Sun)
+
+// Haversine distance in miles
+function dist(a, b) {
+  const R = 3958.8;
+  const dLat = (b.lat - a.lat) * Math.PI / 180;
+  const dLng = (b.lng - a.lng) * Math.PI / 180;
+  const lat1 = a.lat * Math.PI / 180;
+  const lat2 = b.lat * Math.PI / 180;
+  const x = Math.sin(dLat/2)**2 + Math.sin(dLng/2)**2 * Math.cos(lat1) * Math.cos(lat2);
+  return 2 * R * Math.asin(Math.sqrt(x));
+}
+
+// Build optimized route: start at Homestead (southmost), nearest-neighbor northbound, end nearest to HQ
+function buildRoute() {
+  // Anchor southmost store
+  const anchor = STORES.find(s => s.unit === "42982"); // 26551 S Dixie Hwy, Naranja
+  const remaining = STORES.filter(s => s.unit !== anchor.unit);
+  const route = [anchor];
+  let current = anchor;
+  while (remaining.length) {
+    let bestIdx = 0;
+    let bestDist = Infinity;
+    for (let i = 0; i < remaining.length; i++) {
+      const d = dist(current, remaining[i]);
+      // Bias slightly northward to maintain N-bound flow
+      const northBias = remaining[i].lat > current.lat ? -0.5 : 0.5;
+      const score = d + northBias;
+      if (score < bestDist) {
+        bestDist = score;
+        bestIdx = i;
+      }
+    }
+    current = remaining.splice(bestIdx, 1)[0];
+    route.push(current);
+  }
+  return route;
+}
+
+// Get list of working dates (Mon-Thu) within a cycle window
+function getCycleWorkDates(cycleStart) {
+  const dates = [];
+  for (let i = 0; i < CYCLE_LENGTH_DAYS; i++) {
+    const d = new Date(cycleStart);
+    d.setDate(d.getDate() + i);
+    const dow = d.getDay();
+    if (dow >= 1 && dow <= 4) dates.push(new Date(d)); // Mon-Thu
+  }
+  return dates;
+}
+
+// Determine which cycle a given date falls into
+function getCycleStart(date) {
+  const diffDays = Math.floor((date - CYCLE_ANCHOR) / 86400000);
+  const cyclesSinceAnchor = Math.floor(diffDays / CYCLE_LENGTH_DAYS);
+  const start = new Date(CYCLE_ANCHOR);
+  start.setDate(start.getDate() + cyclesSinceAnchor * CYCLE_LENGTH_DAYS);
+  return start;
+}
+
+// Get cycle ID string e.g. "2026-05-20"
+function cycleId(start) {
+  return start.toISOString().slice(0,10);
+}
+
+// Build full schedule map: date -> array of store unit numbers
+function buildSchedule(cycleStart) {
+  const route = buildRoute();
+  const dates = getCycleWorkDates(cycleStart);
+  // 14 nights, last night = 3 stores, others = 4 → 13*4 + 3 = 55
+  const schedule = {};
+  let storeIdx = 0;
+  for (let i = 0; i < dates.length; i++) {
+    const isLastNight = i === dates.length - 1;
+    const count = isLastNight ? 3 : 4;
+    const dayKey = dates[i].toISOString().slice(0,10);
+    schedule[dayKey] = [];
+    for (let j = 0; j < count && storeIdx < route.length; j++) {
+      schedule[dayKey].push(route[storeIdx].unit);
+      storeIdx++;
+    }
+  }
+  return { schedule, route, dates };
+}
+
+</script>
+<script>
+const STATE = {
+  currentView: 'dash',
+  filter: 'all',
+  calMonth: new Date(2026, 4, 1),
+  cycleData: {},
+  currentCycleStart: null,
+  todayKey: '',
+  mgmtUnlocked: false,
+};
+
+function init() {
+  const realToday = new Date();
+  const today = realToday < CYCLE_ANCHOR ? new Date(2026, 4, 20) : realToday;
+  STATE.todayKey = dateKey(today);
+  STATE.currentCycleStart = getCycleStart(today);
+  STATE.calMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
+  ensureCycle(STATE.currentCycleStart);
+  renderAll();
+  populateEmergStores();
+}
+
+function dateKey(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+
+function ensureCycle(cycleStart) {
+  const id = cycleId(cycleStart);
+  if (!STATE.cycleData[id]) {
+    const built = buildSchedule(cycleStart);
+    STATE.cycleData[id] = {
+      schedule: built.schedule,
+      completions: {},
+      emergencies: {},
+      route: built.route.map(r => r.unit),
+    };
+    // Notify server so other devices see the same schedule
+    if (typeof pushAction === 'function') {
+      pushAction('ensureCycle', {
+        cycleId: id,
+        schedule: built.schedule,
+        route: built.route.map(r => r.unit),
+      }).catch(()=>{});
+    }
+  }
+}
+
+function switchView(v) {
+  STATE.currentView = v;
+  document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+  document.getElementById('view-' + v).classList.add('active');
+  document.querySelectorAll('.botnav-btn').forEach(el => el.classList.toggle('active', el.dataset.view === v));
+  if (v === 'cal') renderCalendar();
+  if (v === 'stores') renderStores();
+  window.scrollTo({top:0});
+}
+
+function renderAll() {
+  renderHero();
+  renderTonight();
+  renderUpcoming();
+  if (STATE.currentView === 'cal') renderCalendar();
+  if (STATE.currentView === 'stores') renderStores();
+}
+
+function renderHero() {
+  const cycle = STATE.cycleData[cycleId(STATE.currentCycleStart)];
+  const totalStores = STORES.length;
+  const done = Object.keys(cycle.completions).length;
+  const pct = Math.round((done / totalStores) * 100);
+  const cycleEnd = new Date(STATE.currentCycleStart);
+  cycleEnd.setDate(cycleEnd.getDate() + CYCLE_LENGTH_DAYS - 1);
+
+  document.getElementById('cycleRange').textContent =
+    formatDate(STATE.currentCycleStart, 'd MMM') + ' → ' + formatDate(cycleEnd, 'd MMM, yyyy');
+  document.getElementById('ringPct').innerHTML = pct + '<sup>%</sup>';
+  document.getElementById('statDone').textContent = done;
+  document.getElementById('statPending').textContent = totalStores - done;
+  document.getElementById('statMiles').textContent = '~' + estimateMiles();
+
+  const ring = document.getElementById('ringFg');
+  const c = 2 * Math.PI * 42;
+  ring.style.strokeDashoffset = c - (c * pct / 100);
+
+  const cyclesSinceAnchor = Math.round((STATE.currentCycleStart - CYCLE_ANCHOR) / (CYCLE_LENGTH_DAYS * 86400000));
+  document.getElementById('cycleTag').textContent = 'CICLO ' + (cyclesSinceAnchor + 1);
+}
+
+function estimateMiles() {
+  const cycle = STATE.cycleData[cycleId(STATE.currentCycleStart)];
+  const route = cycle.route.map(unit => STORES.find(s => s.unit === unit)).filter(Boolean);
+  let total = 0;
+  let prev = HQ;
+  for (const s of route) { total += dist(prev, s); prev = s; }
+  total += dist(prev, HQ);
+  return Math.round(total);
+}
+
+function renderTonight() {
+  const cycle = STATE.cycleData[cycleId(STATE.currentCycleStart)];
+  let targetKey = STATE.todayKey;
+  let targetStores = cycle.schedule[targetKey];
+  let targetLabel = "Hoy";
+
+  if (!targetStores || targetStores.length === 0) {
+    const dates = Object.keys(cycle.schedule).sort();
+    const upcoming = dates.find(d => d >= STATE.todayKey && cycle.schedule[d].length > 0);
+    if (upcoming) {
+      targetKey = upcoming;
+      targetStores = cycle.schedule[upcoming];
+      const td = parseDate(upcoming);
+      targetLabel = (upcoming === STATE.todayKey) ? "Hoy" : `Próximo: ${formatDate(td, 'EEE d MMM')}`;
+    }
+  }
+
+  const tag = document.getElementById('tonightTag');
+  const card = document.getElementById('tonightCard');
+
+  if (!targetStores || targetStores.length === 0) {
+    tag.textContent = 'Sin trabajo programado';
+    card.innerHTML = `<div class="empty"><div class="empty-icon">🌙</div><h3>Ciclo completo</h3><p>Las ${STORES.length} tiendas están listas. El próximo ciclo empieza pronto.</p></div>`;
+    return;
+  }
+
+  tag.textContent = targetLabel;
+  const td = parseDate(targetKey);
+  const isToday = targetKey === STATE.todayKey;
+
+  let html = `
+    <div class="tonight-head">
+      <div class="tonight-title">
+        <div class="tonight-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </div>
+        <div class="tonight-meta">
+          <div class="lbl">${isToday ? 'Hoy' : 'Próximo'}</div>
+          <div class="val">${formatDate(td, 'EEEE, MMM d')}</div>
+        </div>
+      </div>
+      <div class="tonight-time">
+        <strong>11:00 PM</strong>
+        ${targetStores.length} paradas
+      </div>
+    </div>
+    <ul class="stops">
+  `;
+  targetStores.forEach((unit) => {
+    const store = STORES.find(s => s.unit === unit);
+    if (!store) return;
+    const isDone = !!cycle.completions[unit];
+    const isEmerg = !!cycle.emergencies[unit];
+    const seq = cycle.route.indexOf(unit) + 1;
+
+    html += `
+      <li class="stop ${isDone ? 'complete' : ''} ${isEmerg ? 'emergency' : ''}" onclick="openStore('${unit}','${targetKey}')">
+        <div class="stop-node">${seq}</div>
+        <div class="stop-info">
+          <div class="stop-no">${store.unit} · ${store.dma}${isEmerg ? ' <span class="emerg-badge">URGENCIA</span>' : ''}</div>
+          <div class="stop-name">${store.addr}</div>
+          <div class="stop-addr">${store.city}, ${store.state} ${store.zip}</div>
+          <div class="stop-rgm">Gerente · ${store.rgm}</div>
+        </div>
+        <div class="stop-actions" onclick="event.stopPropagation()">
+          <button class="icon-btn nav" onclick="openMap('${unit}')" aria-label="Navigate">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+          </button>
+          <button class="icon-btn done" onclick="toggleComplete('${unit}','${targetKey}')" aria-label="Complete">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </button>
+        </div>
+      </li>
+    `;
+  });
+  html += '</ul>';
+  card.innerHTML = html;
+}
+
+function renderUpcoming() {
+  const cycle = STATE.cycleData[cycleId(STATE.currentCycleStart)];
+  const dates = Object.keys(cycle.schedule).sort().filter(d => d > STATE.todayKey && cycle.schedule[d].length > 0);
+  const next3 = dates.slice(0, 3);
+  const list = document.getElementById('upcomingList');
+
+  if (next3.length === 0) {
+    list.innerHTML = `<div class="empty" style="padding:24px"><p>No quedan más noches de trabajo este ciclo.</p></div>`;
+    return;
+  }
+
+  let html = '';
+  next3.forEach(dk => {
+    const stores = cycle.schedule[dk];
+    const td = parseDate(dk);
+    const doneCount = stores.filter(u => cycle.completions[u]).length;
+    html += `
+      <div class="upcoming-card">
+        <div class="upcoming-card-head">
+          <div class="upcoming-date">${formatDate(td, 'EEE · d MMM')}</div>
+          <div class="upcoming-count">${doneCount}/${stores.length} LISTAS</div>
+        </div>
+        <div class="upcoming-stores">
+          ${stores.map(u => {
+            const s = STORES.find(x => x.unit === u);
+            const done = cycle.completions[u];
+            return `<span class="upcoming-pill ${done?'done':''}">${s?'#'+s.unit:u}</span>`;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  });
+  list.innerHTML = html;
+}
+
+function calNav(dir) {
+  STATE.calMonth = new Date(STATE.calMonth.getFullYear(), STATE.calMonth.getMonth() + dir, 1);
+  renderCalendar();
+}
+
+function renderCalendar() {
+  const m = STATE.calMonth;
+  document.getElementById('calMonth').textContent = formatDate(m, 'MMMM yyyy');
+
+  const monthStart = new Date(m);
+  const monthCycle = getCycleStart(monthStart);
+  ensureCycle(monthCycle);
+  const cycleEnd = new Date(monthCycle);
+  cycleEnd.setDate(cycleEnd.getDate() + CYCLE_LENGTH_DAYS - 1);
+  document.getElementById('calCycleInfo').innerHTML =
+    `Inicio del ciclo · <strong>${formatDate(monthCycle, 'd MMM')} → ${formatDate(cycleEnd, 'd MMM')}</strong>`;
+
+  const firstDow = new Date(m.getFullYear(), m.getMonth(), 1).getDay();
+  const daysInMonth = new Date(m.getFullYear(), m.getMonth() + 1, 0).getDate();
+  let html = '';
+
+  for (let i = 0; i < firstDow; i++) {
+    html += `<div class="cal-day empty"><span>·</span></div>`;
+  }
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dt = new Date(m.getFullYear(), m.getMonth(), d);
+    const dk = dateKey(dt);
+    const dow = dt.getDay();
+    const isWorkday = dow >= 1 && dow <= 4;
+    const isToday = dk === STATE.todayKey;
+
+    const dayCycleStart = getCycleStart(dt);
+    ensureCycle(dayCycleStart);
+    const dayCycle = STATE.cycleData[cycleId(dayCycleStart)];
+    const stores = dayCycle.schedule[dk] || [];
+
+    let bars = '';
+    if (isWorkday && stores.length > 0) {
+      bars = '<div class="cal-day-bar">';
+      stores.forEach(u => {
+        const isDone = !!dayCycle.completions[u];
+        const isEmerg = !!dayCycle.emergencies[u];
+        bars += `<div class="${isDone ? 'done' : ''} ${isEmerg ? 'emerg' : ''}"></div>`;
+      });
+      bars += '</div>';
+    }
+
+    const cls = ['cal-day'];
+    if (isWorkday) cls.push('workday');
+    if (isToday) cls.push('today');
+
+    html += `<div class="${cls.join(' ')}" onclick="openDay('${dk}')"><div class="cal-day-num">${d}</div>${bars}</div>`;
+  }
+
+  document.getElementById('calDays').innerHTML = html;
+}
+
+function openDay(dk) {
+  const dt = parseDate(dk);
+  const cycleStart = getCycleStart(dt);
+  ensureCycle(cycleStart);
+  const cycle = STATE.cycleData[cycleId(cycleStart)];
+  const stores = cycle.schedule[dk] || [];
+
+  if (stores.length === 0) {
+    toast(`Sin trabajo el ${formatDate(dt, 'd MMM')}`);
+    return;
+  }
+
+  STATE.currentCycleStart = cycleStart;
+  STATE.todayKey = dk;
+  switchView('dash');
+  renderAll();
+  toast(`Viendo ${formatDate(dt, 'EEE d MMM')}`);
+}
+
+function setFilter(btn) {
+  STATE.filter = btn.dataset.filter;
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  renderStores();
+}
+
+function renderStores() {
+  const cycle = STATE.cycleData[cycleId(STATE.currentCycleStart)];
+  const search = (document.getElementById('storeSearch').value || '').toLowerCase().trim();
+  const filter = STATE.filter;
+
+  let cntDone = 0, cntPending = 0;
+  STORES.forEach(s => { if (cycle.completions[s.unit]) cntDone++; else cntPending++; });
+  document.getElementById('cntAll').textContent = STORES.length;
+  document.getElementById('cntDone').textContent = cntDone;
+  document.getElementById('cntPending').textContent = cntPending;
+
+  const storeDate = {};
+  Object.entries(cycle.schedule).forEach(([d, units]) => {
+    units.forEach(u => storeDate[u] = d);
+  });
+
+  const list = STORES.filter(s => {
+    if (filter === 'done' && !cycle.completions[s.unit]) return false;
+    if (filter === 'pending' && cycle.completions[s.unit]) return false;
+    if (filter !== 'all' && filter !== 'done' && filter !== 'pending' && s.dma !== filter) return false;
+    if (search) {
+      const blob = `${s.unit} ${s.addr} ${s.city} ${s.zip} ${s.rgm} ${s.dma}`.toLowerCase();
+      if (!blob.includes(search)) return false;
+    }
+    return true;
+  });
+
+  if (list.length === 0) {
+    document.getElementById('storesList').innerHTML = `<div class="empty"><div class="empty-icon">🔎</div><h3>No se encontraron tiendas</h3><p>Prueba otra búsqueda o filtro</p></div>`;
+    return;
+  }
+
+  let html = '';
+  list.forEach(s => {
+    const isDone = !!cycle.completions[s.unit];
+    const sched = storeDate[s.unit];
+    const dt = sched ? parseDate(sched) : null;
+    const isUpcoming = dt && sched > STATE.todayKey;
+    const status = isDone ? 'done' : (isUpcoming ? 'upcoming' : 'pending');
+    const statusLabel = isDone ? 'LISTA' : (sched ? formatDate(dt, 'd MMM') : 'PEND');
+
+    html += `
+      <div class="store-card" onclick="openStore('${s.unit}', '${sched || ''}')">
+        <div class="store-unit">${s.unit}</div>
+        <div class="store-info">
+          <div class="store-name">${s.addr}</div>
+          <div class="store-meta">${s.city} · ${s.zip} · ${s.rgm}</div>
+        </div>
+        <div class="store-status ${status}">${statusLabel}</div>
+      </div>
+    `;
+  });
+  document.getElementById('storesList').innerHTML = html;
+}
+
+function openStore(unit, dk) {
+  const store = STORES.find(s => s.unit === unit);
+  if (!store) return;
+  const cycle = STATE.cycleData[cycleId(STATE.currentCycleStart)];
+  const completion = cycle.completions[unit];
+  const isEmerg = !!cycle.emergencies[unit];
+
+  document.getElementById('modalStoreName').textContent = store.addr;
+  document.getElementById('modalStoreSub').textContent = `UNIT ${store.unit} · ${store.dma}`;
+
+  const seq = cycle.route.indexOf(unit) + 1;
+  const sched = dk ? parseDate(dk) : null;
+
+  let html = `
+    <div style="margin-bottom:14px">
+      <div class="modal-detail-row"><span class="lbl">Estado</span><span class="val">${completion ? '<span style="color:var(--signal)">✓ Completada</span>' : '<span style="color:var(--warn)">Pendiente</span>'}</span></div>
+      ${isEmerg ? '<div class="modal-detail-row"><span class="lbl">Tipo</span><span class="val" style="color:var(--emerg)">⚡ Urgencia</span></div>' : ''}
+      <div class="modal-detail-row"><span class="lbl">Posición en ruta</span><span class="val">#${seq} de ${STORES.length}</span></div>
+      ${sched ? `<div class="modal-detail-row"><span class="lbl">Programada</span><span class="val">${formatDate(sched, 'EEE d MMM, yyyy')}</span></div>` : ''}
+      <div class="modal-detail-row"><span class="lbl">Ciudad</span><span class="val">${store.city}, ${store.state} ${store.zip}</span></div>
+      <div class="modal-detail-row"><span class="lbl">Gerente</span><span class="val">${store.rgm}</span></div>
+      <div class="modal-detail-row"><span class="lbl">Teléfono</span><span class="val"><a href="tel:${store.phone}" style="color:var(--ink);text-decoration:none">${store.phone}</a></span></div>
+    </div>
+
+    <div class="field">
+      <label>Notas (visibles para Elio)</label>
+      <textarea id="storeNotes" placeholder="Algo importante para revisar...">${completion?.notes || ''}</textarea>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="openMap('${unit}')">Navegar</button>
+      <button class="btn ${completion ? 'btn-danger' : 'btn-success'}" onclick="toggleComplete('${unit}','${dk||''}',true)">
+        ${completion ? 'Reabrir' : '✓ Marcar Lista'}
+      </button>
+    </div>
+  `;
+  document.getElementById('modalStoreBody').innerHTML = html;
+  document.getElementById('storeModal').classList.add('show');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('show');
+}
+
+function toggleComplete(unit, dk, fromModal) {
+  const cycle = STATE.cycleData[cycleId(STATE.currentCycleStart)];
+  const cid = cycleId(STATE.currentCycleStart);
+  if (cycle.completions[unit]) {
+    delete cycle.completions[unit];
+    toast('Reabierta', 'success');
+    if (fromModal) closeModal('storeModal');
+    renderAll();
+    pushAction('uncomplete', { cycleId: cid, unit }).catch(()=>{});
+  } else {
+    const notes = fromModal ? (document.getElementById('storeNotes')?.value || '') : '';
+    cycle.completions[unit] = {
+      date: dk || STATE.todayKey,
+      notes: notes,
+      completedAt: new Date().toISOString(),
+    };
+    toast('✓ Marcada lista', 'success');
+    if (fromModal) closeModal('storeModal');
+    renderAll();
+    pushAction('complete', { cycleId: cid, unit, date: dk || STATE.todayKey, notes }).catch(()=>{});
+  }
+}
+
+function openMap(unit) {
+  const store = STORES.find(s => s.unit === unit);
+  if (!store) return;
+  const fullAddr = `${store.addr}, ${store.city}, ${store.state} ${store.zip}`;
+  const enc = encodeURIComponent(fullAddr);
+
+  document.getElementById('mapModalAddr').textContent = fullAddr;
+  document.getElementById('mapApple').href = `https://maps.apple.com/?address=${enc}`;
+  document.getElementById('mapGoogle').href = `https://www.google.com/maps/search/?api=1&query=${enc}`;
+  document.getElementById('mapWaze').href = `https://www.waze.com/ul?q=${enc}&navigate=yes`;
+  document.getElementById('mapModal').classList.add('show');
+}
+
+function mgmtUnlock() {
+  const pass = document.getElementById('mgmtPass').value;
+  if (pass === 'ep305') {
+    STATE.mgmtUnlocked = true;
+    document.getElementById('mgmtLockedView').style.display = 'none';
+    document.getElementById('mgmtPanel').style.display = 'block';
+    toast('Desbloqueado', 'success');
+  } else {
+    toast('Contraseña incorrecta', 'error');
+    document.getElementById('mgmtPass').value = '';
+  }
+}
+
+function mgmtLock() {
+  STATE.mgmtUnlocked = false;
+  document.getElementById('mgmtLockedView').style.display = 'block';
+  document.getElementById('mgmtPanel').style.display = 'none';
+  document.getElementById('mgmtPass').value = '';
+  toast('Bloqueado');
+}
+
+function populateEmergStores() {
+  const sel = document.getElementById('emergStore');
+  sel.innerHTML = '<option value="">— Elige tienda —</option>' +
+    STORES.map(s => `<option value="${s.unit}">${s.unit} · ${s.addr}, ${s.city}</option>`).join('');
+}
+
+function emergencyReschedule() {
+  const unit = document.getElementById('emergStore').value;
+  const newDate = document.getElementById('emergDate').value;
+  const notes = document.getElementById('emergNotes').value;
+
+  if (!unit || !newDate) { toast('Elige tienda y fecha', 'error'); return; }
+
+  const newDt = parseDate(newDate);
+  const dow = newDt.getDay();
+  if (dow < 1 || dow > 4) { toast('Elige una noche de Lun–Jue', 'error'); return; }
+
+  const cycleStart = getCycleStart(newDt);
+  ensureCycle(cycleStart);
+  const cycle = STATE.cycleData[cycleId(cycleStart)];
+
+  let currentDate = null;
+  Object.entries(cycle.schedule).forEach(([d, units]) => {
+    if (units.includes(unit)) currentDate = d;
+  });
+
+  if (!currentDate) { toast('Tienda no está en este ciclo', 'error'); return; }
+  if (currentDate === newDate) { toast('Ya está programada para esa fecha', 'error'); return; }
+
+  const targetUnits = cycle.schedule[newDate] || [];
+  if (targetUnits.length >= STORES_PER_NIGHT) {
+    const bumped = targetUnits[targetUnits.length - 1];
+    cycle.schedule[newDate] = [...targetUnits.slice(0, -1), unit];
+    cycle.schedule[currentDate] = cycle.schedule[currentDate].map(u => u === unit ? bumped : u);
+  } else {
+    cycle.schedule[newDate] = [...targetUnits, unit];
+    cycle.schedule[currentDate] = cycle.schedule[currentDate].filter(u => u !== unit);
+  }
+
+  cycle.emergencies[unit] = {
+    originalDate: currentDate,
+    newDate: newDate,
+    notes: notes,
+    requestedAt: new Date().toISOString(),
+  };
+  toast('⚡ Cambio de urgencia aplicado', 'success');
+  document.getElementById('emergStore').value = '';
+  document.getElementById('emergDate').value = '';
+  document.getElementById('emergNotes').value = '';
+  renderAll();
+  pushAction('emergency', {
+    cycleId: cycleId(cycleStart),
+    unit, originalDate: currentDate, newDate, notes,
+    scheduleUpdate: cycle.schedule,
+  }).catch(()=>{});
+}
+
+function exportData() {
+  const data = JSON.stringify(STATE.cycleData, null, 2);
+  const blob = new Blob([data], {type: 'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `ep-cycle-${cycleId(STATE.currentCycleStart)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('Exportado', 'success');
+}
+
+function resetCycle() {
+  if (!confirm('¿Reiniciar todo el progreso de este ciclo?')) return;
+  const id = cycleId(STATE.currentCycleStart);
+  delete STATE.cycleData[id];
+  ensureCycle(STATE.currentCycleStart);
+  renderAll();
+  toast('Ciclo reiniciado', 'success');
+  pushAction('resetCycle', { cycleId: id }).catch(()=>{});
+}
+
+function parseDate(s) {
+  const [y,m,d] = s.split('-').map(Number);
+  return new Date(y, m-1, d);
+}
+
+function formatDate(d, fmt) {
+  const months = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const monthsShort = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const days = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  const daysShort = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  return fmt
+    .replace('EEEE', days[d.getDay()])
+    .replace('EEE', daysShort[d.getDay()])
+    .replace('MMMM', months[d.getMonth()])
+    .replace('MMM', monthsShort[d.getMonth()])
+    .replace('yyyy', d.getFullYear())
+    .replace('MM', String(d.getMonth()+1).padStart(2,'0'))
+    .replace('dd', String(d.getDate()).padStart(2,'0'))
+    .replace(/\bd\b/, d.getDate());
+}
+
+function toast(msg, type) {
+  const t = document.getElementById('toast');
+  t.className = 'toast' + (type ? ' ' + type : '');
+  document.getElementById('toastMsg').textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ═════════════════════════════════════════════════════════
+// CLOUD SYNC LAYER (Vercel KV)
+// ═════════════════════════════════════════════════════════
+const SYNC = {
+  apiUrl: '/api/state',
+  lastSyncedAt: null,
+  syncing: false,
+  offline: false,
+  pollMs: 30000, // background refresh every 30s
+  pollTimer: null,
+};
+
+// Generate a stable per-device identity (so the API can record "who" updated)
+function getDeviceId() {
+  let id = sessionStorage.getItem('ep_device_id');
+  if (!id) {
+    id = 'phone-' + Math.random().toString(36).slice(2, 8);
+    try { sessionStorage.setItem('ep_device_id', id); } catch(e) {}
+  }
+  return id;
+}
+
+function setSyncStatus(state, label) {
+  const pill = document.getElementById('syncPill');
+  const lbl = document.getElementById('syncStatus');
+  if (!pill) return;
+  pill.classList.remove('syncing','offline');
+  if (state === 'syncing') pill.classList.add('syncing');
+  if (state === 'offline') pill.classList.add('offline');
+  lbl.textContent = label;
+}
+
+function timeAgoEs(iso) {
+  if (!iso) return 'sin sincronizar';
+  const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+  if (diff < 5) return 'ahora';
+  if (diff < 60) return `hace ${diff}s`;
+  if (diff < 3600) return `hace ${Math.floor(diff/60)} min`;
+  if (diff < 86400) return `hace ${Math.floor(diff/3600)} h`;
+  return `hace ${Math.floor(diff/86400)} d`;
+}
+
+function tickSyncLabel() {
+  if (SYNC.syncing || SYNC.offline) return;
+  setSyncStatus('ok', timeAgoEs(SYNC.lastSyncedAt));
+}
+
+async function pullState() {
+  if (SYNC.syncing) return;
+  SYNC.syncing = true;
+  setSyncStatus('syncing', 'Sincronizando...');
+  try {
+    const res = await fetch(SYNC.apiUrl, { cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    if (data && data.cycleData) {
+      // Merge server state into client state. Server is source of truth for completions/emergencies.
+      Object.entries(data.cycleData).forEach(([cid, srv]) => {
+        if (!STATE.cycleData[cid]) {
+          STATE.cycleData[cid] = srv;
+        } else {
+          // Keep client-built schedule/route, overwrite tracked data
+          STATE.cycleData[cid].completions = srv.completions || {};
+          STATE.cycleData[cid].emergencies = srv.emergencies || {};
+          if (srv.schedule) STATE.cycleData[cid].schedule = srv.schedule;
+          if (srv.route) STATE.cycleData[cid].route = srv.route;
+        }
+      });
+      SYNC.lastSyncedAt = data.updatedAt || new Date().toISOString();
+    } else {
+      SYNC.lastSyncedAt = new Date().toISOString();
+    }
+    SYNC.offline = false;
+    renderAll();
+    tickSyncLabel();
+  } catch (err) {
+    console.warn('Pull failed:', err);
+    SYNC.offline = true;
+    setSyncStatus('offline', 'Sin conexión');
+  } finally {
+    SYNC.syncing = false;
+  }
+}
+
+async function pushAction(action, payload) {
+  // Optimistic UI: caller has already updated STATE locally. Now push to server.
+  setSyncStatus('syncing', 'Guardando...');
+  try {
+    const res = await fetch(SYNC.apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action, payload: { ...payload, who: getDeviceId() } }),
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    SYNC.lastSyncedAt = data.updatedAt || new Date().toISOString();
+    SYNC.offline = false;
+    tickSyncLabel();
+    return data;
+  } catch (err) {
+    console.warn('Push failed:', err);
+    SYNC.offline = true;
+    setSyncStatus('offline', 'Sin conexión');
+    toast('Cambios guardados solo en este teléfono', 'error');
+    throw err;
+  }
+}
+
+async function manualSync() {
+  await pullState();
+  if (!SYNC.offline) toast('Actualizado', 'success');
+}
+
+function startPolling() {
+  if (SYNC.pollTimer) clearInterval(SYNC.pollTimer);
+  SYNC.pollTimer = setInterval(() => {
+    if (document.visibilityState === 'visible') pullState();
+  }, SYNC.pollMs);
+
+  // Refresh "hace X min" label every 15s without hitting network
+  setInterval(tickSyncLabel, 15000);
+
+  // Pull when tab becomes visible again
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') pullState();
+  });
+}
+
+// ═════════════════════════════════════════════════════════
+// PULL-TO-REFRESH (touch-only)
+// ═════════════════════════════════════════════════════════
+let ptrStartY = 0, ptrPulling = false, ptrTriggered = false;
+const PTR_THRESHOLD = 70;
+
+document.addEventListener('touchstart', (e) => {
+  if (window.scrollY > 0) return;
+  ptrStartY = e.touches[0].clientY;
+  ptrPulling = true;
+  ptrTriggered = false;
+}, { passive: true });
+
+document.addEventListener('touchmove', (e) => {
+  if (!ptrPulling) return;
+  const dy = e.touches[0].clientY - ptrStartY;
+  if (dy > 20 && window.scrollY === 0) {
+    const ptr = document.getElementById('ptr');
+    document.getElementById('ptrLabel').textContent =
+      dy > PTR_THRESHOLD ? 'Suelta para actualizar' : 'Desliza para actualizar';
+    ptr.classList.add('show');
+    if (dy > PTR_THRESHOLD) ptrTriggered = true;
+    else ptrTriggered = false;
+  }
+}, { passive: true });
+
+document.addEventListener('touchend', () => {
+  if (!ptrPulling) return;
+  const ptr = document.getElementById('ptr');
+  if (ptrTriggered) {
+    document.getElementById('ptrLabel').textContent = 'Sincronizando...';
+    pullState().finally(() => {
+      setTimeout(() => ptr.classList.remove('show'), 400);
+    });
+  } else {
+    ptr.classList.remove('show');
+  }
+  ptrPulling = false;
+  ptrTriggered = false;
+}, { passive: true });
+
+// Initial load: build local skeleton, then hydrate from cloud
+init();
+pullState().then(() => startPolling());
+</script>
+</body>
+</html>

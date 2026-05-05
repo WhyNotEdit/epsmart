@@ -1,0 +1,9 @@
+{
+  "name": "ep-route-ops",
+  "version": "1.0.0",
+  "description": "EP Smart Ops - Taco Bell pressure-wash cycle dashboard",
+  "private": true,
+  "dependencies": {
+    "@vercel/kv": "^1.0.1"
+  }
+}
