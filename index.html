@@ -978,6 +978,77 @@ main{padding:14px var(--pad) 22px}
 .gps-empty-icon{font-size:42px;margin-bottom:12px;opacity:0.4}
 .gps-empty h3{font-size:15px;font-weight:600;color:var(--ink-2);margin-bottom:5px}
 .gps-empty p{font-size:12px;line-height:1.5}
+
+/* ═══════ MILEAGE STATS ═══════ */
+.mile-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:8px;
+}
+.mile-stat{
+  background:linear-gradient(180deg,var(--navy-1) 0%,var(--navy) 100%);
+  border:1px solid var(--line-2);border-radius:12px;
+  padding:13px 14px;position:relative;overflow:hidden;
+}
+.mile-stat::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(0,168,255,0.4),transparent);
+}
+.mile-stat-big{
+  grid-column:span 2;
+  background:
+    radial-gradient(ellipse 70% 80% at 100% 0%,rgba(0,168,255,0.15) 0%,transparent 70%),
+    linear-gradient(180deg,var(--navy-1) 0%,var(--navy) 100%);
+  padding:18px 18px;
+}
+.mile-stat-wide{grid-column:span 2}
+.mile-num{
+  font-family:var(--font-mono);
+  font-size:42px;font-weight:700;line-height:1;
+  background:linear-gradient(180deg,#fff 0%,var(--blue-bright) 100%);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  letter-spacing:-0.04em;margin-bottom:4px;
+}
+.mile-num-sm{
+  font-family:var(--font-mono);
+  font-size:24px;font-weight:700;color:white;
+  letter-spacing:-0.03em;line-height:1;margin-bottom:4px;
+}
+.mile-label{
+  font-family:var(--font-mono);font-size:10px;
+  letter-spacing:0.12em;text-transform:uppercase;
+  color:var(--ink-2);font-weight:500;
+}
+.mile-sub{
+  font-size:11px;color:var(--ink-3);margin-top:3px;
+  font-family:var(--font-mono);letter-spacing:0.02em;
+}
+.mile-note{
+  font-size:11px;color:var(--ink-3);margin-top:14px;line-height:1.55;
+  padding:10px 12px;background:rgba(120,180,255,0.04);
+  border:1px solid var(--line);border-radius:8px;
+  font-family:var(--font-mono);letter-spacing:0.01em;
+}
+.mile-breakdown-list{
+  border:1px solid var(--line);border-radius:10px;overflow:hidden;
+  background:var(--navy);
+}
+.mile-night-row{
+  display:grid;grid-template-columns:38px 1fr auto auto;gap:8px;
+  align-items:center;padding:9px 12px;
+  border-bottom:1px solid var(--line);font-size:12px;
+}
+.mile-night-row:last-child{border-bottom:none}
+.mile-night-num{
+  font-family:var(--font-mono);font-size:10px;font-weight:700;
+  color:var(--blue-bright);background:rgba(0,168,255,0.1);
+  padding:3px 6px;border-radius:5px;text-align:center;
+  letter-spacing:0.05em;
+}
+.mile-night-date{color:var(--ink-2);font-weight:500}
+.mile-night-stops{font-family:var(--font-mono);font-size:10px;color:var(--ink-3);letter-spacing:0.04em}
+.mile-night-miles{
+  font-family:var(--font-mono);font-size:13px;font-weight:700;
+  color:white;min-width:55px;text-align:right;
+}
 </style>
 
 </head>
@@ -1162,6 +1233,16 @@ main{padding:14px var(--pad) 22px}
           <textarea id="emergNotes" placeholder="El gerente pidió servicio adelantado porque..."></textarea>
         </div>
         <button class="btn btn-primary btn-full" onclick="emergencyReschedule()">⚡ Aplicar Cambio de Urgencia</button>
+      </div>
+
+      <div class="mgmt-section">
+        <h4>Millaje del Ciclo</h4>
+        <p style="font-size:12px;color:var(--ink-3);margin-bottom:14px;line-height:1.5">Distancia total que recorre el camión saliendo del almacén, completando todas las paradas, y regresando al almacén cada noche.</p>
+        <div id="mileageStats"></div>
+        <details style="margin-top:14px">
+          <summary style="font-family:var(--font-mono);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--blue-bright);cursor:pointer;padding:8px 0">Ver desglose por noche</summary>
+          <div id="mileageBreakdown" style="margin-top:10px"></div>
+        </details>
       </div>
 
       <div class="mgmt-section">
@@ -1549,6 +1630,120 @@ const STATE = {
   inboxRead: {},  // {noteId: true}
 };
 
+// ═════════════════════════════════════════════════════════
+// MILEAGE CALCULATION (HQ → stops → HQ each night)
+// ═════════════════════════════════════════════════════════
+// Almacén / warehouse: 18709 SW 105th Pl, Miami, FL 33157
+const HQ_LAT = 25.6098;
+const HQ_LNG = -80.3690;
+const HQ_LABEL = "18709 SW 105th Pl, Miami, FL 33157";
+// Multiplicador de ruta vs. línea recta (carreteras del sur de Florida ≈ 1.30x)
+const ROAD_MULTIPLIER = 1.30;
+
+function haversineMiles(lat1, lng1, lat2, lng2) {
+  const R = 3958.8;
+  const p1 = lat1 * Math.PI / 180;
+  const p2 = lat2 * Math.PI / 180;
+  const dp = (lat2 - lat1) * Math.PI / 180;
+  const dl = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dp/2)**2 + Math.cos(p1) * Math.cos(p2) * Math.sin(dl/2)**2;
+  return 2 * R * Math.asin(Math.sqrt(a));
+}
+
+// Compute miles for one night: HQ → store1 → store2 → ... → HQ
+function nightMiles(slots) {
+  if (!slots || slots.length === 0) return 0;
+  const points = [{lat: HQ_LAT, lng: HQ_LNG}];
+  slots.forEach(slot => {
+    const u = slotUnit(slot);
+    const s = STORES.find(x => x.unit === u);
+    if (s && s.lat && s.lng) points.push({lat: s.lat, lng: s.lng});
+  });
+  points.push({lat: HQ_LAT, lng: HQ_LNG});
+  let total = 0;
+  for (let i = 0; i < points.length - 1; i++) {
+    total += haversineMiles(points[i].lat, points[i].lng, points[i+1].lat, points[i+1].lng);
+  }
+  return total * ROAD_MULTIPLIER;
+}
+
+function renderMileageStats() {
+  const wrap = document.getElementById('mileageStats');
+  const breakdown = document.getElementById('mileageBreakdown');
+  if (!wrap) return;
+
+  const cycle = STATE.cycleData[cycleId(STATE.currentCycleStart)];
+  if (!cycle || !cycle.schedule) {
+    wrap.innerHTML = '<div style="color:var(--ink-3);font-size:13px">No hay ciclo activo</div>';
+    if (breakdown) breakdown.innerHTML = '';
+    return;
+  }
+
+  const dates = Object.keys(cycle.schedule).sort();
+  const workingNights = dates.filter(d => (cycle.schedule[d] || []).length > 0);
+  let totalMiles = 0;
+  const nightData = [];
+  workingNights.forEach(d => {
+    const m = nightMiles(cycle.schedule[d]);
+    totalMiles += m;
+    nightData.push({ date: d, miles: m, count: cycle.schedule[d].length });
+  });
+
+  const avg = workingNights.length ? totalMiles / workingNights.length : 0;
+  const longest = nightData.reduce((a, b) => a.miles > b.miles ? a : b, {miles: 0, date: ''});
+  const shortest = nightData.filter(n => n.miles > 0).reduce((a, b) => a.miles < b.miles ? a : b, {miles: Infinity, date: ''});
+
+  // Cycle ≈ 28 days ≈ ~1 month. 13 cycles per year.
+  const yearlyMiles = totalMiles * 13;
+
+  wrap.innerHTML = `
+    <div class="mile-grid">
+      <div class="mile-stat mile-stat-big">
+        <div class="mile-num">${Math.round(totalMiles)}</div>
+        <div class="mile-label">millas por ciclo</div>
+        <div class="mile-sub">${workingNights.length} noches de trabajo</div>
+      </div>
+      <div class="mile-stat">
+        <div class="mile-num-sm">${Math.round(avg)}</div>
+        <div class="mile-label">promedio / noche</div>
+      </div>
+      <div class="mile-stat">
+        <div class="mile-num-sm">${Math.round(longest.miles)}</div>
+        <div class="mile-label">noche más larga</div>
+        <div class="mile-sub">${longest.date ? formatDate(parseDate(longest.date), 'EEE d MMM') : '—'}</div>
+      </div>
+      <div class="mile-stat">
+        <div class="mile-num-sm">${shortest.miles === Infinity ? 0 : Math.round(shortest.miles)}</div>
+        <div class="mile-label">noche más corta</div>
+        <div class="mile-sub">${shortest.date ? formatDate(parseDate(shortest.date), 'EEE d MMM') : '—'}</div>
+      </div>
+      <div class="mile-stat mile-stat-wide">
+        <div class="mile-num-sm">${Math.round(yearlyMiles).toLocaleString()}</div>
+        <div class="mile-label">millas al año (13 ciclos)</div>
+      </div>
+    </div>
+    <div class="mile-note">
+      Cálculo: línea recta × 1.30 (carreteras reales).<br>
+      Sale del almacén ${HQ_LABEL} y regresa al final de cada noche.
+    </div>
+  `;
+
+  if (breakdown) {
+    let h = '<div class="mile-breakdown-list">';
+    nightData.forEach((n, i) => {
+      const dt = parseDate(n.date);
+      h += `<div class="mile-night-row">
+        <div class="mile-night-num">N${i+1}</div>
+        <div class="mile-night-date">${formatDate(dt, 'EEE d MMM')}</div>
+        <div class="mile-night-stops">${n.count} parada${n.count !== 1 ? 's' : ''}</div>
+        <div class="mile-night-miles">${Math.round(n.miles)} mi</div>
+      </div>`;
+    });
+    h += '</div>';
+    breakdown.innerHTML = h;
+  }
+}
+
 // Slot helpers — a "slot" is the schedule entry. Usually it's just the unit string,
 // but for re-do scenarios it's "unit::date" so the same store can appear twice.
 function slotUnit(slot) {
@@ -1604,6 +1799,7 @@ function init() {
   populateEmergStores();
   renderInboxBadge();
   renderGpsResults();
+  renderMileageStats();
 
   // Re-check the operational date every minute so the dashboard auto-flips
   // at 12 PM without requiring a refresh.
@@ -1713,6 +1909,7 @@ function renderAll() {
   renderHero();
   renderTonight();
   renderUpcoming();
+  renderMileageStats();
   if (STATE.currentView === 'cal') renderCalendar();
   if (STATE.currentView === 'stores') renderStores();
 }
