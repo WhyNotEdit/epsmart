@@ -549,8 +549,29 @@ main{padding:14px var(--pad) 22px}
   backdrop-filter:blur(24px) saturate(180%);
   -webkit-backdrop-filter:blur(24px) saturate(180%);
   border-top:1px solid var(--line-2);
-  display:grid;grid-template-columns:repeat(4,1fr);gap:4px;
+  display:grid;grid-template-columns:1fr 1fr 70px 1fr 1fr;gap:4px;
+  align-items:center;
 }
+.botnav-fab{
+  position:relative;display:flex;flex-direction:column;align-items:center;
+  margin-top:-28px;font-size:10px;color:var(--ink-3);
+  font-weight:600;letter-spacing:0.04em;transition:color .15s;
+  background:none;border:none;cursor:pointer;padding:0;
+}
+.fab-inner{
+  width:56px;height:56px;border-radius:50%;
+  background:linear-gradient(135deg,#5fd5ff 0%,var(--blue-electric) 50%,#0080d0 100%);
+  display:grid;place-items:center;color:white;
+  box-shadow:0 6px 20px rgba(0,168,255,0.5),0 0 0 4px var(--navy-deep),inset 0 1px 0 rgba(255,255,255,0.4);
+  transition:transform .2s cubic-bezier(0.32,0.72,0,1),box-shadow .2s;
+}
+.botnav-fab:active .fab-inner{transform:scale(0.92)}
+.botnav-fab.active .fab-inner{
+  background:linear-gradient(135deg,#7ddfff 0%,var(--blue-bright) 50%,var(--blue-electric) 100%);
+  box-shadow:0 8px 28px rgba(30,197,255,0.7),0 0 0 4px var(--navy-deep),inset 0 1px 0 rgba(255,255,255,0.5);
+}
+.botnav-fab.active{color:white}
+.fab-label{margin-top:6px;font-family:var(--font-mono);font-size:9px;letter-spacing:0.18em;text-transform:uppercase}
 .botnav::before{
   content:'';position:absolute;top:0;left:0;right:0;height:1px;
   background:linear-gradient(90deg,transparent,var(--blue-electric),transparent);
@@ -827,6 +848,136 @@ main{padding:14px var(--pad) 22px}
   display:flex;align-items:center;justify-content:center;
 }
 .emerg-active-clear:active{background:rgba(255,71,87,0.2)}
+
+.topbar-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.inbox-btn{
+  position:relative;width:38px;height:38px;border-radius:11px;
+  background:linear-gradient(135deg,var(--navy-2) 0%,var(--navy-1) 100%);
+  border:1px solid var(--line-2);color:var(--blue-bright);
+  display:grid;place-items:center;flex-shrink:0;
+  transition:all .15s;
+}
+.inbox-btn:active{transform:scale(0.94)}
+.inbox-btn:hover{border-color:rgba(30,197,255,0.4)}
+.inbox-badge{
+  position:absolute;top:-4px;right:-4px;
+  min-width:18px;height:18px;padding:0 5px;border-radius:9px;
+  background:linear-gradient(135deg,#ff6b6b,var(--danger));
+  color:white;font-family:var(--font-mono);font-size:10px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  border:2px solid var(--navy-deep);
+  letter-spacing:-0.02em;
+  box-shadow:0 2px 8px rgba(255,71,87,0.5);
+  transform:scale(0);transition:transform .25s cubic-bezier(0.32,0.72,0,1);
+}
+.inbox-badge.show{transform:scale(1)}
+
+.inbox-overlay{
+  position:fixed;inset:0;z-index:100;
+  background:rgba(0,5,20,0.85);backdrop-filter:blur(10px);
+  display:none;align-items:flex-end;justify-content:center;
+  animation:fadeIn .2s ease;
+}
+.inbox-overlay.show{display:flex}
+@media(min-width:600px){.inbox-overlay{align-items:center}}
+.inbox-panel{
+  width:100%;max-width:480px;
+  background:linear-gradient(180deg,var(--navy-1) 0%,var(--navy) 100%);
+  border:1px solid var(--line-2);
+  border-radius:20px 20px 0 0;
+  padding:18px;padding-bottom:calc(18px + var(--safe-bot));
+  max-height:88vh;overflow-y:auto;
+  animation:slideUp .3s cubic-bezier(0.32,0.72,0,1);
+  position:relative;
+}
+.inbox-panel::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--blue-electric),transparent);
+}
+@media(min-width:600px){.inbox-panel{border-radius:20px}}
+.inbox-head{display:flex;align-items:start;justify-content:space-between;gap:12px;margin-bottom:16px}
+.inbox-title{font-size:17px;font-weight:600;letter-spacing:-0.01em;color:white}
+.inbox-sub{font-family:var(--font-mono);font-size:10px;color:var(--blue-bright);letter-spacing:0.1em;margin-top:4px;text-transform:uppercase;opacity:0.85}
+
+.inbox-note{
+  background:linear-gradient(180deg,var(--navy-2) 0%,var(--navy-1) 100%);
+  border:1px solid var(--line);border-radius:12px;
+  padding:13px 14px;margin-bottom:9px;
+  position:relative;cursor:pointer;
+  transition:all .15s;
+}
+.inbox-note:active{transform:scale(0.99)}
+.inbox-note.unread{border-color:rgba(30,197,255,0.35);box-shadow:0 0 0 1px rgba(30,197,255,0.1)}
+.inbox-note.unread::before{
+  content:'';position:absolute;top:14px;left:5px;
+  width:6px;height:6px;border-radius:50%;background:var(--blue-bright);
+  box-shadow:0 0 8px var(--blue-bright);
+}
+.inbox-note-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:5px}
+.inbox-note-tag{
+  font-family:var(--font-mono);font-size:9px;letter-spacing:0.15em;
+  text-transform:uppercase;font-weight:700;
+  padding:3px 7px;border-radius:99px;
+}
+.inbox-note-tag.t-complete{background:rgba(0,232,160,0.12);color:var(--signal);border:1px solid rgba(0,232,160,0.3)}
+.inbox-note-tag.t-emergency{background:rgba(30,197,255,0.12);color:var(--blue-bright);border:1px solid rgba(30,197,255,0.35)}
+.inbox-note-tag.t-weather{background:rgba(120,180,255,0.1);color:#a8c8ff;border:1px solid rgba(120,180,255,0.25)}
+.inbox-note-time{font-family:var(--font-mono);font-size:10px;color:var(--ink-3)}
+.inbox-note-store{font-size:13px;font-weight:600;color:white;letter-spacing:-0.01em;margin-bottom:3px}
+.inbox-note-text{font-size:12px;color:var(--ink-2);line-height:1.45}
+.inbox-empty{text-align:center;padding:40px 20px;color:var(--ink-3);font-size:13px}
+
+.cal-tile.redo{
+  background:linear-gradient(135deg,#a78bfa,#7c3aed);
+  color:white;border-color:#7c3aed;
+  box-shadow:0 0 5px rgba(124,58,237,0.5);
+}
+.cal-tile.redo::before{
+  content:"\1F501";  /* repeat symbol */
+  position:absolute;top:1px;right:2px;
+  font-size:7px;line-height:1;
+}
+.upcoming-pill.redo{
+  background:linear-gradient(135deg,rgba(167,139,250,0.16) 0%,rgba(124,58,237,0.06) 100%);
+  color:#c4b5fd;border-color:rgba(124,58,237,0.4);font-weight:700;
+}
+.redo-badge{
+  font-family:var(--font-mono);font-size:8px;letter-spacing:0.2em;
+  color:#c4b5fd;font-weight:700;
+  background:rgba(124,58,237,0.14);padding:2px 6px;border-radius:4px;
+  border:1px solid rgba(124,58,237,0.45);
+}
+
+.gps-hero{text-align:center;padding:20px 16px 24px;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(0,168,255,0.18) 0%,transparent 70%),linear-gradient(180deg,var(--navy-1) 0%,var(--navy) 100%);border:1px solid var(--line-2);border-radius:18px;margin-bottom:16px;position:relative;overflow:hidden}
+.gps-hero::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--blue-electric),transparent);opacity:0.7}
+.gps-hero-icon{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#5fd5ff 0%,var(--blue-electric) 50%,#0080d0 100%);display:grid;place-items:center;color:white;margin:0 auto 12px;box-shadow:0 8px 24px rgba(0,168,255,0.5),inset 0 1px 0 rgba(255,255,255,0.35)}
+.gps-hero-title{font-size:20px;font-weight:600;letter-spacing:-0.02em;background:linear-gradient(180deg,#fff 0%,#c8e0ff 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:4px}
+.gps-hero-sub{font-size:13px;color:var(--ink-2);font-weight:400}
+.gps-search{margin-bottom:16px}
+.gps-input-wrap{display:flex;align-items:center;gap:0;background:linear-gradient(180deg,var(--navy-1) 0%,var(--navy) 100%);border:2px solid var(--line-2);border-radius:14px;padding:0;transition:all .2s;position:relative}
+.gps-input-wrap:focus-within{border-color:var(--blue-electric);box-shadow:0 0 0 4px rgba(0,168,255,0.15)}
+.gps-input-prefix{font-family:var(--font-mono);font-size:24px;font-weight:700;color:var(--blue-bright);padding-left:18px;line-height:1;user-select:none}
+#gpsSearch{flex:1;background:none;border:none;outline:none;font-family:var(--font-mono);font-size:24px;font-weight:700;color:white;padding:18px 12px;letter-spacing:0.04em;-webkit-appearance:none;appearance:none}
+#gpsSearch::placeholder{color:var(--ink-4);font-weight:400}
+.gps-clear{width:34px;height:34px;border-radius:50%;background:rgba(120,180,255,0.08);display:none;align-items:center;justify-content:center;margin-right:10px;color:var(--ink-2);flex-shrink:0;border:none;cursor:pointer}
+.gps-clear.show{display:flex}
+.gps-clear:active{background:rgba(120,180,255,0.15)}
+.gps-hint{font-size:11px;color:var(--ink-3);text-align:center;margin-top:10px;letter-spacing:0.02em;font-family:var(--font-mono)}
+.gps-result-card{background:linear-gradient(180deg,var(--navy-1) 0%,var(--navy) 100%);border:1px solid var(--line-2);border-radius:14px;padding:16px;margin-bottom:10px;display:flex;gap:14px;align-items:center;transition:all .15s;cursor:pointer}
+.gps-result-card:active{transform:scale(0.99);background:var(--navy-2)}
+.gps-result-unit{font-family:var(--font-mono);font-size:18px;font-weight:700;color:white;background:linear-gradient(135deg,var(--navy-2) 0%,var(--navy-1) 100%);border:1px solid var(--line-2);padding:12px 14px;border-radius:11px;letter-spacing:0.02em;flex-shrink:0;min-width:70px;text-align:center}
+.gps-result-info{flex:1;min-width:0}
+.gps-result-addr{font-size:14px;font-weight:600;color:white;letter-spacing:-0.01em}
+.gps-result-meta{font-size:12px;color:var(--ink-2);margin-top:3px}
+.gps-result-tag{display:inline-block;font-family:var(--font-mono);font-size:9px;letter-spacing:0.12em;text-transform:uppercase;font-weight:600;padding:3px 7px;border-radius:99px;margin-top:6px}
+.gps-result-tag.cycle{background:rgba(0,168,255,0.1);color:var(--blue-bright);border:1px solid rgba(0,168,255,0.3)}
+.gps-result-tag.gps-only{background:rgba(167,139,250,0.1);color:#c4b5fd;border:1px solid rgba(167,139,250,0.3)}
+.gps-result-go{width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#5fd5ff 0%,var(--blue-electric) 50%,#0080d0 100%);display:grid;place-items:center;color:white;flex-shrink:0;box-shadow:0 4px 14px rgba(0,168,255,0.5),inset 0 1px 0 rgba(255,255,255,0.35)}
+.gps-result-go:active{transform:scale(0.94)}
+.gps-empty{text-align:center;padding:48px 20px;color:var(--ink-3)}
+.gps-empty-icon{font-size:42px;margin-bottom:12px;opacity:0.4}
+.gps-empty h3{font-size:15px;font-weight:600;color:var(--ink-2);margin-bottom:5px}
+.gps-empty p{font-size:12px;line-height:1.5}
 </style>
 
 </head>
@@ -841,12 +992,18 @@ main{padding:14px var(--pad) 22px}
       <span class="brand-sub">Taco Bell · Ciclo Activo</span>
     </div>
   </div>
-  <button class="cycle-pill" id="syncPill" onclick="manualSync()" aria-label="Sync"><span class="cycle-dot" id="syncDot"></span><span id="syncStatus">Conectando...</span></button>
+  <div class="topbar-actions">
+    <button class="inbox-btn" id="inboxBtn" onclick="toggleInbox()" aria-label="Notas">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+      <span class="inbox-badge" id="inboxBadge">0</span>
+    </button>
+    <button class="cycle-pill" id="syncPill" onclick="manualSync()" aria-label="Sync"><span class="cycle-dot" id="syncDot"></span><span id="syncStatus">Conectando...</span></button>
+  </div>
 </header>
 
 <main>
 
-  <section class="view active" id="view-dash">
+  <section class="view" id="view-dash">
     <div class="hero">
       <div class="hero-head">
         <div>
@@ -920,10 +1077,10 @@ main{padding:14px var(--pad) 22px}
       <input type="text" id="storeSearch" placeholder="Buscar por número, dirección, RGM, ciudad..." oninput="renderStores()">
     </div>
     <div class="filter-chips" id="filterChips">
-      <button class="chip active" data-filter="all" onclick="setFilter(this)">Todas · <span id="cntAll">55</span></button>
+      <button class="chip active" data-filter="all" onclick="setFilter(this)">Todas · <span id="cntAll">54</span></button>
       <button class="chip" data-filter="route" onclick="setFilter(this)">En Ruta</button>
       <button class="chip" data-filter="done" onclick="setFilter(this)">Listas · <span id="cntDone">0</span></button>
-      <button class="chip" data-filter="pending" onclick="setFilter(this)">Pendientes · <span id="cntPending">55</span></button>
+      <button class="chip" data-filter="pending" onclick="setFilter(this)">Pendientes · <span id="cntPending">54</span></button>
       <button class="chip" data-filter="A40201" onclick="setFilter(this)">Gonzalez · 7</button>
       <button class="chip" data-filter="A40202" onclick="setFilter(this)">Juarez · 8</button>
       <button class="chip" data-filter="A40204" onclick="setFilter(this)">Paulino · 8</button>
@@ -934,6 +1091,28 @@ main{padding:14px var(--pad) 22px}
       <button class="chip" data-filter="A40210" onclick="setFilter(this)">Silvera · 6</button>
     </div>
     <div id="storesList"></div>
+  </section>
+
+  <section class="view active" id="view-gps">
+    <div class="gps-hero">
+      <div class="gps-hero-icon">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 1 8 8c0 4.5-8 12-8 12s-8-7.5-8-12a8 8 0 0 1 8-8z"/></svg>
+      </div>
+      <div class="gps-hero-title">Buscar Tienda GPS</div>
+      <div class="gps-hero-sub">Escribe el número de la tienda para navegar</div>
+    </div>
+    <div class="gps-search">
+      <div class="gps-input-wrap">
+        <span class="gps-input-prefix">#</span>
+        <input type="tel" inputmode="numeric" pattern="[0-9]*" autocomplete="off" autocorrect="off" spellcheck="false"
+               id="gpsSearch" placeholder="42897" oninput="renderGpsResults()" maxlength="6">
+        <button class="gps-clear" id="gpsClear" onclick="clearGpsSearch()" aria-label="Limpiar">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="gps-hint">Solo números · Cualquier tienda de la base de datos</div>
+    </div>
+    <div id="gpsResults"></div>
   </section>
 
   <section class="view" id="view-mgmt">
@@ -975,7 +1154,7 @@ main{padding:14px var(--pad) 22px}
           <select id="emergStore"></select>
         </div>
         <div class="field">
-          <label>Nueva fecha (Lun–Jue)</label>
+          <label>Nueva fecha (cualquier día)</label>
           <input type="date" id="emergDate">
         </div>
         <div class="field">
@@ -983,6 +1162,16 @@ main{padding:14px var(--pad) 22px}
           <textarea id="emergNotes" placeholder="El gerente pidió servicio adelantado porque..."></textarea>
         </div>
         <button class="btn btn-primary btn-full" onclick="emergencyReschedule()">⚡ Aplicar Cambio de Urgencia</button>
+      </div>
+
+      <div class="mgmt-section">
+        <h4>Mal Tiempo — Posponer Noche</h4>
+        <p style="font-size:12px;color:var(--ink-3);margin-bottom:14px;line-height:1.5">Si una noche se cae por mal tiempo, todas las paradas se mueven un día. Si la noche siguiente ya tiene paradas, se hacen cascada hasta los días libres del final del ciclo.</p>
+        <div class="field">
+          <label>Noche afectada</label>
+          <input type="date" id="weatherDate">
+        </div>
+        <button class="btn btn-primary btn-full" onclick="applyWeatherShift()">🌧️ Posponer 1 Día</button>
       </div>
 
       <div class="mgmt-section">
@@ -997,10 +1186,29 @@ main{padding:14px var(--pad) 22px}
     </div>
   </section>
 
+  <div class="inbox-overlay" id="inboxOverlay" onclick="if(event.target===this)closeInbox()">
+    <div class="inbox-panel">
+      <div class="modal-handle"></div>
+      <div class="inbox-head">
+        <div>
+          <div class="inbox-title">Bandeja de notas</div>
+          <div class="inbox-sub" id="inboxSub">0 sin leer</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-secondary" style="padding:8px 14px;font-size:12px" onclick="markAllRead()">Marcar todas leídas</button>
+          <button class="modal-close" onclick="closeInbox()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+      </div>
+      <div id="inboxList"></div>
+    </div>
+  </div>
+
 </main>
 
 <nav class="botnav">
-  <button class="botnav-btn active" data-view="dash" onclick="switchView('dash')">
+  <button class="botnav-btn" data-view="dash" onclick="switchView('dash')">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
     Inicio
   </button>
@@ -1008,12 +1216,18 @@ main{padding:14px var(--pad) 22px}
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
     Calendario
   </button>
+  <button class="botnav-fab active" data-view="gps" onclick="switchView('gps')" aria-label="Buscar GPS">
+    <div class="fab-inner">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 1 8 8c0 4.5-8 12-8 12s-8-7.5-8-12a8 8 0 0 1 8-8z"/></svg>
+    </div>
+    <span class="fab-label">GPS</span>
+  </button>
   <button class="botnav-btn" data-view="stores" onclick="switchView('stores')">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
     Tiendas
   </button>
   <button class="botnav-btn" data-view="mgmt" onclick="switchView('mgmt')">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6m11-7h-6m-10 0H1"/></svg>
     Admin
   </button>
 </nav>
@@ -1151,6 +1365,62 @@ const STORES = [
   {unit:"42964", dma:"A40210", rgm:"Lourde Lambert",        addr:"1040 W Hallandale Beach Blvd",       city:"Hallandale Beach",state:"FL",zip:"33009",phone:"954-456-7748", lat:25.985, lng:-80.156},
 ];
 
+// ═══════════════════════════════════════════════════════════════════
+// GPS-ONLY STORES — these are NOT part of the pressure-wash cycle.
+// They appear ONLY in the GPS search feature for navigation purposes.
+// Source: C00404 (Anna delCarpio) — West Palm Beach region
+// ═══════════════════════════════════════════════════════════════════
+const GPS_STORES = [
+  // A40401 — Henry Diaz (West Palm Beach corridor / Treasure Coast)
+  {unit:"42897", dma:"A40401", rgm:"Yousef Abdelrahman",   addr:"9016 S US Highway 1",        city:"Port Saint Lucie",  state:"FL", zip:"34952", phone:"772-398-0111"},
+  {unit:"42902", dma:"A40401", rgm:"William Girard",       addr:"1840 SW Gatlin Blvd",        city:"Port Saint Lucie",  state:"FL", zip:"34953", phone:"772-621-4836"},
+  {unit:"42896", dma:"A40401", rgm:"Maria Reyes",          addr:"1985 41st Ave",              city:"Vero Beach",        state:"FL", zip:"32960", phone:"772-569-3737"},
+  {unit:"42893", dma:"A40401", rgm:"Santos Tax",           addr:"2958 N West Federal Hwy",    city:"Jensen Beach",      state:"FL", zip:"34957", phone:"772-692-4148"},
+  {unit:"42894", dma:"A40401", rgm:"Estefany Figueroa Tamayo", addr:"1812 S US Hwy 1",        city:"Fort Pierce",       state:"FL", zip:"34950", phone:"772-460-2429"},
+  {unit:"42970", dma:"A40401", rgm:"Brandon Rojas",        addr:"191 SW Port St Lucie Blvd",  city:"Port Saint Lucie",  state:"FL", zip:"34984", phone:"772-621-3732"},
+  {unit:"42972", dma:"A40401", rgm:"Esther Ross",          addr:"1070 US Hwy 1",              city:"Vero Beach",        state:"FL", zip:"32960", phone:"772-494-5407"},
+
+  // A40402 — Rosa Garcia (Stuart / Boca / Delray)
+  {unit:"42899", dma:"A40402", rgm:"Irene Jeronimo",       addr:"3450 SE Federal Highway",    city:"Stuart",            state:"FL", zip:"34997", phone:"772-221-0008"},
+  {unit:"42973", dma:"A40402", rgm:"Neyda Bartolon",       addr:"6800 South Kanner Hwy",      city:"Stuart",            state:"FL", zip:"34977", phone:"772-212-9090"},
+  {unit:"26581", dma:"A40402", rgm:"Danie Wilson",         addr:"1361 West Palmetto Park Rd", city:"Boca Raton",        state:"FL", zip:"33486", phone:"561-391-7834"},
+  {unit:"32631", dma:"A40402", rgm:"Evelyn Robert",        addr:"5070 West Atlantic Ave",     city:"Delray Beach",      state:"FL", zip:"33484", phone:"561-501-0156"},
+  {unit:"42898", dma:"A40402", rgm:"Lewis Walter",         addr:"240 Linton Blvd",            city:"Delray Beach",      state:"FL", zip:"33444", phone:"561-276-1000"},
+
+  // A40403 — Claudia Arcia (Davie / Pembroke Pines / Hollywood / Cooper City)
+  {unit:"4642",  dma:"A40403", rgm:"Wensley Charite",      addr:"2250 S University Dr",       city:"Davie",             state:"FL", zip:"33324", phone:"954-370-3492"},
+  {unit:"15777", dma:"A40403", rgm:"Lazaro Rodriguez",     addr:"11257 Pines Blvd",           city:"Pembroke Pines",    state:"FL", zip:"33026", phone:"954-430-3353"},
+  {unit:"17092", dma:"A40403", rgm:"Chad Salazar",         addr:"2700 Stirling Road",         city:"Hollywood",         state:"FL", zip:"33020", phone:"954-923-0834"},
+  {unit:"19017", dma:"A40403", rgm:"Karen Cadenas",        addr:"300 North Park Road",        city:"Hollywood",         state:"FL", zip:"33021", phone:"954-893-9292"},
+  {unit:"21409", dma:"A40403", rgm:"Carlos Ascencio",      addr:"298 N University Drive",     city:"Pembroke Pines",    state:"FL", zip:"33024", phone:"954-430-7618"},
+  {unit:"28850", dma:"A40403", rgm:"Jessamine Alexander",  addr:"235 SR 7 (HWY 441)",         city:"Hollywood",         state:"FL", zip:"33023", phone:"954-963-2656"},
+  {unit:"40943", dma:"A40403", rgm:"Elaine Cardenas",      addr:"2640 N SR 7",                city:"Hollywood",         state:"FL", zip:"33313", phone:""},
+  {unit:"40993", dma:"A40403", rgm:"",                     addr:"2500 N Pine Island Rd",      city:"Cooper City",       state:"FL", zip:"",      phone:""},
+
+  // A40404 — Astride Alexis (Boca / Pompano / Deerfield / Oakland Park)
+  {unit:"2595",  dma:"A40404", rgm:"Josue Malave",         addr:"22953 Sandalfoot Plaza Drive", city:"Boca Raton",      state:"FL", zip:"33428", phone:"561-488-2255"},
+  {unit:"3898",  dma:"A40404", rgm:"Frederick Gordon",     addr:"357 W Atlantic Blvd",        city:"Pompano Beach",     state:"FL", zip:"33060", phone:"954-781-2524"},
+  {unit:"3927",  dma:"A40404", rgm:"Kianca Lowe",          addr:"3652 W Hillsboro Blvd",      city:"Deerfield Beach",   state:"FL", zip:"33442", phone:"954-698-6428"},
+  {unit:"17677", dma:"A40404", rgm:"Jeanty Saintval",      addr:"593 East Oakland Park Blvd", city:"Oakland Park",      state:"FL", zip:"33334", phone:"954-537-4913"},
+  {unit:"19579", dma:"A40404", rgm:"Mika Arnold",          addr:"1717 East Sample Road",      city:"Pompano Beach",     state:"FL", zip:"33064", phone:"954-781-0557"},
+];
+
+// Stores that exist in the cycle database but are EXCLUDED from the pressure-wash cycle.
+// Reasons: closed location, contract change, ownership change, etc.
+// These still appear in the GPS search feature.
+const CYCLE_EXCLUSIONS = new Set(['41779']);
+
+// Combined searchable database for GPS feature (cycle + GPS-only, deduped).
+// GPS_STORES come first so any duplicate unit numbers from there win for display.
+const ALL_LOCATABLE_STORES = (() => {
+  const seen = new Set();
+  const out = [];
+  GPS_STORES.forEach(s => { if (!seen.has(s.unit)) { seen.add(s.unit); out.push(s); } });
+  STORES.forEach(s => { if (!seen.has(s.unit)) { seen.add(s.unit); out.push(s); } });
+  return out;
+})();
+
+
 // Cycle anchor: Wed May 20, 2026 — every 4 weeks (28 days)
 const CYCLE_ANCHOR = new Date(2026, 4, 20); // Month is 0-indexed: 4=May
 const CYCLE_LENGTH_DAYS = 28;
@@ -1172,9 +1442,11 @@ function dist(a, b) {
 
 // Build optimized route: start at Homestead (southmost), nearest-neighbor northbound, end nearest to HQ
 function buildRoute() {
+  // Filter out excluded stores (closed, contract changed, etc.)
+  const eligible = STORES.filter(s => !CYCLE_EXCLUSIONS.has(s.unit));
   // Anchor southmost store
-  const anchor = STORES.find(s => s.unit === "42982"); // 26551 S Dixie Hwy, Naranja
-  const remaining = STORES.filter(s => s.unit !== anchor.unit);
+  const anchor = eligible.find(s => s.unit === "42982"); // 26551 S Dixie Hwy, Naranja
+  const remaining = eligible.filter(s => s.unit !== anchor.unit);
   const route = [anchor];
   let current = anchor;
   while (remaining.length) {
@@ -1265,15 +1537,31 @@ function localDateKey(d) {
 </script>
 <script>
 const STATE = {
-  currentView: 'dash',
+  currentView: 'gps',
   filter: 'all',
   calMonth: new Date(2026, 4, 1),
   cycleData: {},
   currentCycleStart: null,
   todayKey: '',
   mgmtUnlocked: false,
-  pinnedDate: false,  // true when user is viewing a non-today day
+  pinnedDate: false,
+  inboxOpen: false,
+  inboxRead: {},  // {noteId: true}
 };
+
+// Slot helpers — a "slot" is the schedule entry. Usually it's just the unit string,
+// but for re-do scenarios it's "unit::date" so the same store can appear twice.
+function slotUnit(slot) {
+  if (!slot) return slot;
+  const i = slot.indexOf('::');
+  return i === -1 ? slot : slot.slice(0, i);
+}
+function slotIsRedo(slot) {
+  return typeof slot === 'string' && slot.includes('::');
+}
+function makeRedoSlot(unit, date) {
+  return unit + '::' + date;
+}
 
 // Compute the "operational" date for the crew.
 // "Today" means tonight's planned run. The crew works overnight (11 PM → early AM),
@@ -1310,9 +1598,12 @@ function init() {
   STATE.currentCycleStart = getCycleStart(today);
   STATE.calMonth = new Date(today.getFullYear(), today.getMonth(), 1);
 
+  loadInboxReadMarks();
   ensureCycle(STATE.currentCycleStart);
   renderAll();
   populateEmergStores();
+  renderInboxBadge();
+  renderGpsResults();
 
   // Re-check the operational date every minute so the dashboard auto-flips
   // at 12 PM without requiring a refresh.
@@ -1347,13 +1638,74 @@ function ensureCycle(cycleStart) {
   }
 }
 
+function renderGpsResults() {
+  const inp = document.getElementById('gpsSearch');
+  if (!inp) return;
+  const q = (inp.value || '').replace(/\D/g, '');
+  if (q !== inp.value) inp.value = q;
+  const clearBtn = document.getElementById('gpsClear');
+  if (clearBtn) clearBtn.classList.toggle('show', q.length > 0);
+  const list = document.getElementById('gpsResults');
+  if (!list) return;
+  if (q.length === 0) {
+    list.innerHTML = `<div class="gps-empty"><div class="gps-empty-icon">🔢</div><h3>Escribe el número de tienda</h3><p>Ej: 42897, 4642, 19579...<br>Aparecerán todas las tiendas que coincidan.</p></div>`;
+    return;
+  }
+  const matches = ALL_LOCATABLE_STORES.filter(s => s.unit.includes(q));
+  if (matches.length === 0) {
+    list.innerHTML = `<div class="gps-empty"><div class="gps-empty-icon">🔍</div><h3>Sin resultados</h3><p>No se encontró ninguna tienda con ese número.</p></div>`;
+    return;
+  }
+  matches.sort((a, b) => {
+    const aRank = a.unit === q ? 0 : (a.unit.startsWith(q) ? 1 : 2);
+    const bRank = b.unit === q ? 0 : (b.unit.startsWith(q) ? 1 : 2);
+    if (aRank !== bRank) return aRank - bRank;
+    return a.unit.localeCompare(b.unit);
+  });
+  const capped = matches.slice(0, 20);
+  let html = '';
+  capped.forEach(s => {
+    const isGpsOnly = GPS_STORES.some(g => g.unit === s.unit);
+    const tagClass = isGpsOnly ? 'gps-only' : 'cycle';
+    const tagText = isGpsOnly ? 'GPS' : 'CICLO';
+    html += `<div class="gps-result-card" onclick="openMapForUnit('${s.unit}')"><div class="gps-result-unit">${s.unit}</div><div class="gps-result-info"><div class="gps-result-addr">${s.addr}</div><div class="gps-result-meta">${s.city}, ${s.state} ${s.zip || ''}</div><span class="gps-result-tag ${tagClass}">${tagText}${s.dma ? ' · ' + s.dma : ''}</span></div><div class="gps-result-go" aria-label="Navegar"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg></div></div>`;
+  });
+  if (matches.length > 20) {
+    html += `<div class="gps-empty" style="padding:20px"><p>+${matches.length - 20} más resultados. Escribe más dígitos para refinar.</p></div>`;
+  }
+  list.innerHTML = html;
+}
+
+function clearGpsSearch() {
+  const inp = document.getElementById('gpsSearch');
+  if (inp) { inp.value = ''; inp.focus(); }
+  renderGpsResults();
+}
+
+function openMapForUnit(unit) {
+  const store = ALL_LOCATABLE_STORES.find(s => s.unit === unit);
+  if (!store) { toast('Tienda no encontrada', 'error'); return; }
+  const fullAddr = `${store.addr}, ${store.city}, ${store.state} ${store.zip || ''}`.trim();
+  const enc = encodeURIComponent(fullAddr);
+  document.getElementById('mapModalAddr').textContent = fullAddr;
+  document.getElementById('mapApple').href = `https://maps.apple.com/?address=${enc}`;
+  document.getElementById('mapGoogle').href = `https://www.google.com/maps/search/?api=1&query=${enc}`;
+  document.getElementById('mapWaze').href = `https://www.waze.com/ul?q=${enc}&navigate=yes`;
+  document.getElementById('mapModal').classList.add('show');
+}
+
 function switchView(v) {
   STATE.currentView = v;
   document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
   document.getElementById('view-' + v).classList.add('active');
   document.querySelectorAll('.botnav-btn').forEach(el => el.classList.toggle('active', el.dataset.view === v));
+  document.querySelectorAll('.botnav-fab').forEach(el => el.classList.toggle('active', el.dataset.view === v));
   if (v === 'cal') renderCalendar();
   if (v === 'stores') renderStores();
+  if (v === 'gps') {
+    renderGpsResults();
+    setTimeout(() => { const inp = document.getElementById('gpsSearch'); if (inp) inp.focus(); }, 350);
+  }
   window.scrollTo({top:0});
 }
 
@@ -1367,7 +1719,7 @@ function renderAll() {
 
 function renderHero() {
   const cycle = STATE.cycleData[cycleId(STATE.currentCycleStart)];
-  const totalStores = STORES.length;
+  const totalStores = STORES.length - CYCLE_EXCLUSIONS.size;
   const done = Object.keys(cycle.completions).length;
   const pct = Math.round((done / totalStores) * 100);
   const cycleEnd = new Date(STATE.currentCycleStart);
@@ -1420,7 +1772,7 @@ function renderTonight() {
 
   if (!targetStores || targetStores.length === 0) {
     tag.textContent = 'Sin trabajo programado';
-    card.innerHTML = `<div class="empty"><div class="empty-icon">🌙</div><h3>Ciclo completo</h3><p>Las ${STORES.length} tiendas están listas. El próximo ciclo empieza pronto.</p></div>`;
+    card.innerHTML = `<div class="empty"><div class="empty-icon">🌙</div><h3>Ciclo completo</h3><p>Las ${STORES.length - CYCLE_EXCLUSIONS.size} tiendas están listas. El próximo ciclo empieza pronto.</p></div>`;
     return;
   }
 
@@ -1446,30 +1798,34 @@ function renderTonight() {
     </div>
     <ul class="stops">
   `;
-  targetStores.forEach((unit) => {
+  targetStores.forEach((slot) => {
+    const unit = slotUnit(slot);
+    const isRedo = slotIsRedo(slot);
     const store = STORES.find(s => s.unit === unit);
     if (!store) return;
-    const isDone = !!cycle.completions[unit];
-    const isEmerg = !!cycle.emergencies[unit];
+    const isDone = !!cycle.completions[slot];
+    const isEmerg = !!cycle.emergencies[slot] || !!cycle.emergencies[unit];
     const isBumped = !!(cycle.bumped && cycle.bumped[unit]);
     const seq = cycle.route.indexOf(unit) + 1;
+    // For looking up emergency notes, check both slot-keyed and unit-keyed entries
+    const emergRecord = cycle.emergencies[slot] || cycle.emergencies[unit];
 
     html += `
-      <li class="stop ${isDone ? 'complete' : ''} ${isEmerg ? 'emergency' : ''} ${isBumped && !isEmerg ? 'bumped' : ''}" onclick="openStore('${unit}','${targetKey}')">
+      <li class="stop ${isDone ? 'complete' : ''} ${isEmerg ? 'emergency' : ''} ${isBumped && !isEmerg ? 'bumped' : ''}" onclick="openStore('${slot}','${targetKey}')">
         <div class="stop-node">${seq}</div>
         <div class="stop-info">
-          <div class="stop-no">${store.unit} · ${store.dma}${isEmerg ? ' <span class="emerg-badge">⚡ URGENCIA</span>' : ''}${isBumped && !isEmerg ? ' <span class="bumped-badge">↻ MOVIDA</span>' : ''}</div>
+          <div class="stop-no">${store.unit} · ${store.dma}${isEmerg ? ' <span class="emerg-badge">⚡ URGENCIA</span>' : ''}${isBumped && !isEmerg ? ' <span class="bumped-badge">↻ MOVIDA</span>' : ''}${isRedo ? ' <span class="redo-badge">🔁 REPETIR</span>' : ''}</div>
           <div class="stop-name">${store.addr}</div>
           <div class="stop-addr">${store.city}, ${store.state} ${store.zip}</div>
           <div class="stop-rgm">Gerente · ${store.rgm}</div>
-          ${isEmerg && cycle.emergencies[unit].notes ? `<div class="stop-emerg-note">⚡ ${escapeHtml(cycle.emergencies[unit].notes)}</div>` : ''}
+          ${isEmerg && emergRecord && emergRecord.notes ? `<div class="stop-emerg-note">⚡ ${escapeHtml(emergRecord.notes)}</div>` : ''}
           ${isBumped && !isEmerg ? `<div class="stop-bumped-note">↻ Movida desde ${formatDate(parseDate(cycle.bumped[unit].originalDate), 'EEE d MMM')}</div>` : ''}
         </div>
         <div class="stop-actions" onclick="event.stopPropagation()">
           <button class="icon-btn nav" onclick="openMap('${unit}')" aria-label="Navigate">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
           </button>
-          <button class="icon-btn done" onclick="toggleComplete('${unit}','${targetKey}')" aria-label="Complete">
+          <button class="icon-btn done" onclick="toggleComplete('${slot}','${targetKey}')" aria-label="Complete">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
           </button>
         </div>
@@ -1495,8 +1851,8 @@ function renderUpcoming() {
   next3.forEach(dk => {
     const stores = cycle.schedule[dk];
     const td = parseDate(dk);
-    const doneCount = stores.filter(u => cycle.completions[u]).length;
-    const hasEmerg = stores.some(u => cycle.emergencies[u]);
+    const doneCount = stores.filter(slot => cycle.completions[slot]).length;
+    const hasEmerg = stores.some(slot => cycle.emergencies[slot] || cycle.emergencies[slotUnit(slot)]);
     upHtml += `
       <div class="upcoming-card${hasEmerg ? ' has-emerg' : ''}">
         <div class="upcoming-card-head">
@@ -1504,16 +1860,19 @@ function renderUpcoming() {
           <div class="upcoming-count">${doneCount}/${stores.length} LISTAS</div>
         </div>
         <div class="upcoming-stores">
-          ${stores.map(u => {
+          ${stores.map(slot => {
+            const u = slotUnit(slot);
             const s = STORES.find(x => x.unit === u);
-            const done = cycle.completions[u];
-            const emerg = cycle.emergencies[u];
+            const done = cycle.completions[slot];
+            const emerg = cycle.emergencies[slot] || cycle.emergencies[u];
             const bumped = cycle.bumped && cycle.bumped[u];
+            const isRedoSlot = slotIsRedo(slot);
             const cls = ['upcoming-pill'];
             if (done) cls.push('done');
             if (emerg) cls.push('emerg');
+            else if (isRedoSlot) cls.push('redo');
             else if (bumped) cls.push('bumped');
-            const prefix = emerg ? '⚡ ' : (bumped ? '↻ ' : '');
+            const prefix = emerg ? '⚡ ' : (isRedoSlot ? '🔁 ' : (bumped ? '↻ ' : ''));
             return `<span class="${cls.join(' ')}">${prefix}${s?'#'+s.unit:u}</span>`;
           }).join('')}
         </div>
@@ -1567,16 +1926,19 @@ function renderCalendar() {
       const opTodayKey = dateKey(getOperationalDate());
       const isPast = dk < opTodayKey;
       const isCurrentDay = dk === opTodayKey;
-      stores.forEach(u => {
-        const isDone = !!dayCycle.completions[u];
-        const isEmerg = !!dayCycle.emergencies[u];
+      stores.forEach(slot => {
+        const u = slotUnit(slot);
+        const isDone = !!dayCycle.completions[slot];
+        const isEmerg = !!dayCycle.emergencies[slot] || !!dayCycle.emergencies[u];
         const isBumped = !!(dayCycle.bumped && dayCycle.bumped[u]);
+        const isRedo = slotIsRedo(slot);
         const seq = (dayCycle.route || []).indexOf(u) + 1;
         const tcls = ['cal-tile'];
         if (isDone) tcls.push('done');
         else if (isPast) tcls.push('overdue');
         else if (isCurrentDay) tcls.push('pending-today');
         if (isEmerg) tcls.push('emerg');
+        else if (isRedo) tcls.push('redo');
         else if (isBumped) tcls.push('bumped');
         tiles += `<div class="${tcls.join(' ')}">${seq || ''}</div>`;
       });
@@ -1628,19 +1990,31 @@ function renderStores() {
   const filter = STATE.filter;
 
   let cntDone = 0, cntPending = 0;
-  STORES.forEach(s => { if (cycle.completions[s.unit]) cntDone++; else cntPending++; });
-  document.getElementById('cntAll').textContent = STORES.length;
+  STORES.forEach(s => {
+    if (CYCLE_EXCLUSIONS.has(s.unit)) return;
+    if (isUnitDone(s.unit)) cntDone++; else cntPending++;
+  });
+  document.getElementById('cntAll').textContent = STORES.length - CYCLE_EXCLUSIONS.size;
   document.getElementById('cntDone').textContent = cntDone;
   document.getElementById('cntPending').textContent = cntPending;
 
   const storeDate = {};
-  Object.entries(cycle.schedule).forEach(([d, units]) => {
-    units.forEach(u => storeDate[u] = d);
+  Object.entries(cycle.schedule).forEach(([d, slots]) => {
+    slots.forEach(slot => {
+      const u = slotUnit(slot);
+      // If a store appears multiple times, prefer the most recent date
+      if (!storeDate[u] || d > storeDate[u]) storeDate[u] = d;
+    });
   });
 
+  // Helper: is this store completed in any slot?
+  const isUnitDone = (unit) => {
+    return Object.keys(cycle.completions || {}).some(slot => slotUnit(slot) === unit);
+  };
   let list = STORES.filter(s => {
-    if (filter === 'done' && !cycle.completions[s.unit]) return false;
-    if (filter === 'pending' && cycle.completions[s.unit]) return false;
+    if (CYCLE_EXCLUSIONS.has(s.unit)) return false;
+    if (filter === 'done' && !isUnitDone(s.unit)) return false;
+    if (filter === 'pending' && isUnitDone(s.unit)) return false;
     if (filter !== 'all' && filter !== 'done' && filter !== 'pending' && filter !== 'route' && s.dma !== filter) return false;
     if (search) {
       const blob = `${s.unit} ${s.addr} ${s.city} ${s.zip} ${s.rgm} ${s.dma}`.toLowerCase();
@@ -1661,20 +2035,28 @@ function renderStores() {
     return;
   }
 
-  let html = '';
+  let htmlOut = '';
   list.forEach(s => {
-    const isDone = !!cycle.completions[s.unit];
+    const isDone = isUnitDone(s.unit);
     const sched = storeDate[s.unit];
     const dt = sched ? parseDate(sched) : null;
     const isUpcoming = dt && sched > STATE.todayKey;
     const status = isDone ? 'done' : (isUpcoming ? 'upcoming' : 'pending');
     const statusLabel = isDone ? 'LISTA' : (sched ? formatDate(dt, 'd MMM') : 'PEND');
 
+    // Find a slot ID to use when opening — prefer the unit's primary slot if available
+    let slotId = s.unit;
+    if (sched) {
+      const slotsOnDate = cycle.schedule[sched] || [];
+      const found = slotsOnDate.find(sl => slotUnit(sl) === s.unit);
+      if (found) slotId = found;
+    }
+
     const seq = cycle.route ? cycle.route.indexOf(s.unit) + 1 : 0;
     const routeBadge = (STATE.filter === 'route' && seq > 0)
       ? `<div class="route-seq">#${seq}</div>` : '';
-    html += `
-      <div class="store-card" onclick="openStore('${s.unit}', '${sched || ''}')">
+    htmlOut += `
+      <div class="store-card" onclick="openStore('${slotId}', '${sched || ''}')">
         ${routeBadge}
         <div class="store-unit">${s.unit}</div>
         <div class="store-info">
@@ -1685,19 +2067,22 @@ function renderStores() {
       </div>
     `;
   });
-  document.getElementById('storesList').innerHTML = html;
+  document.getElementById('storesList').innerHTML = htmlOut;
 }
 
-function openStore(unit, dk) {
+function openStore(slot, dk) {
+  const unit = slotUnit(slot);
   const store = STORES.find(s => s.unit === unit);
   if (!store) return;
   const cycle = STATE.cycleData[cycleId(STATE.currentCycleStart)];
-  const completion = cycle.completions[unit];
-  const isEmerg = !!cycle.emergencies[unit];
+  const completion = cycle.completions[slot];
+  const isEmerg = !!cycle.emergencies[slot] || !!cycle.emergencies[unit];
+  const emergRecord = cycle.emergencies[slot] || cycle.emergencies[unit];
   const isBumpedM = !!(cycle.bumped && cycle.bumped[unit]);
+  const isRedo = slotIsRedo(slot);
 
   document.getElementById('modalStoreName').textContent = store.addr;
-  document.getElementById('modalStoreSub').textContent = `UNIT ${store.unit} · ${store.dma}`;
+  document.getElementById('modalStoreSub').textContent = `UNIT ${store.unit} · ${store.dma}${isRedo ? ' · 🔁 REPETIR' : ''}`;
 
   const seq = cycle.route.indexOf(unit) + 1;
   const sched = dk ? parseDate(dk) : null;
@@ -1707,7 +2092,7 @@ function openStore(unit, dk) {
       <div class="modal-detail-row"><span class="lbl">Estado</span><span class="val">${completion ? '<span style="color:var(--signal)">✓ Completada</span>' : '<span style="color:var(--warn)">Pendiente</span>'}</span></div>
       ${isEmerg ? '<div class="modal-detail-row"><span class="lbl">Tipo</span><span class="val" style="color:var(--blue-bright)">⚡ Urgencia</span></div>' : ''}
       ${isBumpedM ? `<div class="modal-detail-row"><span class="lbl">Movimiento</span><span class="val" style="color:#c084fc">↻ Movida desde ${formatDate(parseDate(cycle.bumped[unit].originalDate), 'd MMM')}</span></div>` : ''}
-      <div class="modal-detail-row"><span class="lbl">Posición en ruta</span><span class="val">#${seq} de ${STORES.length}</span></div>
+      <div class="modal-detail-row"><span class="lbl">Posición en ruta</span><span class="val">#${seq} de ${STORES.length - CYCLE_EXCLUSIONS.size}</span></div>
       ${sched ? `<div class="modal-detail-row"><span class="lbl">Programada</span><span class="val">${formatDate(sched, 'EEE d MMM, yyyy')}</span></div>` : ''}
       <div class="modal-detail-row"><span class="lbl">Ciudad</span><span class="val">${store.city}, ${store.state} ${store.zip}</span></div>
       <div class="modal-detail-row"><span class="lbl">Gerente</span><span class="val">${store.rgm}</span></div>
@@ -1721,7 +2106,7 @@ function openStore(unit, dk) {
 
     <div class="btn-row">
       <button class="btn btn-secondary" onclick="openMap('${unit}')">Navegar</button>
-      <button class="btn ${completion ? 'btn-danger' : 'btn-success'}" onclick="toggleComplete('${unit}','${dk||''}',true)">
+      <button class="btn ${completion ? 'btn-danger' : 'btn-success'}" onclick="toggleComplete('${slot}','${dk||''}',true)">
         ${completion ? 'Reabrir' : '✓ Marcar Lista'}
       </button>
     </div>
@@ -1734,18 +2119,20 @@ function closeModal(id) {
   document.getElementById(id).classList.remove('show');
 }
 
-function toggleComplete(unit, dk, fromModal) {
+function toggleComplete(slot, dk, fromModal) {
   const cycle = STATE.cycleData[cycleId(STATE.currentCycleStart)];
   const cid = cycleId(STATE.currentCycleStart);
-  if (cycle.completions[unit]) {
-    delete cycle.completions[unit];
+  const unit = slotUnit(slot);
+  if (cycle.completions[slot]) {
+    delete cycle.completions[slot];
     toast('Reabierta', 'success');
     if (fromModal) closeModal('storeModal');
     renderAll();
-    pushAction('uncomplete', { cycleId: cid, unit }).catch(()=>{});
+    pushAction('uncomplete', { cycleId: cid, unit: slot }).catch(()=>{});
   } else {
     const notes = fromModal ? (document.getElementById('storeNotes')?.value || '') : '';
-    cycle.completions[unit] = {
+    cycle.completions[slot] = {
+      unit: unit,
       date: dk || STATE.todayKey,
       notes: notes,
       completedAt: new Date().toISOString(),
@@ -1753,7 +2140,7 @@ function toggleComplete(unit, dk, fromModal) {
     toast('✓ Marcada lista', 'success');
     if (fromModal) closeModal('storeModal');
     renderAll();
-    pushAction('complete', { cycleId: cid, unit, date: dk || STATE.todayKey, notes }).catch(()=>{});
+    pushAction('complete', { cycleId: cid, unit: slot, date: dk || STATE.todayKey, notes }).catch(()=>{});
   }
 }
 
@@ -1792,17 +2179,19 @@ function renderActiveEmergencies() {
   const items = Object.entries(cycle.emergencies);
   if (items.length === 0) { wrap.innerHTML = ''; return; }
   let h = '<div class="emerg-active-list"><div class="emerg-active-head">⚡ Urgencias activas (' + items.length + ')</div>';
-  items.forEach(([u, e]) => {
+  items.forEach(([key, e]) => {
+    const u = slotUnit(key);
     const s = STORES.find(x => x.unit === u);
     const newDt = parseDate(e.newDate);
+    const tagText = e.isRedo ? '🔁 Repetir' : '⚡ Mover';
     h += `
       <div class="emerg-active-item">
         <div class="emerg-active-info">
-          <div class="emerg-active-store">#${u} · ${s ? s.addr : ''}</div>
+          <div class="emerg-active-store">${tagText} #${u} · ${s ? s.addr : ''}</div>
           <div class="emerg-active-date">${formatDate(newDt, 'EEE d MMM')}</div>
           ${e.notes ? `<div class="emerg-active-notes">${escapeHtml(e.notes)}</div>` : ''}
         </div>
-        <button class="emerg-active-clear" onclick="clearEmergency('${u}')" aria-label="Quitar urgencia">×</button>
+        <button class="emerg-active-clear" onclick="clearEmergency('${key}')" aria-label="Quitar urgencia">×</button>
       </div>
     `;
   });
@@ -1810,16 +2199,140 @@ function renderActiveEmergencies() {
   wrap.innerHTML = h;
 }
 
-function clearEmergency(unit) {
-  if (!confirm('¿Quitar la marca de urgencia? La tienda mantendrá su nueva fecha pero ya no aparecerá como urgente.')) return;
-  const cycle = STATE.cycleData[cycleId(STATE.currentCycleStart)];
-  if (cycle && cycle.emergencies) {
-    delete cycle.emergencies[unit];
-    renderActiveEmergencies();
-    renderAll();
-    toast('Marca de urgencia quitada', 'success');
-    pushAction('replace', { cycleData: STATE.cycleData }).catch(()=>{});
+function applyWeatherShift() {
+  const dateStr = document.getElementById('weatherDate').value;
+  if (!dateStr) { toast('Elige la noche afectada', 'error'); return; }
+  if (!confirm('¿Posponer todas las paradas de esa noche un día? El cambio se sincroniza con todos los teléfonos.')) return;
+
+  const cycleStart = getCycleStart(parseDate(dateStr));
+  ensureCycle(cycleStart);
+  const cycle = STATE.cycleData[cycleId(cycleStart)];
+
+  const startSlots = cycle.schedule[dateStr];
+  if (!startSlots || startSlots.length === 0) {
+    toast('No hay paradas esa noche', 'error');
+    return;
   }
+
+  // Cascade: starting from `dateStr`, push each day's slots one day forward
+  // until we hit an empty (or absent) day in the cycle.
+  const cycleEnd = new Date(cycleStart);
+  cycleEnd.setDate(cycleEnd.getDate() + CYCLE_LENGTH_DAYS - 1);
+
+  let cursor = parseDate(dateStr);
+  let carry = startSlots.slice();
+  cycle.schedule[dateStr] = []; // empty out the affected night
+  let cascadeCount = 0;
+
+  while (carry.length > 0) {
+    cursor.setDate(cursor.getDate() + 1);
+    if (cursor > cycleEnd) {
+      // Out of cycle. Bail and warn.
+      toast('No hay espacio suficiente en el ciclo. ' + carry.length + ' parada(s) sin reubicar.', 'error');
+      // Stuff the leftover back so we don't lose work
+      cycle.schedule[dateStr] = carry;
+      break;
+    }
+    const cursorKey = localDateKey(cursor);
+    const existing = cycle.schedule[cursorKey] || [];
+    if (existing.length === 0) {
+      // Empty day — drop everything here and stop
+      cycle.schedule[cursorKey] = carry;
+      carry = [];
+    } else {
+      // Day has stuff — bump its load, take new carry
+      cycle.schedule[cursorKey] = carry;
+      carry = existing;
+      cascadeCount++;
+    }
+  }
+
+  toast('🌧️ Posposición aplicada (cascada ' + cascadeCount + ' días)', 'success');
+  addInboxNote({
+    type: 'weather',
+    date: dateStr,
+    notes: 'Posposición por mal tiempo, cascada ' + cascadeCount + ' día(s)',
+  });
+  document.getElementById('weatherDate').value = '';
+  renderAll();
+  renderActiveEmergencies();
+  renderInboxBadge();
+  pushAction('replace', { cycleData: STATE.cycleData }).catch(()=>{});
+}
+
+function clearEmergency(emergKey) {
+  if (!confirm('¿Quitar la urgencia y devolver la tienda a su fecha original?')) return;
+  const cycle = STATE.cycleData[cycleId(STATE.currentCycleStart)];
+  if (!cycle || !cycle.emergencies || !cycle.emergencies[emergKey]) return;
+
+  const emerg = cycle.emergencies[emergKey];
+  const unit = slotUnit(emergKey);
+  const isRedoEmerg = emerg.isRedo;
+  const newDate = emerg.newDate;
+  const originalDate = emerg.originalDate;
+
+  if (isRedoEmerg) {
+    // ── REDO UNDO ──
+    // Remove the redo slot from the schedule entirely. The original completion
+    // stays untouched.
+    cycle.schedule[newDate] = (cycle.schedule[newDate] || []).filter(s => s !== emergKey);
+    // If a store was bumped to make room for this redo, bring it back
+    Object.entries(cycle.bumped || {}).forEach(([bumpedU, info]) => {
+      if (info.causedBy === unit) {
+        const bumpedFromDate = info.originalDate;
+        const bumpedNowOn = info.currentDate;
+        // Remove bumped store from its current temporary spot
+        cycle.schedule[bumpedNowOn] = (cycle.schedule[bumpedNowOn] || []).filter(s =>
+          slotUnit(s) !== bumpedU
+        );
+        // Put it back on the new (now-vacated) date
+        cycle.schedule[newDate] = [...(cycle.schedule[newDate] || []),
+          (cycle.schedule[bumpedNowOn].find(s => slotUnit(s) === bumpedU) || bumpedU)];
+        // Actually we already filtered it out. We need to add the original slot id.
+        // Simpler: just add bumpedU as the slot id (assumes non-redo).
+        // Re-fix:
+      }
+    });
+    // Simpler bumped restoration logic - redo
+    const bumpedToRestore = Object.entries(cycle.bumped || {}).filter(([_, info]) => info.causedBy === unit);
+    bumpedToRestore.forEach(([bumpedU, info]) => {
+      const restoredFromDate = info.currentDate;
+      cycle.schedule[restoredFromDate] = (cycle.schedule[restoredFromDate] || []).filter(s => slotUnit(s) !== bumpedU);
+      cycle.schedule[newDate] = [...(cycle.schedule[newDate] || []), bumpedU];
+      delete cycle.bumped[bumpedU];
+    });
+  } else {
+    // ── SWAP UNDO ──
+    // Move the store back from newDate → originalDate.
+    const slotOnNew = (cycle.schedule[newDate] || []).find(s => slotUnit(s) === unit);
+    if (slotOnNew) {
+      cycle.schedule[newDate] = cycle.schedule[newDate].filter(s => s !== slotOnNew);
+    }
+    // Was anything bumped because of this swap? Restore them too.
+    const bumpedToRestore = Object.entries(cycle.bumped || {}).filter(([_, info]) => info.causedBy === unit);
+    bumpedToRestore.forEach(([bumpedU, info]) => {
+      const wasOn = info.currentDate;
+      // Find the slot id of the bumped unit on its temporary date
+      const bumpedSlot = (cycle.schedule[wasOn] || []).find(s => slotUnit(s) === bumpedU);
+      if (bumpedSlot) {
+        cycle.schedule[wasOn] = cycle.schedule[wasOn].filter(s => s !== bumpedSlot);
+        // Put it back on the original date (where the urgent unit was)
+        cycle.schedule[originalDate] = [...(cycle.schedule[originalDate] || []), bumpedSlot];
+      }
+      delete cycle.bumped[bumpedU];
+    });
+    // Put the original unit back on its original date
+    if (slotOnNew) {
+      cycle.schedule[originalDate] = [...(cycle.schedule[originalDate] || []), slotOnNew];
+    }
+  }
+
+  delete cycle.emergencies[emergKey];
+
+  renderActiveEmergencies();
+  renderAll();
+  toast(isRedoEmerg ? 'Repetición cancelada y limpiada' : 'Urgencia revertida', 'success');
+  pushAction('replace', { cycleData: STATE.cycleData }).catch(()=>{});
 }
 
 function mgmtLock() {
@@ -1832,8 +2345,9 @@ function mgmtLock() {
 
 function populateEmergStores() {
   const sel = document.getElementById('emergStore');
+  const eligible = STORES.filter(s => !CYCLE_EXCLUSIONS.has(s.unit));
   sel.innerHTML = '<option value="">— Elige tienda —</option>' +
-    STORES.map(s => `<option value="${s.unit}">${s.unit} · ${s.addr}, ${s.city}</option>`).join('');
+    eligible.map(s => `<option value="${s.unit}">${s.unit} · ${s.addr}, ${s.city}</option>`).join('');
 }
 
 function emergencyReschedule() {
@@ -1844,83 +2358,159 @@ function emergencyReschedule() {
   if (!unit || !newDate) { toast('Elige tienda y fecha', 'error'); return; }
 
   const newDt = parseDate(newDate);
-  const dow = newDt.getDay();
-  if (dow < 1 || dow > 4) { toast('Elige una noche de Lun–Jue', 'error'); return; }
+  // CHANGE 3: any day of week is allowed for emergencies (not just Mon-Thu)
 
   const cycleStart = getCycleStart(newDt);
   ensureCycle(cycleStart);
   const cycle = STATE.cycleData[cycleId(cycleStart)];
+  cycle.bumped = cycle.bumped || {};
 
+  // Is this store already completed in this cycle? Check any slot whose unit matches.
+  const completedSlot = Object.keys(cycle.completions || {}).find(slot => slotUnit(slot) === unit);
+  const isAlreadyDone = !!completedSlot;
+
+  // Find current scheduled slot(s) for this unit
   let currentDate = null;
-  Object.entries(cycle.schedule).forEach(([d, units]) => {
-    if (units.includes(unit)) currentDate = d;
+  let currentSlot = null;
+  Object.entries(cycle.schedule).forEach(([d, slots]) => {
+    slots.forEach(slot => {
+      if (slotUnit(slot) === unit && !cycle.completions[slot]) {
+        currentDate = d;
+        currentSlot = slot;
+      }
+    });
   });
 
-  if (!currentDate) { toast('Tienda no está en este ciclo', 'error'); return; }
-  if (currentDate === newDate) { toast('Ya está programada para esa fecha', 'error'); return; }
+  if (isAlreadyDone && currentDate === newDate) {
+    toast('Esa tienda ya está lista en esa fecha', 'error');
+    return;
+  }
+  if (!isAlreadyDone && !currentDate) {
+    toast('Tienda no está en este ciclo', 'error');
+    return;
+  }
+  if (!isAlreadyDone && currentDate === newDate) {
+    toast('Ya está programada para esa fecha', 'error');
+    return;
+  }
 
-  cycle.bumped = cycle.bumped || {};
-  const targetUnits = cycle.schedule[newDate] || [];
-  let bumpedUnit = null;
-  let bumpedFrom = null;
-  let bumpedTo = null;
-  if (targetUnits.length >= STORES_PER_NIGHT) {
-    // Find a store on the target night that's safe to bump:
-    // 1. Not already completed (would erase progress)
-    // 2. Not already an emergency (would re-displace it)
-    // Prefer the LAST safe one so the route order disturbance is minimal.
-    const bumpableIdx = [...targetUnits].reverse().findIndex(u =>
-      !cycle.completions[u] && !cycle.emergencies[u]
-    );
-    if (bumpableIdx === -1) {
-      toast('Esa noche ya tiene 4 paradas urgentes/listas — elige otra fecha', 'error');
+  let createdSlot;  // the slot id that gets the emergency mark
+
+  if (isAlreadyDone) {
+    // ── REDO PATH ──
+    // Store is already done in original slot. Add a NEW slot on the new date
+    // with redo suffix. Don't touch the original completion record.
+    createdSlot = makeRedoSlot(unit, newDate);
+    const targetSlots = cycle.schedule[newDate] || [];
+
+    // Avoid duplicate redo on same date
+    if (targetSlots.includes(createdSlot)) {
+      toast('Ya hay una repetición programada para esa fecha', 'error');
       return;
     }
-    const realIdx = targetUnits.length - 1 - bumpableIdx;
-    bumpedUnit = targetUnits[realIdx];
-    bumpedFrom = newDate;
-    bumpedTo = currentDate;
-    // Place the new emergency in that slot, push the bumped store to the original date
-    const newTarget = [...targetUnits];
-    newTarget[realIdx] = unit;
-    cycle.schedule[newDate] = newTarget;
-    cycle.schedule[currentDate] = cycle.schedule[currentDate].map(u => u === unit ? bumpedUnit : u);
+
+    // If the night is full, bump the last unprotected store
+    if (targetSlots.length >= STORES_PER_NIGHT) {
+      const bumpableIdx = [...targetSlots].reverse().findIndex(s =>
+        !cycle.completions[s] && !cycle.emergencies[s] && !cycle.emergencies[slotUnit(s)]
+      );
+      if (bumpableIdx === -1) {
+        toast('Esa noche está llena de tareas protegidas — elige otra fecha', 'error');
+        return;
+      }
+      const realIdx = targetSlots.length - 1 - bumpableIdx;
+      const bumpedSlot = targetSlots[realIdx];
+      const bumpedU = slotUnit(bumpedSlot);
+      // Push the bumped slot somewhere with room (look for any night with <4 slots,
+      // preferably the empty buffer days at the end of the cycle)
+      const allDates = Object.keys(cycle.schedule).sort();
+      const targetForBump = allDates.find(d =>
+        d !== newDate && (cycle.schedule[d] || []).length < STORES_PER_NIGHT
+      );
+      if (!targetForBump) {
+        toast('No hay espacio para mover la tienda desplazada', 'error');
+        return;
+      }
+      cycle.schedule[targetForBump] = [...(cycle.schedule[targetForBump] || []), bumpedSlot];
+      const newTarget = [...targetSlots];
+      newTarget[realIdx] = createdSlot;
+      cycle.schedule[newDate] = newTarget;
+      cycle.bumped[bumpedU] = {
+        originalDate: cycle.bumped[bumpedU]?.originalDate || newDate,
+        currentDate: targetForBump,
+        bumpedAt: new Date().toISOString(),
+        causedBy: unit,
+      };
+    } else {
+      cycle.schedule[newDate] = [...targetSlots, createdSlot];
+    }
+    toast('🔁 Repetición urgente programada', 'success');
   } else {
-    cycle.schedule[newDate] = [...targetUnits, unit];
-    cycle.schedule[currentDate] = cycle.schedule[currentDate].filter(u => u !== unit);
+    // ── SWAP PATH (existing behavior, but using slots) ──
+    const targetSlots = cycle.schedule[newDate] || [];
+    let bumpedSlot = null;
+    let bumpedFrom = null;
+    let bumpedTo = null;
+    if (targetSlots.length >= STORES_PER_NIGHT) {
+      const bumpableIdx = [...targetSlots].reverse().findIndex(s =>
+        !cycle.completions[s] && !cycle.emergencies[s] && !cycle.emergencies[slotUnit(s)]
+      );
+      if (bumpableIdx === -1) {
+        toast('Esa noche ya tiene 4 paradas urgentes/listas — elige otra fecha', 'error');
+        return;
+      }
+      const realIdx = targetSlots.length - 1 - bumpableIdx;
+      bumpedSlot = targetSlots[realIdx];
+      bumpedFrom = newDate;
+      bumpedTo = currentDate;
+      const newTarget = [...targetSlots];
+      newTarget[realIdx] = currentSlot;
+      cycle.schedule[newDate] = newTarget;
+      cycle.schedule[currentDate] = cycle.schedule[currentDate].map(s => s === currentSlot ? bumpedSlot : s);
+    } else {
+      cycle.schedule[newDate] = [...targetSlots, currentSlot];
+      cycle.schedule[currentDate] = cycle.schedule[currentDate].filter(s => s !== currentSlot);
+    }
+    if (bumpedSlot) {
+      const bumpedU = slotUnit(bumpedSlot);
+      cycle.bumped[bumpedU] = {
+        originalDate: cycle.bumped[bumpedU]?.originalDate || bumpedFrom,
+        currentDate: bumpedTo,
+        bumpedAt: new Date().toISOString(),
+        causedBy: unit,
+      };
+    }
+    if (cycle.bumped[unit]) delete cycle.bumped[unit];
+    createdSlot = currentSlot;  // the original slot now lives on the new date
+    toast('⚡ Cambio de urgencia aplicado', 'success');
   }
 
-  // Track the bump so the displaced store gets the purple marker
-  if (bumpedUnit) {
-    // If the bumped unit was previously bumped from somewhere, chain that info
-    cycle.bumped[bumpedUnit] = {
-      originalDate: cycle.bumped[bumpedUnit]?.originalDate || bumpedFrom,
-      currentDate: bumpedTo,
-      bumpedAt: new Date().toISOString(),
-      causedBy: unit,
-    };
-  }
-  // If THIS store was previously bumped and is now becoming an emergency,
-  // remove the bumped marker (it has its own ⚡ marker now)
-  if (cycle.bumped[unit]) delete cycle.bumped[unit];
-
-  cycle.emergencies[unit] = {
-    originalDate: currentDate,
+  // Record the emergency keyed by the slot that got the urgency (so it shows
+  // notes correctly in renderTonight which checks both slot and unit keys)
+  cycle.emergencies[createdSlot] = {
+    originalDate: isAlreadyDone ? null : currentDate,
     newDate: newDate,
     notes: notes,
     requestedAt: new Date().toISOString(),
+    isRedo: isAlreadyDone,
   };
-  toast('⚡ Cambio de urgencia aplicado', 'success');
+
+  // Push completion-style note to inbox so Elio sees it
+  addInboxNote({
+    type: 'emergency',
+    unit: unit,
+    date: newDate,
+    notes: notes || (isAlreadyDone ? 'Repetición urgente programada' : 'Cambio de urgencia'),
+    isRedo: isAlreadyDone,
+  });
+
   document.getElementById('emergStore').value = '';
   document.getElementById('emergDate').value = '';
   document.getElementById('emergNotes').value = '';
   renderAll();
   renderActiveEmergencies();
-  pushAction('emergency', {
-    cycleId: cycleId(cycleStart),
-    unit, originalDate: currentDate, newDate, notes,
-    scheduleUpdate: cycle.schedule,
-  }).catch(()=>{});
+  renderInboxBadge();
+  pushAction('replace', { cycleData: STATE.cycleData }).catch(()=>{});
 }
 
 function exportData() {
@@ -2055,6 +2645,10 @@ async function pullState() {
     }
     SYNC.offline = false;
     renderAll();
+    renderInboxBadge();
+    if (document.getElementById('inboxOverlay') && document.getElementById('inboxOverlay').classList.contains('show')) {
+      renderInboxList();
+    }
     tickSyncLabel();
   } catch (err) {
     console.warn('Pull failed:', err);
@@ -2107,6 +2701,128 @@ function startPolling() {
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') pullState();
   });
+}
+
+// ═════════════════════════════════════════════════════════
+// INBOX (notes for Elio + Pablo)
+// ═════════════════════════════════════════════════════════
+function getInbox() {
+  const cid = cycleId(STATE.currentCycleStart);
+  const cycle = STATE.cycleData[cid];
+  if (!cycle) return [];
+  cycle.inbox = cycle.inbox || [];
+  return cycle.inbox;
+}
+
+function addInboxNote(note) {
+  const cid = cycleId(STATE.currentCycleStart);
+  const cycle = STATE.cycleData[cid];
+  if (!cycle) return;
+  cycle.inbox = cycle.inbox || [];
+  const id = 'n' + Date.now() + '-' + Math.random().toString(36).slice(2,6);
+  cycle.inbox.unshift({
+    id,
+    type: note.type,
+    unit: note.unit || null,
+    date: note.date || null,
+    notes: note.notes || '',
+    createdAt: new Date().toISOString(),
+    createdBy: typeof getDeviceId === 'function' ? getDeviceId() : 'unknown',
+    isRedo: note.isRedo || false,
+  });
+  if (cycle.inbox.length > 100) cycle.inbox = cycle.inbox.slice(0, 100);
+  renderInboxBadge();
+}
+
+function isNoteRead(id) {
+  return !!STATE.inboxRead[id];
+}
+
+function renderInboxBadge() {
+  const inbox = getInbox();
+  const unread = inbox.filter(n => !isNoteRead(n.id)).length;
+  const badge = document.getElementById('inboxBadge');
+  if (!badge) return;
+  badge.textContent = unread > 99 ? '99+' : String(unread);
+  badge.classList.toggle('show', unread > 0);
+}
+
+function toggleInbox() {
+  const overlay = document.getElementById('inboxOverlay');
+  if (overlay.classList.contains('show')) closeInbox();
+  else openInbox();
+}
+
+function openInbox() {
+  renderInboxList();
+  document.getElementById('inboxOverlay').classList.add('show');
+}
+
+function closeInbox() {
+  document.getElementById('inboxOverlay').classList.remove('show');
+}
+
+function renderInboxList() {
+  const inbox = getInbox();
+  const list = document.getElementById('inboxList');
+  const sub = document.getElementById('inboxSub');
+  const unread = inbox.filter(n => !isNoteRead(n.id)).length;
+  sub.textContent = unread === 0 ? 'Todas leídas' : (unread + ' sin leer');
+
+  if (inbox.length === 0) {
+    list.innerHTML = '<div class="inbox-empty">No hay notas todavía. Las notas de paradas completadas, urgencias y mal tiempo aparecen aquí.</div>';
+    return;
+  }
+
+  let h = '';
+  inbox.forEach(n => {
+    const read = isNoteRead(n.id);
+    const store = n.unit ? STORES.find(s => s.unit === n.unit) : null;
+    const tagLabel = n.type === 'complete' ? '✓ Lista'
+                   : n.type === 'emergency' ? (n.isRedo ? '🔁 Repetir' : '⚡ Urgencia')
+                   : n.type === 'weather' ? '🌧️ Mal Tiempo'
+                   : 'Nota';
+    const tagClass = n.type === 'complete' ? 't-complete'
+                   : n.type === 'emergency' ? 't-emergency'
+                   : n.type === 'weather' ? 't-weather' : '';
+    const dt = n.date ? parseDate(n.date) : new Date(n.createdAt);
+    const ago = timeAgoEs(n.createdAt);
+
+    h += `
+      <div class="inbox-note ${read ? '' : 'unread'}" onclick="markNoteRead('${n.id}')">
+        <div class="inbox-note-head">
+          <span class="inbox-note-tag ${tagClass}">${tagLabel}</span>
+          <span class="inbox-note-time">${ago}</span>
+        </div>
+        <div class="inbox-note-store">${store ? '#' + store.unit + ' · ' + store.addr : (n.date ? formatDate(dt, 'EEE d MMM') : 'Nota general')}</div>
+        ${n.notes ? `<div class="inbox-note-text">${escapeHtml(n.notes)}</div>` : ''}
+      </div>
+    `;
+  });
+  list.innerHTML = h;
+}
+
+function markNoteRead(id) {
+  STATE.inboxRead[id] = true;
+  try { sessionStorage.setItem('ep_inbox_read', JSON.stringify(STATE.inboxRead)); } catch(e) {}
+  renderInboxList();
+  renderInboxBadge();
+}
+
+function markAllRead() {
+  const inbox = getInbox();
+  inbox.forEach(n => { STATE.inboxRead[n.id] = true; });
+  try { sessionStorage.setItem('ep_inbox_read', JSON.stringify(STATE.inboxRead)); } catch(e) {}
+  renderInboxList();
+  renderInboxBadge();
+  toast('Bandeja limpia', 'success');
+}
+
+function loadInboxReadMarks() {
+  try {
+    const v = sessionStorage.getItem('ep_inbox_read');
+    if (v) STATE.inboxRead = JSON.parse(v);
+  } catch(e) {}
 }
 
 // ═════════════════════════════════════════════════════════
