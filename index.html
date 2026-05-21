@@ -1049,6 +1049,18 @@ main{padding:14px var(--pad) 22px}
   font-family:var(--font-mono);font-size:13px;font-weight:700;
   color:white;min-width:55px;text-align:right;
 }
+
+.btn-save-note{
+  display:flex;align-items:center;gap:8px;justify-content:center;
+  width:100%;margin-top:8px;padding:11px 16px;
+  background:linear-gradient(135deg,rgba(0,168,255,0.12) 0%,rgba(0,168,255,0.06) 100%);
+  border:1px solid rgba(0,168,255,0.35);border-radius:10px;
+  color:var(--blue-bright);font-size:13px;font-weight:600;
+  letter-spacing:0.02em;cursor:pointer;
+  transition:all .15s;
+}
+.btn-save-note:active{background:rgba(0,168,255,0.2);transform:scale(0.98)}
+.btn-save-note svg{flex-shrink:0}
 </style>
 
 </head>
@@ -1253,6 +1265,7 @@ main{padding:14px var(--pad) 22px}
           <input type="date" id="weatherDate">
         </div>
         <button class="btn btn-primary btn-full" onclick="applyWeatherShift()">🌧️ Posponer 1 Día</button>
+        <div id="weatherShiftsList"></div>
       </div>
 
       <div class="mgmt-section">
@@ -1910,6 +1923,7 @@ function renderAll() {
   renderTonight();
   renderUpcoming();
   renderMileageStats();
+  renderWeatherShifts();
   if (STATE.currentView === 'cal') renderCalendar();
   if (STATE.currentView === 'stores') renderStores();
 }
@@ -2299,6 +2313,10 @@ function openStore(slot, dk) {
     <div class="field">
       <label>Notas (visibles para Elio)</label>
       <textarea id="storeNotes" placeholder="Algo importante para revisar...">${completion?.notes || ''}</textarea>
+      <button class="btn-save-note" onclick="saveStoreNote('${slot}','${dk||''}')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Guardar Nota
+      </button>
     </div>
 
     <div class="btn-row">
@@ -2334,11 +2352,45 @@ function toggleComplete(slot, dk, fromModal) {
       notes: notes,
       completedAt: new Date().toISOString(),
     };
+    // Always push to inbox so Elio sees every completion
+    addInboxNote({
+      type: 'complete',
+      unit: unit,
+      date: dk || STATE.todayKey,
+      notes: notes || '✓ Parada marcada como completada',
+    });
     toast('✓ Marcada lista', 'success');
     if (fromModal) closeModal('storeModal');
     renderAll();
+    renderInboxBadge();
     pushAction('complete', { cycleId: cid, unit: slot, date: dk || STATE.todayKey, notes }).catch(()=>{});
   }
+}
+
+function saveStoreNote(slot, dk) {
+  const notesEl = document.getElementById('storeNotes');
+  if (!notesEl) return;
+  const notes = notesEl.value.trim();
+  if (!notes) { toast('Escribe una nota primero', 'error'); return; }
+
+  const cycle = STATE.cycleData[cycleId(STATE.currentCycleStart)];
+  const unit = slotUnit(slot);
+  const dateKey_ = dk || STATE.todayKey;
+
+  // Save note into completion record if exists, or a standalone note record
+  if (cycle.completions[slot]) {
+    cycle.completions[slot].notes = notes;
+  } else {
+    cycle.notes = cycle.notes || {};
+    cycle.notes[slot] = { unit, date: dateKey_, notes, savedAt: new Date().toISOString() };
+  }
+
+  // Always push to inbox so Elio sees it immediately
+  addInboxNote({ type: 'complete', unit, date: dateKey_, notes });
+
+  toast('✓ Nota guardada y enviada a Elio', 'success');
+  renderInboxBadge();
+  pushAction('replace', { cycleData: STATE.cycleData }).catch(()=>{});
 }
 
 function openMap(unit) {
@@ -2399,7 +2451,7 @@ function renderActiveEmergencies() {
 function applyWeatherShift() {
   const dateStr = document.getElementById('weatherDate').value;
   if (!dateStr) { toast('Elige la noche afectada', 'error'); return; }
-  if (!confirm('¿Posponer todas las paradas de esa noche un día? El cambio se sincroniza con todos los teléfonos.')) return;
+  if (!confirm('¿Posponer todas las paradas de esa noche un día? El cambio se puede deshacer.')) return;
 
   const cycleStart = getCycleStart(parseDate(dateStr));
   ensureCycle(cycleStart);
@@ -2411,50 +2463,112 @@ function applyWeatherShift() {
     return;
   }
 
-  // Cascade: starting from `dateStr`, push each day's slots one day forward
-  // until we hit an empty (or absent) day in the cycle.
-  const cycleEnd = new Date(cycleStart);
-  cycleEnd.setDate(cycleEnd.getDate() + CYCLE_LENGTH_DAYS - 1);
+  // ── CORRECT CASCADE LOGIC ──
+  // We want to shift every working night from dateStr onward by ONE day.
+  // This means: gather all nights from dateStr to the last working night,
+  // shift each one to the following day, emptying out dateStr.
+  // The last working night's stores land in the first available buffer day.
 
-  let cursor = parseDate(dateStr);
-  let carry = startSlots.slice();
-  cycle.schedule[dateStr] = []; // empty out the affected night
-  let cascadeCount = 0;
+  const allDates = Object.keys(cycle.schedule).sort();
+  // Find dates from dateStr onward that have stores
+  const affectedDates = allDates.filter(d => d >= dateStr && (cycle.schedule[d] || []).length > 0);
 
-  while (carry.length > 0) {
-    cursor.setDate(cursor.getDate() + 1);
-    if (cursor > cycleEnd) {
-      // Out of cycle. Bail and warn.
-      toast('No hay espacio suficiente en el ciclo. ' + carry.length + ' parada(s) sin reubicar.', 'error');
-      // Stuff the leftover back so we don't lose work
-      cycle.schedule[dateStr] = carry;
-      break;
-    }
-    const cursorKey = localDateKey(cursor);
-    const existing = cycle.schedule[cursorKey] || [];
-    if (existing.length === 0) {
-      // Empty day — drop everything here and stop
-      cycle.schedule[cursorKey] = carry;
-      carry = [];
-    } else {
-      // Day has stuff — bump its load, take new carry
-      cycle.schedule[cursorKey] = carry;
-      carry = existing;
-      cascadeCount++;
-    }
+  if (affectedDates.length === 0) {
+    toast('No hay paradas desde esa noche', 'error');
+    return;
   }
 
-  toast('🌧️ Posposición aplicada (cascada ' + cascadeCount + ' días)', 'success');
+  // Check that there is at least one buffer day available after the last affected date
+  const lastDate = affectedDates[affectedDates.length - 1];
+  const lastDt = parseDate(lastDate);
+  const nextDt = new Date(lastDt); nextDt.setDate(nextDt.getDate() + 1);
+  const nextKey = localDateKey(nextDt);
+  const cycleEnd = new Date(cycleStart); cycleEnd.setDate(cycleEnd.getDate() + CYCLE_LENGTH_DAYS - 1);
+  if (nextDt > cycleEnd) {
+    toast('No hay días de margen al final del ciclo para absorber el turno', 'error');
+    return;
+  }
+
+  // Snapshot current state for undo
+  cycle.weatherShifts = cycle.weatherShifts || [];
+  const snapshot = {};
+  affectedDates.forEach(d => { snapshot[d] = [...cycle.schedule[d]]; });
+  // Also snapshot the landing day if it already has entries
+  if (cycle.schedule[nextKey]) snapshot[nextKey] = [...cycle.schedule[nextKey]];
+  cycle.weatherShifts.push({
+    shiftedDate: dateStr,
+    appliedAt: new Date().toISOString(),
+    snapshot,
+  });
+
+  // Shift: work backwards from the LAST affected date so we don't overwrite
+  // before reading. Each night moves to the next day.
+  for (let i = affectedDates.length - 1; i >= 0; i--) {
+    const fromDate = affectedDates[i];
+    const fromDt = parseDate(fromDate);
+    const toDt = new Date(fromDt); toDt.setDate(toDt.getDate() + 1);
+    const toDate = localDateKey(toDt);
+    // Merge into the destination (don't overwrite — these are the buffer days)
+    const existing = cycle.schedule[toDate] || [];
+    cycle.schedule[toDate] = [...existing, ...cycle.schedule[fromDate]];
+    cycle.schedule[fromDate] = [];
+  }
+
+  toast('🌧️ Posposición aplicada — usa "Deshacer turno" para revertir', 'success');
   addInboxNote({
     type: 'weather',
     date: dateStr,
-    notes: 'Posposición por mal tiempo, cascada ' + cascadeCount + ' día(s)',
+    notes: `Posposición por mal tiempo — ${affectedDates.length} noche(s) corridas`,
   });
   document.getElementById('weatherDate').value = '';
   renderAll();
   renderActiveEmergencies();
+  renderWeatherShifts();
   renderInboxBadge();
   pushAction('replace', { cycleData: STATE.cycleData }).catch(()=>{});
+}
+
+function undoWeatherShift(idx) {
+  if (!confirm('¿Deshacer este turno por mal tiempo y regresar las paradas a su noche original?')) return;
+  const cycle = STATE.cycleData[cycleId(STATE.currentCycleStart)];
+  if (!cycle || !cycle.weatherShifts || !cycle.weatherShifts[idx]) return;
+
+  const shift = cycle.weatherShifts[idx];
+  // Restore all dates from snapshot
+  Object.entries(shift.snapshot).forEach(([d, slots]) => {
+    cycle.schedule[d] = slots;
+  });
+  // Remove this shift record
+  cycle.weatherShifts.splice(idx, 1);
+
+  toast('↩️ Turno revertido', 'success');
+  renderAll();
+  renderWeatherShifts();
+  pushAction('replace', { cycleData: STATE.cycleData }).catch(()=>{});
+}
+
+function renderWeatherShifts() {
+  const wrap = document.getElementById('weatherShiftsList');
+  if (!wrap) return;
+  const cycle = STATE.cycleData[cycleId(STATE.currentCycleStart)];
+  const shifts = (cycle && cycle.weatherShifts) ? cycle.weatherShifts : [];
+  if (shifts.length === 0) {
+    wrap.innerHTML = '';
+    return;
+  }
+  let h = '<div style="margin-top:12px">';
+  shifts.forEach((s, i) => {
+    const dt = parseDate(s.shiftedDate);
+    h += `<div class="emerg-active-item" style="margin-bottom:8px">
+      <div class="emerg-active-info">
+        <div class="emerg-active-store">🌧️ Turno — noche del ${formatDate(dt, 'EEE d MMM')}</div>
+        <div class="emerg-active-date">${timeAgoEs(s.appliedAt)}</div>
+      </div>
+      <button class="emerg-active-clear" onclick="undoWeatherShift(${i})" aria-label="Deshacer">↩</button>
+    </div>`;
+  });
+  h += '</div>';
+  wrap.innerHTML = h;
 }
 
 function clearEmergency(emergKey) {
@@ -2470,56 +2584,44 @@ function clearEmergency(emergKey) {
 
   if (isRedoEmerg) {
     // ── REDO UNDO ──
-    // Remove the redo slot from the schedule entirely. The original completion
-    // stays untouched.
+    // Remove the redo slot from the new date entirely.
     cycle.schedule[newDate] = (cycle.schedule[newDate] || []).filter(s => s !== emergKey);
-    // If a store was bumped to make room for this redo, bring it back
-    Object.entries(cycle.bumped || {}).forEach(([bumpedU, info]) => {
-      if (info.causedBy === unit) {
-        const bumpedFromDate = info.originalDate;
-        const bumpedNowOn = info.currentDate;
-        // Remove bumped store from its current temporary spot
-        cycle.schedule[bumpedNowOn] = (cycle.schedule[bumpedNowOn] || []).filter(s =>
-          slotUnit(s) !== bumpedU
-        );
-        // Put it back on the new (now-vacated) date
-        cycle.schedule[newDate] = [...(cycle.schedule[newDate] || []),
-          (cycle.schedule[bumpedNowOn].find(s => slotUnit(s) === bumpedU) || bumpedU)];
-        // Actually we already filtered it out. We need to add the original slot id.
-        // Simpler: just add bumpedU as the slot id (assumes non-redo).
-        // Re-fix:
-      }
-    });
-    // Simpler bumped restoration logic - redo
-    const bumpedToRestore = Object.entries(cycle.bumped || {}).filter(([_, info]) => info.causedBy === unit);
-    bumpedToRestore.forEach(([bumpedU, info]) => {
-      const restoredFromDate = info.currentDate;
-      cycle.schedule[restoredFromDate] = (cycle.schedule[restoredFromDate] || []).filter(s => slotUnit(s) !== bumpedU);
+
+    // Restore any stores that got bumped to make room for this redo
+    const bumpedEntries = Object.entries(cycle.bumped || {}).filter(([_, info]) => info.causedBy === unit);
+    bumpedEntries.forEach(([bumpedU, info]) => {
+      // Remove bumped unit from wherever it currently sits
+      const sitDate = info.currentDate;
+      cycle.schedule[sitDate] = (cycle.schedule[sitDate] || []).filter(s => slotUnit(s) !== bumpedU);
+      // Put it back on newDate (which now has the redo slot removed — there's room)
       cycle.schedule[newDate] = [...(cycle.schedule[newDate] || []), bumpedU];
       delete cycle.bumped[bumpedU];
     });
+
   } else {
     // ── SWAP UNDO ──
-    // Move the store back from newDate → originalDate.
+    // Step 1: Remove the urgent store from newDate
     const slotOnNew = (cycle.schedule[newDate] || []).find(s => slotUnit(s) === unit);
     if (slotOnNew) {
       cycle.schedule[newDate] = cycle.schedule[newDate].filter(s => s !== slotOnNew);
     }
-    // Was anything bumped because of this swap? Restore them too.
-    const bumpedToRestore = Object.entries(cycle.bumped || {}).filter(([_, info]) => info.causedBy === unit);
-    bumpedToRestore.forEach(([bumpedU, info]) => {
-      const wasOn = info.currentDate;
-      // Find the slot id of the bumped unit on its temporary date
-      const bumpedSlot = (cycle.schedule[wasOn] || []).find(s => slotUnit(s) === bumpedU);
-      if (bumpedSlot) {
-        cycle.schedule[wasOn] = cycle.schedule[wasOn].filter(s => s !== bumpedSlot);
-        // Put it back on the original date (where the urgent unit was)
-        cycle.schedule[originalDate] = [...(cycle.schedule[originalDate] || []), bumpedSlot];
-      }
+
+    // Step 2: Find and restore ALL stores that were bumped because of this urgency.
+    // They are tracked in cycle.bumped with causedBy === unit.
+    const bumpedEntries = Object.entries(cycle.bumped || {}).filter(([_, info]) => info.causedBy === unit);
+    bumpedEntries.forEach(([bumpedU, info]) => {
+      const sitDate = info.currentDate; // where the bumped store currently lives
+      // Find the slot ID on that date
+      const bumpedSlot = (cycle.schedule[sitDate] || []).find(s => slotUnit(s) === bumpedU) || bumpedU;
+      // Remove from its temporary date
+      cycle.schedule[sitDate] = (cycle.schedule[sitDate] || []).filter(s => slotUnit(s) !== bumpedU);
+      // Put it back on newDate (the night it was bumped from, which now has a free slot)
+      cycle.schedule[newDate] = [...(cycle.schedule[newDate] || []), bumpedSlot];
       delete cycle.bumped[bumpedU];
     });
-    // Put the original unit back on its original date
-    if (slotOnNew) {
+
+    // Step 3: Put the original urgent store back on its original date
+    if (slotOnNew && originalDate) {
       cycle.schedule[originalDate] = [...(cycle.schedule[originalDate] || []), slotOnNew];
     }
   }
@@ -2528,7 +2630,7 @@ function clearEmergency(emergKey) {
 
   renderActiveEmergencies();
   renderAll();
-  toast(isRedoEmerg ? 'Repetición cancelada y limpiada' : 'Urgencia revertida', 'success');
+  toast(isRedoEmerg ? 'Repetición cancelada y limpiada' : '↩️ Urgencia revertida — tiendas en su lugar original', 'success');
   pushAction('replace', { cycleData: STATE.cycleData }).catch(()=>{});
 }
 
