@@ -1326,8 +1326,9 @@ main{padding:14px var(--pad) 22px}
         <button class="inbox-tab" id="tabGuardadas" onclick="switchInboxTab('guardadas')">Guardadas</button>
       </div>
       <div id="inboxTabBandeja">
-        <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
+        <div style="display:flex;justify-content:flex-end;gap:6px;margin-bottom:10px">
           <button class="btn btn-secondary" style="padding:7px 12px;font-size:11px" onclick="markAllRead()">Marcar todas leídas</button>
+          <button class="btn btn-secondary" style="padding:7px 12px;font-size:11px;color:#ff6b7a;border-color:rgba(255,71,87,0.3)" onclick="deleteAllUnsaved()">Borrar todo</button>
         </div>
         <div id="inboxList"></div>
       </div>
@@ -3253,11 +3254,32 @@ function deleteInboxNote(id) {
   cycle.inbox = (cycle.inbox || []).filter(n => n.id !== id);
   delete STATE.inboxRead[id];
   try { sessionStorage.setItem('ep_inbox_read', JSON.stringify(STATE.inboxRead)); } catch(e) {}
-  persistSavedNotes(getSavedNotes().filter(n => n.id !== id));
+  // Do NOT touch savedNotes — user may have saved this note intentionally
   renderInboxList();
   renderInboxBadge();
   pushAction('replace', { cycleData: STATE.cycleData }).catch(()=>{});
-  toast('Nota eliminada');
+  toast('Nota eliminada de la bandeja');
+}
+
+function deleteAllUnsaved() {
+  const inbox = getInbox();
+  const savedIds = new Set(getSavedNotes().map(n => n.id));
+  const unsaved = inbox.filter(n => !savedIds.has(n.id));
+  if (unsaved.length === 0) { toast('No hay notas sin guardar para eliminar'); return; }
+  if (!confirm(`¿Eliminar ${unsaved.length} nota(s) de la bandeja? Las guardadas no se tocan.`)) return;
+
+  const cid = cycleId(STATE.currentCycleStart);
+  const cycle = STATE.cycleData[cid];
+  if (!cycle) return;
+  // Keep only saved notes in inbox
+  cycle.inbox = inbox.filter(n => savedIds.has(n.id));
+  // Clean read marks for deleted notes
+  unsaved.forEach(n => { delete STATE.inboxRead[n.id]; });
+  try { sessionStorage.setItem('ep_inbox_read', JSON.stringify(STATE.inboxRead)); } catch(e) {}
+  renderInboxList();
+  renderInboxBadge();
+  pushAction('replace', { cycleData: STATE.cycleData }).catch(()=>{});
+  toast(`${unsaved.length} nota(s) eliminadas — guardadas intactas`);
 }
 
 function deleteSavedNote(id) {
