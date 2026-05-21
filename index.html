@@ -1061,6 +1061,35 @@ main{padding:14px var(--pad) 22px}
 }
 .btn-save-note:active{background:rgba(0,168,255,0.2);transform:scale(0.98)}
 .btn-save-note svg{flex-shrink:0}
+
+.inbox-tabs{display:flex;gap:2px;background:rgba(255,255,255,0.04);border-radius:10px;padding:3px;margin-bottom:14px}
+.inbox-tab{flex:1;padding:8px;border-radius:8px;font-size:12px;font-weight:600;letter-spacing:0.04em;
+  color:var(--ink-2);border:none;background:none;cursor:pointer;transition:all .15s;font-family:var(--font-body)}
+.inbox-tab.active{background:linear-gradient(135deg,var(--navy-1) 0%,var(--navy-2) 100%);
+  color:white;box-shadow:0 2px 8px rgba(0,0,0,0.3)}
+.inbox-note-actions{display:flex;gap:6px;margin-top:8px}
+.inbox-note-action-btn{flex:1;padding:7px 10px;border-radius:8px;font-size:11px;font-weight:600;
+  letter-spacing:0.04em;cursor:pointer;border:1px solid;transition:all .15s;
+  display:flex;align-items:center;justify-content:center;gap:5px;font-family:var(--font-body)}
+.inbox-btn-save{background:rgba(0,168,255,0.08);color:var(--blue-bright);border-color:rgba(0,168,255,0.3)}
+.inbox-btn-save:active{background:rgba(0,168,255,0.18)}
+.inbox-btn-delete{background:rgba(255,71,87,0.07);color:#ff6b7a;border-color:rgba(255,71,87,0.25)}
+.inbox-btn-delete:active{background:rgba(255,71,87,0.15)}
+.saved-note-card{background:linear-gradient(180deg,var(--navy-1) 0%,var(--navy) 100%);
+  border:1px solid var(--line-2);border-radius:12px;padding:13px 14px;margin-bottom:9px;position:relative}
+.saved-note-card::after{content:'🔖';position:absolute;top:12px;right:12px;font-size:12px;opacity:0.5}
+.saved-note-head{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.saved-note-tag{font-family:var(--font-mono);font-size:9px;letter-spacing:0.15em;text-transform:uppercase;
+  font-weight:600;padding:3px 7px;border-radius:99px;
+  background:rgba(251,191,36,0.12);color:#fbbf24;border:1px solid rgba(251,191,36,0.3)}
+.saved-note-time{font-family:var(--font-mono);font-size:10px;color:var(--ink-3);margin-left:auto}
+.saved-note-store{font-size:13px;font-weight:600;color:white;margin-bottom:3px}
+.saved-note-text{font-size:12px;color:var(--ink-2);line-height:1.45;margin-bottom:9px}
+.saved-note-delete{width:100%;padding:7px;border-radius:8px;font-size:11px;font-weight:600;
+  letter-spacing:0.04em;cursor:pointer;border:1px solid rgba(255,71,87,0.25);
+  background:rgba(255,71,87,0.07);color:#ff6b7a;font-family:var(--font-body);
+  display:flex;align-items:center;justify-content:center;gap:6px;transition:all .15s}
+.saved-note-delete:active{background:rgba(255,71,87,0.15)}
 </style>
 
 </head>
@@ -1285,17 +1314,26 @@ main{padding:14px var(--pad) 22px}
       <div class="modal-handle"></div>
       <div class="inbox-head">
         <div>
-          <div class="inbox-title">Bandeja de notas</div>
+          <div class="inbox-title">Notas</div>
           <div class="inbox-sub" id="inboxSub">0 sin leer</div>
         </div>
-        <div style="display:flex;gap:8px">
-          <button class="btn btn-secondary" style="padding:8px 14px;font-size:12px" onclick="markAllRead()">Marcar todas leídas</button>
-          <button class="modal-close" onclick="closeInbox()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-          </button>
-        </div>
+        <button class="modal-close" onclick="closeInbox()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
       </div>
-      <div id="inboxList"></div>
+      <div class="inbox-tabs">
+        <button class="inbox-tab active" id="tabBandeja" onclick="switchInboxTab('bandeja')">Bandeja</button>
+        <button class="inbox-tab" id="tabGuardadas" onclick="switchInboxTab('guardadas')">Guardadas</button>
+      </div>
+      <div id="inboxTabBandeja">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
+          <button class="btn btn-secondary" style="padding:7px 12px;font-size:11px" onclick="markAllRead()">Marcar todas leídas</button>
+        </div>
+        <div id="inboxList"></div>
+      </div>
+      <div id="inboxTabGuardadas" style="display:none">
+        <div id="savedNotesList"></div>
+      </div>
     </div>
   </div>
 
@@ -1641,6 +1679,7 @@ const STATE = {
   pinnedDate: false,
   inboxOpen: false,
   inboxRead: {},  // {noteId: true}
+  inboxTab: 'bandeja',
 };
 
 // ═════════════════════════════════════════════════════════
@@ -2343,7 +2382,7 @@ function toggleComplete(slot, dk, fromModal) {
     toast('Reabierta', 'success');
     if (fromModal) closeModal('storeModal');
     renderAll();
-    pushAction('uncomplete', { cycleId: cid, unit: slot }).catch(()=>{});
+    pushAction('replace', { cycleData: STATE.cycleData }).catch(()=>{});
   } else {
     const notes = fromModal ? (document.getElementById('storeNotes')?.value || '') : '';
     cycle.completions[slot] = {
@@ -2363,7 +2402,8 @@ function toggleComplete(slot, dk, fromModal) {
     if (fromModal) closeModal('storeModal');
     renderAll();
     renderInboxBadge();
-    pushAction('complete', { cycleId: cid, unit: slot, date: dk || STATE.todayKey, notes }).catch(()=>{});
+    // Use replace (not partial 'complete') so inbox syncs to all devices
+    pushAction('replace', { cycleData: STATE.cycleData }).catch(()=>{});
   }
 }
 
@@ -2936,6 +2976,10 @@ async function pullState() {
           STATE.cycleData[cid].emergencies = srv.emergencies || {};
           if (srv.schedule) STATE.cycleData[cid].schedule = srv.schedule;
           if (srv.route) STATE.cycleData[cid].route = srv.route;
+          if (srv.inbox) STATE.cycleData[cid].inbox = srv.inbox;
+          if (srv.bumped) STATE.cycleData[cid].bumped = srv.bumped;
+          if (srv.weatherShifts) STATE.cycleData[cid].weatherShifts = srv.weatherShifts;
+          if (srv.notes) STATE.cycleData[cid].notes = srv.notes;
         }
       });
       SYNC.lastSyncedAt = data.updatedAt || new Date().toISOString();
@@ -3054,11 +3098,21 @@ function toggleInbox() {
 
 function openInbox() {
   renderInboxList();
+  switchInboxTab(STATE.inboxTab || 'bandeja');
   document.getElementById('inboxOverlay').classList.add('show');
 }
 
 function closeInbox() {
   document.getElementById('inboxOverlay').classList.remove('show');
+}
+
+function switchInboxTab(tab) {
+  STATE.inboxTab = tab;
+  document.getElementById('tabBandeja').classList.toggle('active', tab === 'bandeja');
+  document.getElementById('tabGuardadas').classList.toggle('active', tab === 'guardadas');
+  document.getElementById('inboxTabBandeja').style.display = tab === 'bandeja' ? 'block' : 'none';
+  document.getElementById('inboxTabGuardadas').style.display = tab === 'guardadas' ? 'block' : 'none';
+  if (tab === 'guardadas') renderSavedNotes();
 }
 
 function renderInboxList() {
@@ -3079,13 +3133,13 @@ function renderInboxList() {
     const store = n.unit ? STORES.find(s => s.unit === n.unit) : null;
     const tagLabel = n.type === 'complete' ? '✓ Lista'
                    : n.type === 'emergency' ? (n.isRedo ? '🔁 Repetir' : '⚡ Urgencia')
-                   : n.type === 'weather' ? '🌧️ Mal Tiempo'
-                   : 'Nota';
+                   : n.type === 'weather' ? '🌧️ Mal Tiempo' : 'Nota';
     const tagClass = n.type === 'complete' ? 't-complete'
                    : n.type === 'emergency' ? 't-emergency'
                    : n.type === 'weather' ? 't-weather' : '';
     const dt = n.date ? parseDate(n.date) : new Date(n.createdAt);
     const ago = timeAgoEs(n.createdAt);
+    const alreadySaved = isSaved(n.id);
 
     h += `
       <div class="inbox-note ${read ? '' : 'unread'}" onclick="markNoteRead('${n.id}')">
@@ -3095,10 +3149,51 @@ function renderInboxList() {
         </div>
         <div class="inbox-note-store">${store ? '#' + store.unit + ' · ' + store.addr : (n.date ? formatDate(dt, 'EEE d MMM') : 'Nota general')}</div>
         ${n.notes ? `<div class="inbox-note-text">${escapeHtml(n.notes)}</div>` : ''}
+        <div class="inbox-note-actions" onclick="event.stopPropagation()">
+          <button class="inbox-note-action-btn inbox-btn-save" onclick="toggleSaveNote('${n.id}')">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="${alreadySaved ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+            ${alreadySaved ? 'Guardada ✓' : 'Guardar'}
+          </button>
+          <button class="inbox-note-action-btn inbox-btn-delete" onclick="deleteInboxNote('${n.id}')">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+            Eliminar
+          </button>
+        </div>
       </div>
     `;
   });
   list.innerHTML = h;
+}
+
+function renderSavedNotes() {
+  const saved = getSavedNotes();
+  const wrap = document.getElementById('savedNotesList');
+  if (!wrap) return;
+  if (saved.length === 0) {
+    wrap.innerHTML = '<div class="inbox-empty"><div class="gps-empty-icon">🔖</div><h3>No hay notas guardadas</h3><p>Toca "Guardar" en cualquier nota de la bandeja para anclarla aquí.</p></div>';
+    return;
+  }
+  let h = '';
+  saved.forEach(n => {
+    const store = n.unit ? STORES.find(s => s.unit === n.unit) : null;
+    const dt = n.date ? parseDate(n.date) : new Date(n.savedAt || n.createdAt);
+    const ago = timeAgoEs(n.savedAt || n.createdAt);
+    h += `
+      <div class="saved-note-card">
+        <div class="saved-note-head">
+          <span class="saved-note-tag">🔖 Guardada</span>
+          <span class="saved-note-time">${ago}</span>
+        </div>
+        <div class="saved-note-store">${store ? '#' + store.unit + ' · ' + store.addr : (n.date ? formatDate(dt, 'EEE d MMM') : 'Nota general')}</div>
+        ${n.notes ? `<div class="saved-note-text">${escapeHtml(n.notes)}</div>` : ''}
+        <button class="saved-note-delete" onclick="deleteSavedNote('${n.id}')">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+          Eliminar nota guardada
+        </button>
+      </div>
+    `;
+  });
+  wrap.innerHTML = h;
 }
 
 function markNoteRead(id) {
@@ -3115,6 +3210,59 @@ function markAllRead() {
   renderInboxList();
   renderInboxBadge();
   toast('Bandeja limpia', 'success');
+}
+
+// ── SAVED NOTES ──
+function getSavedNotes() {
+  try {
+    const v = sessionStorage.getItem('ep_saved_notes');
+    return v ? JSON.parse(v) : [];
+  } catch(e) { return []; }
+}
+
+function persistSavedNotes(arr) {
+  try { sessionStorage.setItem('ep_saved_notes', JSON.stringify(arr)); } catch(e) {}
+}
+
+function isSaved(id) {
+  return getSavedNotes().some(n => n.id === id);
+}
+
+function toggleSaveNote(id) {
+  const inbox = getInbox();
+  const note = inbox.find(n => n.id === id);
+  if (!note) return;
+  const saved = getSavedNotes();
+  if (saved.some(n => n.id === id)) {
+    persistSavedNotes(saved.filter(n => n.id !== id));
+    toast('Nota removida de guardadas');
+  } else {
+    persistSavedNotes([{ ...note, savedAt: new Date().toISOString() }, ...saved]);
+    toast('🔖 Nota guardada');
+  }
+  renderInboxList();
+  if (STATE.inboxTab === 'guardadas') renderSavedNotes();
+}
+
+function deleteInboxNote(id) {
+  const cid = cycleId(STATE.currentCycleStart);
+  const cycle = STATE.cycleData[cid];
+  if (!cycle) return;
+  cycle.inbox = (cycle.inbox || []).filter(n => n.id !== id);
+  delete STATE.inboxRead[id];
+  try { sessionStorage.setItem('ep_inbox_read', JSON.stringify(STATE.inboxRead)); } catch(e) {}
+  persistSavedNotes(getSavedNotes().filter(n => n.id !== id));
+  renderInboxList();
+  renderInboxBadge();
+  pushAction('replace', { cycleData: STATE.cycleData }).catch(()=>{});
+  toast('Nota eliminada');
+}
+
+function deleteSavedNote(id) {
+  persistSavedNotes(getSavedNotes().filter(n => n.id !== id));
+  renderSavedNotes();
+  renderInboxList();
+  toast('Nota guardada eliminada');
 }
 
 function loadInboxReadMarks() {
