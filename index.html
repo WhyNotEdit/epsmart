@@ -2504,14 +2504,18 @@ function applyWeatherShift() {
   }
 
   // ── CORRECT CASCADE LOGIC ──
-  // We want to shift every working night from dateStr onward by ONE day.
-  // This means: gather all nights from dateStr to the last working night,
-  // shift each one to the following day, emptying out dateStr.
-  // The last working night's stores land in the first available buffer day.
+  // Only shift dates that belong to THIS cycle (cycleStart → cycleEnd).
+  // Never touch dates from the next period.
+  const cycleEnd = new Date(cycleStart); cycleEnd.setDate(cycleEnd.getDate() + CYCLE_LENGTH_DAYS - 1);
+  const cycleEndKey = localDateKey(cycleEnd);
 
   const allDates = Object.keys(cycle.schedule).sort();
-  // Find dates from dateStr onward that have stores
-  const affectedDates = allDates.filter(d => d >= dateStr && (cycle.schedule[d] || []).length > 0);
+  // Only include dates within THIS cycle that have stores scheduled
+  const affectedDates = allDates.filter(d =>
+    d >= dateStr &&
+    d <= cycleEndKey &&
+    (cycle.schedule[d] || []).length > 0
+  );
 
   if (affectedDates.length === 0) {
     toast('No hay paradas desde esa noche', 'error');
@@ -2523,18 +2527,16 @@ function applyWeatherShift() {
   const lastDt = parseDate(lastDate);
   const nextDt = new Date(lastDt); nextDt.setDate(nextDt.getDate() + 1);
   const nextKey = localDateKey(nextDt);
-  const cycleEnd = new Date(cycleStart); cycleEnd.setDate(cycleEnd.getDate() + CYCLE_LENGTH_DAYS - 1);
   if (nextDt > cycleEnd) {
     toast('No hay días de margen al final del ciclo para absorber el turno', 'error');
     return;
   }
 
-  // Snapshot current state for undo
+  // Snapshot current state for undo — include all affected dates plus the buffer landing day
   cycle.weatherShifts = cycle.weatherShifts || [];
   const snapshot = {};
   affectedDates.forEach(d => { snapshot[d] = [...cycle.schedule[d]]; });
-  // Also snapshot the landing day if it already has entries
-  if (cycle.schedule[nextKey]) snapshot[nextKey] = [...cycle.schedule[nextKey]];
+  snapshot[nextKey] = cycle.schedule[nextKey] ? [...cycle.schedule[nextKey]] : [];
   cycle.weatherShifts.push({
     shiftedDate: dateStr,
     appliedAt: new Date().toISOString(),
