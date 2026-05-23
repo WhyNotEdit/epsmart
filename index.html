@@ -2205,7 +2205,7 @@ function renderCalendar() {
     const stores = dayCycle.schedule[dk] || [];
 
     let tiles = '';
-    if (isWorkday && stores.length > 0) {
+    if (stores.length > 0) {
       tiles = '<div class="cal-tiles">';
       const opTodayKey = dateKey(getOperationalDate());
       const isPast = dk < opTodayKey;
