@@ -1320,6 +1320,9 @@ main{padding:14px var(--pad) 22px}
           <button class="btn btn-secondary" onclick="exportData()">Exportar JSON</button>
           <button class="btn btn-danger" onclick="resetCycle()">Reiniciar Ciclo</button>
         </div>
+        <div class="btn-row" style="margin-top:8px">
+          <button class="btn btn-secondary" style="font-size:12px;color:#fbbf24;border-color:rgba(251,191,36,0.3)" onclick="cleanCorruptData()">🧹 Limpiar Datos Corruptos</button>
+        </div>
         <button class="btn btn-secondary btn-full" style="margin-top:8px" onclick="mgmtLock()">Bloquear y Salir</button>
       </div>
     </div>
@@ -2024,23 +2027,36 @@ function renderTonight() {
   let targetStores = cycle.schedule[targetKey];
   let targetLabel = "Hoy";
 
-  if (!targetStores || targetStores.length === 0) {
-    const dates = Object.keys(cycle.schedule).sort();
-    const upcoming = dates.find(d => d >= STATE.todayKey && cycle.schedule[d].length > 0);
-    if (upcoming) {
-      targetKey = upcoming;
-      targetStores = cycle.schedule[upcoming];
-      const td = parseDate(upcoming);
-      targetLabel = (upcoming === STATE.todayKey) ? "Hoy" : `Próximo: ${formatDate(td, 'EEE d MMM')}`;
-    }
-  }
-
   const tag = document.getElementById('tonightTag');
   const card = document.getElementById('tonightCard');
 
   if (!targetStores || targetStores.length === 0) {
-    tag.textContent = 'Sin trabajo programado';
-    card.innerHTML = `<div class="empty"><div class="empty-icon">🌙</div><h3>Ciclo completo</h3><p>Las ${STORES.length - CYCLE_EXCLUSIONS.size} tiendas están listas. El próximo ciclo empieza pronto.</p></div>`;
+    const dates = Object.keys(cycle.schedule).sort();
+    const nextNight = dates.find(d => d > STATE.todayKey && cycle.schedule[d].length > 0);
+
+    const tag = document.getElementById('tonightTag');
+    const card = document.getElementById('tonightCard');
+    tag.textContent = 'Noche libre';
+
+    if (nextNight) {
+      const nd = parseDate(nextNight);
+      const count = cycle.schedule[nextNight].length;
+      card.innerHTML = `
+        <div class="empty">
+          <div class="empty-icon">🌙</div>
+          <h3>No hay paradas esta noche</h3>
+          <p>Próxima noche de trabajo:<br>
+            <strong style="color:white">${formatDate(nd, 'EEEE d MMM')} · ${count} parada${count !== 1 ? 's' : ''}</strong>
+          </p>
+        </div>`;
+    } else {
+      card.innerHTML = `
+        <div class="empty">
+          <div class="empty-icon">🌙</div>
+          <h3>No hay paradas esta noche</h3>
+          <p>No quedan más noches de trabajo en este ciclo.</p>
+        </div>`;
+    }
     return;
   }
 
@@ -2705,11 +2721,29 @@ function applyPullForward() {
     },
   });
 
-  // Move: merge source slots into target, empty the source
-  cycle.schedule[targetStr] = [...targetSlots, ...sourceSlots];
+  // Move: re-key the source slots with the target date so completions don't bleed.
+  // Bare unit strings (e.g. "4258") become date-stamped ("4258::2026-05-23") on the new date.
+  // This ensures cycle.completions["4258"] (from the original night) does NOT
+  // make the same store appear "done" on the new night.
+  const rekeyed = sourceSlots.map(slot => {
+    const u = slotUnit(slot);
+    // Only re-key non-redo slots — redo slots already carry a date stamp
+    return slotIsRedo(slot) ? slot : makeRedoSlot(u, targetStr);
+  });
+  cycle.schedule[targetStr] = [...targetSlots, ...rekeyed];
   cycle.schedule[sourceStr] = [];
 
-  toast(`⚡ ${sourceSlots.length} parada(s) adelantadas al ${formatDate(parseDate(targetStr), 'd MMM')}`, 'success');
+  // Mark pulled stores as bumped so they show ↻ MOVIDA on the new night
+  cycle.bumped = cycle.bumped || {};
+  sourceSlots.forEach(slot => {
+    const u = slotUnit(slot);
+    cycle.bumped[u] = {
+      originalDate: sourceStr,
+      currentDate: targetStr,
+      bumpedAt: new Date().toISOString(),
+      causedBy: 'pull',
+    };
+  });
   addInboxNote({
     type: 'weather',
     date: targetStr,
@@ -2731,9 +2765,19 @@ function undoPullShift(idx) {
   if (!cycle || !cycle.pullShifts || !cycle.pullShifts[idx]) return;
 
   const shift = cycle.pullShifts[idx];
+  // Restore original schedule from snapshot
   Object.entries(shift.snapshot).forEach(([d, slots]) => {
     cycle.schedule[d] = slots;
   });
+  // Clear bumped markers that were set by this pull
+  if (cycle.bumped) {
+    Object.keys(cycle.bumped).forEach(u => {
+      if (cycle.bumped[u].causedBy === 'pull' &&
+          cycle.bumped[u].originalDate === shift.sourceDate) {
+        delete cycle.bumped[u];
+      }
+    });
+  }
   cycle.pullShifts.splice(idx, 1);
 
   toast('↩️ Adelanto revertido', 'success');
@@ -3026,6 +3070,52 @@ function resetCycle() {
   renderAll();
   toast('Ciclo reiniciado', 'success');
   pushAction('resetCycle', { cycleId: id }).catch(()=>{});
+}
+
+function cleanCorruptData() {
+  if (!confirm('¿Limpiar datos corruptos? Esto elimina entradas duplicadas del horario y los "pull shifts" que causaron el problema. Las completadas y urgencias se mantienen.')) return;
+  const cycle = STATE.cycleData[cycleId(STATE.currentCycleStart)];
+  if (!cycle) return;
+
+  // Remove duplicate slot entries per date (keep first occurrence per unit per day)
+  let cleaned = 0;
+  Object.keys(cycle.schedule).forEach(d => {
+    const seen = new Set();
+    const orig = cycle.schedule[d];
+    cycle.schedule[d] = orig.filter(slot => {
+      const u = slotUnit(slot);
+      if (seen.has(u)) { cleaned++; return false; }
+      seen.add(u);
+      return true;
+    });
+  });
+
+  // Remove any date-stamped slot completions that have a matching bare-unit completion
+  // (these are the ghost "done" marks from the old pull-forward bug)
+  const bareCompletions = new Set(
+    Object.keys(cycle.completions || {}).filter(k => !slotIsRedo(k))
+  );
+  Object.keys(cycle.completions || {}).forEach(slot => {
+    if (slotIsRedo(slot) && bareCompletions.has(slotUnit(slot))) {
+      // The original completion exists AND the rekeyed redo slot also has a completion —
+      // the redo one is the ghost. Remove it.
+      delete cycle.completions[slot];
+      cleaned++;
+    }
+  });
+
+  // Clear pull shifts history (they caused the corruption)
+  cycle.pullShifts = [];
+  cycle.bumped = cycle.bumped || {};
+  // Clear any 'pull'-caused bumped markers
+  Object.keys(cycle.bumped).forEach(u => {
+    if (cycle.bumped[u].causedBy === 'pull') delete cycle.bumped[u];
+  });
+
+  renderAll();
+  renderPullShifts();
+  toast(`Datos limpiados (${cleaned} entradas corregidas)`, 'success');
+  pushAction('replace', { cycleData: STATE.cycleData }).catch(()=>{});
 }
 
 function parseDate(s) {
