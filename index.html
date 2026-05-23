@@ -2686,68 +2686,84 @@ function applyPullForward() {
   ensureCycle(cycleStart);
   const cycle = STATE.cycleData[cycleId(cycleStart)];
 
-  // Validate source has stores
-  const sourceSlots = cycle.schedule[sourceStr];
-  if (!sourceSlots || sourceSlots.length === 0) {
-    toast('La noche de origen no tiene paradas programadas', 'error');
-    return;
-  }
-
-  // Validate target is within same cycle
-  const cycleEnd = new Date(cycleStart); cycleEnd.setDate(cycleEnd.getDate() + CYCLE_LENGTH_DAYS - 1);
-  const cycleEndKey = localDateKey(cycleEnd);
-  if (targetStr > cycleEndKey || sourceStr > cycleEndKey) {
-    toast('Las fechas deben estar dentro del ciclo actual', 'error');
-    return;
-  }
-
-  // Validate target is either empty or has room
+  // Validate target is empty (it must be a genuinely free night)
   const targetSlots = cycle.schedule[targetStr] || [];
   if (targetSlots.length > 0) {
-    if (!confirm(`El día destino ya tiene ${targetSlots.length} parada(s). ¿Agregar las paradas de origen a ese día?`)) return;
-  } else {
-    if (!confirm(`¿Mover ${sourceSlots.length} parada(s) del ${formatDate(parseDate(sourceStr), 'EEE d MMM')} al ${formatDate(parseDate(targetStr), 'EEE d MMM')}? La noche de origen quedará vacía.`)) return;
+    toast('El día destino ya tiene paradas — solo se puede usar un día verdaderamente libre', 'error');
+    return;
   }
 
-  // Snapshot for undo
+  // ── TRUE REVERSE CASCADE ──
+  // Collect all scheduled nights from sourceStr back to (but not including) targetStr.
+  // Each one shifts one day earlier. The source night's stores go to target.
+  // Example: target=Fri May 23, source=Mon May 26
+  //   → Mon May 26 moves to Fri May 23
+  //   → Tue May 27 moves to Mon May 26
+  //   → Wed May 28 moves to Tue May 27
+  //   → Thu May 29 moves to Wed May 28
+  //   → Thu May 29 becomes empty (last night shifts into the vacated slot)
+
+  const cycleEnd = new Date(cycleStart); cycleEnd.setDate(cycleEnd.getDate() + CYCLE_LENGTH_DAYS - 1);
+  const cycleEndKey = localDateKey(cycleEnd);
+
+  // Gather all scheduled nights from sourceStr onward (within cycle)
+  const allDates = Object.keys(cycle.schedule).sort();
+  const affectedDates = allDates.filter(d =>
+    d >= sourceStr &&
+    d <= cycleEndKey &&
+    (cycle.schedule[d] || []).length > 0
+  );
+
+  if (affectedDates.length === 0) {
+    toast('No hay paradas programadas desde esa noche de origen', 'error');
+    return;
+  }
+
+  const nightCount = affectedDates.length;
+  if (!confirm(
+    `¿Adelantar ${nightCount} noche(s) al ${formatDate(parseDate(targetStr), 'EEE d MMM')}?\n` +
+    `Las paradas de cada noche se mueven un día antes. La última noche queda vacía.`
+  )) return;
+
+  // Snapshot ALL affected dates + target for undo
   cycle.pullShifts = cycle.pullShifts || [];
+  const snapshot = { [targetStr]: [] };
+  affectedDates.forEach(d => { snapshot[d] = [...cycle.schedule[d]]; });
   cycle.pullShifts.push({
     targetDate: targetStr,
     sourceDate: sourceStr,
     appliedAt: new Date().toISOString(),
-    snapshot: {
-      [targetStr]: [...targetSlots],
-      [sourceStr]: [...sourceSlots],
-    },
+    snapshot,
   });
 
-  // Move: re-key the source slots with the target date so completions don't bleed.
-  // Bare unit strings (e.g. "4258") become date-stamped ("4258::2026-05-23") on the new date.
-  // This ensures cycle.completions["4258"] (from the original night) does NOT
-  // make the same store appear "done" on the new night.
-  const rekeyed = sourceSlots.map(slot => {
-    const u = slotUnit(slot);
-    // Only re-key non-redo slots — redo slots already carry a date stamp
-    return slotIsRedo(slot) ? slot : makeRedoSlot(u, targetStr);
+  // Cascade forward: each night's stores move one day earlier
+  const destinations = [targetStr, ...affectedDates.slice(0, -1)];
+  affectedDates.forEach((fromDate, i) => {
+    const toDate = destinations[i];
+    cycle.schedule[toDate] = [...cycle.schedule[fromDate]];
+    // Only mark as bumped (purple ↻ MOVIDA) if landing on the FREE target date
+    // The rest just shift normally — no purple marker
+    if (toDate === targetStr) {
+      cycle.bumped = cycle.bumped || {};
+      cycle.schedule[fromDate].forEach(slot => {
+        const u = slotUnit(slot);
+        cycle.bumped[u] = {
+          originalDate: fromDate,
+          currentDate: toDate,
+          bumpedAt: new Date().toISOString(),
+          causedBy: 'pull',
+        };
+      });
+    }
   });
-  cycle.schedule[targetStr] = [...targetSlots, ...rekeyed];
-  cycle.schedule[sourceStr] = [];
+  // Last affected night becomes empty
+  cycle.schedule[affectedDates[affectedDates.length - 1]] = [];
 
-  // Mark pulled stores as bumped so they show ↻ MOVIDA on the new night
-  cycle.bumped = cycle.bumped || {};
-  sourceSlots.forEach(slot => {
-    const u = slotUnit(slot);
-    cycle.bumped[u] = {
-      originalDate: sourceStr,
-      currentDate: targetStr,
-      bumpedAt: new Date().toISOString(),
-      causedBy: 'pull',
-    };
-  });
+  toast(`⚡ ${nightCount} noche(s) adelantadas al ${formatDate(parseDate(targetStr), 'EEE d MMM')}`, 'success');
   addInboxNote({
     type: 'weather',
     date: targetStr,
-    notes: `Noche extra — ${sourceSlots.length} parada(s) adelantadas desde ${formatDate(parseDate(sourceStr), 'EEE d MMM')}`,
+    notes: `Noche extra — ${nightCount} noche(s) adelantadas desde ${formatDate(parseDate(sourceStr), 'EEE d MMM')}`,
   });
 
   document.getElementById('pullTargetDate').value = '';
@@ -2765,22 +2781,21 @@ function undoPullShift(idx) {
   if (!cycle || !cycle.pullShifts || !cycle.pullShifts[idx]) return;
 
   const shift = cycle.pullShifts[idx];
-  // Restore original schedule from snapshot
+  // Restore all dates from snapshot (covers target + all cascaded nights)
   Object.entries(shift.snapshot).forEach(([d, slots]) => {
     cycle.schedule[d] = slots;
   });
-  // Clear bumped markers that were set by this pull
+  // Clear bumped markers set by this pull
   if (cycle.bumped) {
     Object.keys(cycle.bumped).forEach(u => {
-      if (cycle.bumped[u].causedBy === 'pull' &&
-          cycle.bumped[u].originalDate === shift.sourceDate) {
+      if (cycle.bumped[u] && cycle.bumped[u].causedBy === 'pull') {
         delete cycle.bumped[u];
       }
     });
   }
   cycle.pullShifts.splice(idx, 1);
 
-  toast('↩️ Adelanto revertido', 'success');
+  toast('↩️ Adelanto revertido — noches restauradas', 'success');
   renderAll();
   renderPullShifts();
   pushAction('replace', { cycleData: STATE.cycleData }).catch(()=>{});
@@ -3073,11 +3088,12 @@ function resetCycle() {
 }
 
 function cleanCorruptData() {
-  if (!confirm('¿Limpiar datos corruptos? Esto elimina entradas duplicadas del horario y los "pull shifts" que causaron el problema. Las completadas y urgencias se mantienen.')) return;
+  if (!confirm('¿Limpiar entradas duplicadas del horario? Las completadas, notas y urgencias NO se tocan.')) return;
   const cycle = STATE.cycleData[cycleId(STATE.currentCycleStart)];
   if (!cycle) return;
 
-  // Remove duplicate slot entries per date (keep first occurrence per unit per day)
+  // ONLY remove duplicate slot entries per date (keep first occurrence per unit per day)
+  // Nothing else is touched — completions, inbox, emergencies all stay intact
   let cleaned = 0;
   Object.keys(cycle.schedule).forEach(d => {
     const seen = new Set();
@@ -3090,31 +3106,12 @@ function cleanCorruptData() {
     });
   });
 
-  // Remove any date-stamped slot completions that have a matching bare-unit completion
-  // (these are the ghost "done" marks from the old pull-forward bug)
-  const bareCompletions = new Set(
-    Object.keys(cycle.completions || {}).filter(k => !slotIsRedo(k))
-  );
-  Object.keys(cycle.completions || {}).forEach(slot => {
-    if (slotIsRedo(slot) && bareCompletions.has(slotUnit(slot))) {
-      // The original completion exists AND the rekeyed redo slot also has a completion —
-      // the redo one is the ghost. Remove it.
-      delete cycle.completions[slot];
-      cleaned++;
-    }
-  });
-
-  // Clear pull shifts history (they caused the corruption)
+  // Clear pull shifts history log only
   cycle.pullShifts = [];
-  cycle.bumped = cycle.bumped || {};
-  // Clear any 'pull'-caused bumped markers
-  Object.keys(cycle.bumped).forEach(u => {
-    if (cycle.bumped[u].causedBy === 'pull') delete cycle.bumped[u];
-  });
 
   renderAll();
   renderPullShifts();
-  toast(`Datos limpiados (${cleaned} entradas corregidas)`, 'success');
+  toast(`Duplicados eliminados: ${cleaned} entradas corregidas`, 'success');
   pushAction('replace', { cycleData: STATE.cycleData }).catch(()=>{});
 }
 
