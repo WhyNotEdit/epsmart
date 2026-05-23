@@ -1298,6 +1298,22 @@ main{padding:14px var(--pad) 22px}
       </div>
 
       <div class="mgmt-section">
+        <h4>Noche Extra — Adelantar Paradas</h4>
+        <p style="font-size:12px;color:var(--ink-3);margin-bottom:14px;line-height:1.5">¿Hay un día libre disponible? Mueve las paradas de una noche futura a ese día. La noche de origen queda vacía.</p>
+        <div class="field">
+          <label>Día libre (destino)</label>
+          <input type="date" id="pullTargetDate" oninput="autoFillPullSource()">
+        </div>
+        <div class="field">
+          <label>Noche a adelantar (origen)</label>
+          <input type="date" id="pullSourceDate">
+          <div id="pullSourceHint" style="font-size:11px;color:var(--blue-bright);margin-top:5px;font-family:var(--font-mono);min-height:16px"></div>
+        </div>
+        <button class="btn btn-primary btn-full" onclick="applyPullForward()">⚡ Adelantar Paradas</button>
+        <div id="pullShiftsList"></div>
+      </div>
+
+      <div class="mgmt-section">
         <h4>Datos y Sincronización</h4>
         <p style="font-size:12px;color:var(--ink-3);margin-bottom:14px;line-height:1.5">Datos guardados en memoria. Conectar a Vercel KV para sincronización en vivo entre todos los teléfonos del equipo.</p>
         <div class="btn-row">
@@ -1964,6 +1980,7 @@ function renderAll() {
   renderUpcoming();
   renderMileageStats();
   renderWeatherShifts();
+  renderPullShifts();
   if (STATE.currentView === 'cal') renderCalendar();
   if (STATE.currentView === 'stores') renderStores();
 }
@@ -2614,6 +2631,140 @@ function renderWeatherShifts() {
   wrap.innerHTML = h;
 }
 
+// ─── PULL FORWARD (Noche Extra) ───────────────────────────────────────────────
+// Auto-fill the source field with the next scheduled night after the target date
+
+function autoFillPullSource() {
+  const targetStr = document.getElementById('pullTargetDate').value;
+  const hint = document.getElementById('pullSourceHint');
+  if (!targetStr) { hint.textContent = ''; return; }
+
+  const cycle = STATE.cycleData[cycleId(STATE.currentCycleStart)];
+  if (!cycle) { hint.textContent = ''; return; }
+
+  // Find the next date after targetStr that has stores
+  const nextNight = Object.keys(cycle.schedule)
+    .filter(d => d > targetStr && (cycle.schedule[d] || []).length > 0)
+    .sort()[0];
+
+  const sourceInput = document.getElementById('pullSourceDate');
+  if (nextNight) {
+    sourceInput.value = nextNight;
+    const dt = parseDate(nextNight);
+    const count = cycle.schedule[nextNight].length;
+    hint.textContent = `→ ${formatDate(dt, 'EEE d MMM')} · ${count} parada${count !== 1 ? 's' : ''}`;
+  } else {
+    sourceInput.value = '';
+    hint.textContent = 'No hay noches programadas después de esa fecha';
+  }
+}
+
+function applyPullForward() {
+  const targetStr = document.getElementById('pullTargetDate').value;
+  const sourceStr = document.getElementById('pullSourceDate').value;
+
+  if (!targetStr || !sourceStr) { toast('Elige fecha destino y origen', 'error'); return; }
+  if (targetStr >= sourceStr) { toast('El día libre debe ser ANTES de la noche de origen', 'error'); return; }
+
+  const cycleStart = getCycleStart(parseDate(targetStr));
+  ensureCycle(cycleStart);
+  const cycle = STATE.cycleData[cycleId(cycleStart)];
+
+  // Validate source has stores
+  const sourceSlots = cycle.schedule[sourceStr];
+  if (!sourceSlots || sourceSlots.length === 0) {
+    toast('La noche de origen no tiene paradas programadas', 'error');
+    return;
+  }
+
+  // Validate target is within same cycle
+  const cycleEnd = new Date(cycleStart); cycleEnd.setDate(cycleEnd.getDate() + CYCLE_LENGTH_DAYS - 1);
+  const cycleEndKey = localDateKey(cycleEnd);
+  if (targetStr > cycleEndKey || sourceStr > cycleEndKey) {
+    toast('Las fechas deben estar dentro del ciclo actual', 'error');
+    return;
+  }
+
+  // Validate target is either empty or has room
+  const targetSlots = cycle.schedule[targetStr] || [];
+  if (targetSlots.length > 0) {
+    if (!confirm(`El día destino ya tiene ${targetSlots.length} parada(s). ¿Agregar las paradas de origen a ese día?`)) return;
+  } else {
+    if (!confirm(`¿Mover ${sourceSlots.length} parada(s) del ${formatDate(parseDate(sourceStr), 'EEE d MMM')} al ${formatDate(parseDate(targetStr), 'EEE d MMM')}? La noche de origen quedará vacía.`)) return;
+  }
+
+  // Snapshot for undo
+  cycle.pullShifts = cycle.pullShifts || [];
+  cycle.pullShifts.push({
+    targetDate: targetStr,
+    sourceDate: sourceStr,
+    appliedAt: new Date().toISOString(),
+    snapshot: {
+      [targetStr]: [...targetSlots],
+      [sourceStr]: [...sourceSlots],
+    },
+  });
+
+  // Move: merge source slots into target, empty the source
+  cycle.schedule[targetStr] = [...targetSlots, ...sourceSlots];
+  cycle.schedule[sourceStr] = [];
+
+  toast(`⚡ ${sourceSlots.length} parada(s) adelantadas al ${formatDate(parseDate(targetStr), 'd MMM')}`, 'success');
+  addInboxNote({
+    type: 'weather',
+    date: targetStr,
+    notes: `Noche extra — ${sourceSlots.length} parada(s) adelantadas desde ${formatDate(parseDate(sourceStr), 'EEE d MMM')}`,
+  });
+
+  document.getElementById('pullTargetDate').value = '';
+  document.getElementById('pullSourceDate').value = '';
+  document.getElementById('pullSourceHint').textContent = '';
+  renderAll();
+  renderPullShifts();
+  renderInboxBadge();
+  pushAction('replace', { cycleData: STATE.cycleData }).catch(()=>{});
+}
+
+function undoPullShift(idx) {
+  if (!confirm('¿Deshacer este adelanto y regresar las paradas a su noche original?')) return;
+  const cycle = STATE.cycleData[cycleId(STATE.currentCycleStart)];
+  if (!cycle || !cycle.pullShifts || !cycle.pullShifts[idx]) return;
+
+  const shift = cycle.pullShifts[idx];
+  Object.entries(shift.snapshot).forEach(([d, slots]) => {
+    cycle.schedule[d] = slots;
+  });
+  cycle.pullShifts.splice(idx, 1);
+
+  toast('↩️ Adelanto revertido', 'success');
+  renderAll();
+  renderPullShifts();
+  pushAction('replace', { cycleData: STATE.cycleData }).catch(()=>{});
+}
+
+function renderPullShifts() {
+  const wrap = document.getElementById('pullShiftsList');
+  if (!wrap) return;
+  const cycle = STATE.cycleData[cycleId(STATE.currentCycleStart)];
+  const shifts = (cycle && cycle.pullShifts) ? cycle.pullShifts : [];
+  if (shifts.length === 0) { wrap.innerHTML = ''; return; }
+  let h = '<div style="margin-top:12px">';
+  shifts.forEach((s, i) => {
+    const tDt = parseDate(s.targetDate);
+    const sDt = parseDate(s.sourceDate);
+    h += `<div class="emerg-active-item" style="margin-bottom:8px">
+      <div class="emerg-active-info">
+        <div class="emerg-active-store">⚡ Adelanto — ${formatDate(sDt, 'EEE d MMM')} → ${formatDate(tDt, 'EEE d MMM')}</div>
+        <div class="emerg-active-date">${timeAgoEs(s.appliedAt)}</div>
+      </div>
+      <button class="emerg-active-clear" onclick="undoPullShift(${i})" aria-label="Deshacer">↩</button>
+    </div>`;
+  });
+  h += '</div>';
+  wrap.innerHTML = h;
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 function clearEmergency(emergKey) {
   if (!confirm('¿Quitar la urgencia y devolver la tienda a su fecha original?')) return;
   const cycle = STATE.cycleData[cycleId(STATE.currentCycleStart)];
@@ -2982,6 +3133,7 @@ async function pullState() {
           if (srv.inbox) STATE.cycleData[cid].inbox = srv.inbox;
           if (srv.bumped) STATE.cycleData[cid].bumped = srv.bumped;
           if (srv.weatherShifts) STATE.cycleData[cid].weatherShifts = srv.weatherShifts;
+          if (srv.pullShifts) STATE.cycleData[cid].pullShifts = srv.pullShifts;
           if (srv.notes) STATE.cycleData[cid].notes = srv.notes;
         }
       });
