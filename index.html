@@ -1090,6 +1090,30 @@ main{padding:14px var(--pad) 22px}
   background:rgba(255,71,87,0.07);color:#ff6b7a;font-family:var(--font-body);
   display:flex;align-items:center;justify-content:center;gap:6px;transition:all .15s}
 .saved-note-delete:active{background:rgba(255,71,87,0.15)}
+
+/* ═══ STORE INFO SHEET ═══ */
+.ssheet-unit{font-family:var(--font-mono);font-size:22px;font-weight:700;color:white;margin-bottom:4px;display:flex;align-items:center;gap:10px}
+.ssheet-tag{font-size:9px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:3px 8px;border-radius:99px}
+.ssheet-tag.cycle{background:rgba(0,168,255,0.1);color:var(--blue-bright);border:1px solid rgba(0,168,255,0.3)}
+.ssheet-tag.gps-only{background:rgba(167,139,250,0.1);color:#c4b5fd;border:1px solid rgba(167,139,250,0.3)}
+.ssheet-addr{font-size:15px;font-weight:600;color:white;margin-bottom:2px}
+.ssheet-city{font-size:13px;color:var(--ink-2);margin-bottom:16px}
+.ssheet-section{background:linear-gradient(180deg,var(--navy-1) 0%,var(--navy) 100%);border:1px solid var(--line-2);border-radius:12px;padding:13px 14px;margin-bottom:10px}
+.ssheet-section-label{font-family:var(--font-mono);font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-3);font-weight:500;margin-bottom:10px}
+.ssheet-contact-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.ssheet-contact-info{flex:1;min-width:0}
+.ssheet-contact-name{font-size:14px;font-weight:600;color:white;letter-spacing:-0.01em}
+.ssheet-contact-sub{font-size:11px;color:var(--ink-2);margin-top:2px;font-family:var(--font-mono)}
+.ssheet-contact-btns{display:flex;gap:6px;flex-shrink:0}
+.contact-btn{display:flex;align-items:center;gap:5px;padding:8px 12px;border-radius:9px;font-size:11px;font-weight:600;letter-spacing:0.04em;text-decoration:none;transition:all .15s}
+.contact-btn{background:rgba(0,232,160,0.1);color:var(--signal);border:1px solid rgba(0,232,160,0.3)}
+.contact-btn:active{background:rgba(0,232,160,0.2)}
+.contact-btn-email{background:rgba(0,168,255,0.1);color:var(--blue-bright);border:1px solid rgba(0,168,255,0.3)}
+.contact-btn-email:active{background:rgba(0,168,255,0.2)}
+.ssheet-map-btns{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.ssheet-map-btn{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 8px;border-radius:11px;background:var(--navy-2);border:1px solid var(--line-2);font-size:11px;color:var(--ink-2);text-decoration:none;font-weight:500;text-align:center;transition:all .15s}
+.ssheet-map-btn:active{background:var(--navy-1);color:white}
+.ssheet-map-icon{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;color:white;font-weight:700;font-size:15px;box-shadow:0 2px 8px rgba(0,0,0,0.3)}
 </style>
 
 </head>
@@ -1357,6 +1381,19 @@ main{padding:14px var(--pad) 22px}
     </div>
   </div>
 
+  <div class="modal-overlay" id="storeSheetOverlay" onclick="if(event.target===this)document.getElementById('storeSheetOverlay').classList.remove('show')">
+    <div class="modal" style="max-width:460px">
+      <div class="modal-handle"></div>
+      <div class="modal-head">
+        <div class="modal-title">Información de Tienda</div>
+        <button class="modal-close" onclick="document.getElementById('storeSheetOverlay').classList.remove('show')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div id="storeSheetContent" style="padding:0 4px 8px"></div>
+    </div>
+  </div>
+
 </main>
 
 <nav class="botnav">
@@ -1556,6 +1593,25 @@ const GPS_STORES = [
   {unit:"17677", dma:"A40404", rgm:"Jeanty Saintval",      addr:"593 East Oakland Park Blvd", city:"Oakland Park",      state:"FL", zip:"33334", phone:"954-537-4913"},
   {unit:"19579", dma:"A40404", rgm:"Mika Arnold",          addr:"1717 East Sample Road",      city:"Pompano Beach",     state:"FL", zip:"33064", phone:"954-781-0557"},
 ];
+
+// ── AREA MANAGER LOOKUP ──
+// Maps DMA code → { name, phone, email }
+// Miami DMAs (A402xx) — names from original sheet; phones/emails not provided
+// West Palm DMAs (A404xx) — names + emails from C00404 sheet
+const AREA_MANAGERS = {
+  'A40201': { name: 'Raul Gonzalez',       phone: '',  email: '' },
+  'A40202': { name: 'Giovanny Juarez',      phone: '',  email: '' },
+  'A40204': { name: 'Betty Paulino',        phone: '',  email: '' },
+  'A40206': { name: 'Heberto Cabrera',      phone: '',  email: '' },
+  'A40207': { name: 'Yaime Sosa',           phone: '',  email: '' },
+  'A40208': { name: 'Griselda Menjivar',    phone: '',  email: '' },
+  'A40209': { name: 'Mildred Hernandez',    phone: '',  email: '' },
+  'A40210': { name: 'Yadira Silvera',       phone: '',  email: '' },
+  'A40401': { name: 'Henry Diaz',           phone: '',  email: 'henry.diaz@yum.com' },
+  'A40402': { name: 'Rosa Garcia',          phone: '',  email: 'rosa.garcia@yum.com' },
+  'A40403': { name: 'Claudia Arcia',        phone: '',  email: 'claudia.arcia@yum.com' },
+  'A40404': { name: 'Astride Alexis',       phone: '',  email: 'astride.alexis@yum.com' },
+};
 
 // Stores that exist in the cycle database but are EXCLUDED from the pressure-wash cycle.
 // Reasons: closed location, contract change, ownership change, etc.
@@ -1936,7 +1992,17 @@ function renderGpsResults() {
     const isGpsOnly = GPS_STORES.some(g => g.unit === s.unit);
     const tagClass = isGpsOnly ? 'gps-only' : 'cycle';
     const tagText = isGpsOnly ? 'GPS' : 'CICLO';
-    html += `<div class="gps-result-card" onclick="openMapForUnit('${s.unit}')"><div class="gps-result-unit">${s.unit}</div><div class="gps-result-info"><div class="gps-result-addr">${s.addr}</div><div class="gps-result-meta">${s.city}, ${s.state} ${s.zip || ''}</div><span class="gps-result-tag ${tagClass}">${tagText}${s.dma ? ' · ' + s.dma : ''}</span></div><div class="gps-result-go" aria-label="Navegar"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg></div></div>`;
+    html += `<div class="gps-result-card" onclick="openStoreSheet('${s.unit}')">
+      <div class="gps-result-unit">${s.unit}</div>
+      <div class="gps-result-info">
+        <div class="gps-result-addr">${s.addr}</div>
+        <div class="gps-result-meta">${s.city}, ${s.state} ${s.zip || ''}</div>
+        <span class="gps-result-tag ${tagClass}">${tagText}${s.dma ? ' · ' + s.dma : ''}</span>
+      </div>
+      <div class="gps-result-go" aria-label="Ver detalles">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg>
+      </div>
+    </div>`;
   });
   if (matches.length > 20) {
     html += `<div class="gps-empty" style="padding:20px"><p>+${matches.length - 20} más resultados. Escribe más dígitos para refinar.</p></div>`;
@@ -1948,6 +2014,42 @@ function clearGpsSearch() {
   const inp = document.getElementById('gpsSearch');
   if (inp) { inp.value = ''; inp.focus(); }
   renderGpsResults();
+}
+
+function openStoreSheet(unit) {
+  const store = ALL_LOCATABLE_STORES.find(s => s.unit === unit);
+  if (!store) return;
+
+  const am = AREA_MANAGERS[store.dma] || {};
+  const fullAddr = `${store.addr}, ${store.city}, ${store.state} ${store.zip || ''}`.trim();
+  const isGpsOnly = GPS_STORES.some(g => g.unit === unit);
+
+  document.getElementById('storeSheetContent').innerHTML = `
+    <div class="ssheet-unit">#${store.unit} <span class="ssheet-tag ${isGpsOnly ? 'gps-only' : 'cycle'}">${isGpsOnly ? 'GPS' : 'CICLO'} · ${store.dma}</span></div>
+    <div class="ssheet-addr">${store.addr}</div>
+    <div class="ssheet-city">${store.city}, ${store.state} ${store.zip || ''}</div>
+
+    <div class="ssheet-section">
+      <div class="ssheet-section-label">Area Coach (AC)</div>
+      <div class="ssheet-contact-name" style="font-size:15px;color:white;font-weight:600;padding:2px 0">${am.name || '—'}</div>
+    </div>
+
+    <div class="ssheet-section">
+      <div class="ssheet-section-label">Navegar</div>
+      <div class="ssheet-map-btns">
+        <a class="ssheet-map-btn" href="https://maps.apple.com/?address=${encodeURIComponent(fullAddr)}" target="_blank">
+          <div class="ssheet-map-icon" style="background:linear-gradient(135deg,#3478f6,#1c5acd)">A</div>Apple Maps
+        </a>
+        <a class="ssheet-map-btn" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullAddr)}" target="_blank">
+          <div class="ssheet-map-icon" style="background:linear-gradient(135deg,#4285f4,#34a853)">G</div>Google Maps
+        </a>
+        <a class="ssheet-map-btn" href="https://www.waze.com/ul?q=${encodeURIComponent(fullAddr)}&navigate=yes" target="_blank">
+          <div class="ssheet-map-icon" style="background:linear-gradient(135deg,#33ccff,#0099cc)">W</div>Waze
+        </a>
+      </div>
+    </div>
+  `;
+  document.getElementById('storeSheetOverlay').classList.add('show');
 }
 
 function openMapForUnit(unit) {
