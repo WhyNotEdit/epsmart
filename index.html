@@ -2788,23 +2788,10 @@ function applyPullForward() {
   ensureCycle(cycleStart);
   const cycle = STATE.cycleData[cycleId(cycleStart)];
 
-  // Validate target is empty (it must be a genuinely free night)
   const targetSlots = cycle.schedule[targetStr] || [];
-  if (targetSlots.length > 0) {
-    toast('El día destino ya tiene paradas — solo se puede usar un día verdaderamente libre', 'error');
-    return;
-  }
+  const targetHasStores = targetSlots.length > 0;
 
   // ── TRUE REVERSE CASCADE ──
-  // Collect all scheduled nights from sourceStr back to (but not including) targetStr.
-  // Each one shifts one day earlier. The source night's stores go to target.
-  // Example: target=Fri May 23, source=Mon May 26
-  //   → Mon May 26 moves to Fri May 23
-  //   → Tue May 27 moves to Mon May 26
-  //   → Wed May 28 moves to Tue May 27
-  //   → Thu May 29 moves to Wed May 28
-  //   → Thu May 29 becomes empty (last night shifts into the vacated slot)
-
   const cycleEnd = new Date(cycleStart); cycleEnd.setDate(cycleEnd.getDate() + CYCLE_LENGTH_DAYS - 1);
   const cycleEndKey = localDateKey(cycleEnd);
 
@@ -2821,15 +2808,23 @@ function applyPullForward() {
     return;
   }
 
+  const firstNightStores = (cycle.schedule[affectedDates[0]] || []).length;
+  const totalOnTarget = Math.min(STORES_PER_NIGHT, targetSlots.length + firstNightStores);
   const nightCount = affectedDates.length;
-  if (!confirm(
-    `¿Adelantar ${nightCount} noche(s) al ${formatDate(parseDate(targetStr), 'EEE d MMM')}?\n` +
-    `Las paradas de cada noche se mueven un día antes. La última noche queda vacía.`
-  )) return;
+
+  const targetDtLabel = formatDate(parseDate(targetStr), 'EEE d MMM');
+  let confirmMsg = `¿Adelantar paradas al ${targetDtLabel}?\n\n`;
+  confirmMsg += `Cada noche se llena hasta ${STORES_PER_NIGHT} paradas jalando del siguiente turno.\n`;
+  if (targetHasStores) {
+    confirmMsg += `\nEsa noche ya tiene ${targetSlots.length} → quedará con ${totalOnTarget} paradas.`;
+  }
+  confirmMsg += `\nLa última noche del ciclo quedará con el sobrante.`;
+
+  if (!confirm(confirmMsg)) return;
 
   // Snapshot ALL affected dates + target for undo
   cycle.pullShifts = cycle.pullShifts || [];
-  const snapshot = { [targetStr]: [] };
+  const snapshot = { [targetStr]: [...targetSlots] };
   affectedDates.forEach(d => { snapshot[d] = [...cycle.schedule[d]]; });
   cycle.pullShifts.push({
     targetDate: targetStr,
@@ -2838,28 +2833,59 @@ function applyPullForward() {
     snapshot,
   });
 
-  // Cascade forward: each night's stores move one day earlier
-  const destinations = [targetStr, ...affectedDates.slice(0, -1)];
-  affectedDates.forEach((fromDate, i) => {
-    const toDate = destinations[i];
-    cycle.schedule[toDate] = [...cycle.schedule[fromDate]];
-    // Only mark as bumped (purple ↻ MOVIDA) if landing on the FREE target date
-    // The rest just shift normally — no purple marker
-    if (toDate === targetStr) {
+  // ── FILL-TO-4 CASCADE ──
+  // Each night gets topped up to STORES_PER_NIGHT (4) by pulling from the next night.
+  // Whatever is left in the next night stays there, and it pulls from the night after, etc.
+  // The last night ends up with just the remainder (could be 1, 2, or 3).
+  //
+  // Example: tonight=1 store, Mon=4, Tue=4, Wed=4, Thu=4
+  //   Tonight: needs 3 more → takes first 3 from Mon → tonight=4, Mon now has [1]
+  //   Mon:     needs 3 more → takes first 3 from Tue → Mon=4, Tue now has [1]
+  //   Tue:     needs 3 more → takes first 3 from Wed → Tue=4, Wed now has [1]
+  //   Wed:     needs 3 more → takes first 3 from Thu → Wed=4, Thu now has [1]
+  //   Thu:     1 store left → Thu=1 (last night, that's fine)
+
+  // Build a working pool: start with target's existing stores, then all affected nights in order
+  // We process night by night, filling each to STORES_PER_NIGHT
+  const allNightDates = [targetStr, ...affectedDates];
+  // Flatten all slots into one ordered pool
+  let pool = [];
+  allNightDates.forEach(d => {
+    pool = pool.concat(cycle.schedule[d] || (d === targetStr ? targetSlots : []));
+  });
+
+  // Now redistribute: fill each night to STORES_PER_NIGHT, last night gets remainder
+  allNightDates.forEach((d, i) => {
+    const isLast = i === allNightDates.length - 1;
+    const take = isLast ? pool.length : Math.min(STORES_PER_NIGHT, pool.length);
+    const nightSlots = pool.splice(0, take);
+    cycle.schedule[d] = nightSlots;
+
+    // Mark stores landing on the TARGET date as bumped (purple ↻ MOVIDA)
+    // only if they weren't originally scheduled there
+    if (d === targetStr) {
       cycle.bumped = cycle.bumped || {};
-      cycle.schedule[fromDate].forEach(slot => {
+      nightSlots.forEach(slot => {
         const u = slotUnit(slot);
-        cycle.bumped[u] = {
-          originalDate: fromDate,
-          currentDate: toDate,
-          bumpedAt: new Date().toISOString(),
-          causedBy: 'pull',
-        };
+        // Only mark as bumped if this store wasn't already on the target date
+        if (!targetSlots.includes(slot)) {
+          cycle.bumped[u] = {
+            originalDate: sourceStr,
+            currentDate: targetStr,
+            bumpedAt: new Date().toISOString(),
+            causedBy: 'pull',
+          };
+        }
       });
     }
   });
-  // Last affected night becomes empty
-  cycle.schedule[affectedDates[affectedDates.length - 1]] = [];
+
+  // Any remaining pool items (shouldn't happen but safety net)
+  // drop into the last night
+  if (pool.length > 0) {
+    const lastD = allNightDates[allNightDates.length - 1];
+    cycle.schedule[lastD] = [...cycle.schedule[lastD], ...pool];
+  }
 
   toast(`⚡ ${nightCount} noche(s) adelantadas al ${formatDate(parseDate(targetStr), 'EEE d MMM')}`, 'success');
   addInboxNote({
