@@ -1114,6 +1114,75 @@ main{padding:14px var(--pad) 22px}
 .ssheet-map-btn{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 8px;border-radius:11px;background:var(--navy-2);border:1px solid var(--line-2);font-size:11px;color:var(--ink-2);text-decoration:none;font-weight:500;text-align:center;transition:all .15s}
 .ssheet-map-btn:active{background:var(--navy-1);color:white}
 .ssheet-map-icon{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;color:white;font-weight:700;font-size:15px;box-shadow:0 2px 8px rgba(0,0,0,0.3)}
+
+/* ═══ FORT MYERS ROUTE LIST ═══ */
+.route-header{
+  background:linear-gradient(180deg,var(--navy-1) 0%,var(--navy) 100%);
+  border:1px solid var(--line-2);border-radius:16px;
+  padding:16px;margin-bottom:14px;
+}
+.route-header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.route-title{font-size:16px;font-weight:600;color:white;letter-spacing:-0.01em}
+.route-sub{font-family:var(--font-mono);font-size:11px;color:var(--blue-bright);margin-top:3px;letter-spacing:0.06em}
+.route-anchor{font-size:11px;color:var(--ink-3);font-family:var(--font-mono);display:flex;align-items:center;gap:5px}
+.route-reset-btn{
+  padding:7px 12px;border-radius:8px;font-size:11px;font-weight:600;
+  background:rgba(255,71,87,0.08);color:#ff6b7a;border:1px solid rgba(255,71,87,0.25);
+  cursor:pointer;letter-spacing:0.04em;font-family:var(--font-body);
+}
+.route-reset-btn:active{background:rgba(255,71,87,0.15)}
+
+.route-row{
+  display:grid;grid-template-columns:28px 36px 1fr 44px;gap:8px;align-items:center;
+  padding:12px 4px;border-bottom:1px solid var(--line);
+  transition:background .15s;
+}
+.route-row:last-child{border-bottom:none}
+.route-row.checked{opacity:0.45}
+.route-row.anchor{background:rgba(0,168,255,0.04)}
+
+.route-row-num{
+  font-family:var(--font-mono);font-size:11px;color:var(--ink-3);
+  text-align:center;font-weight:600;
+}
+.route-check{
+  width:32px;height:32px;border-radius:8px;border:2px solid var(--line-2);
+  background:var(--navy-1);display:grid;place-items:center;
+  color:var(--signal);cursor:pointer;flex-shrink:0;transition:all .15s;
+}
+.route-row.checked .route-check{
+  background:linear-gradient(135deg,var(--signal),#00c48c);
+  border-color:var(--signal);
+  box-shadow:0 0 0 3px rgba(0,232,160,0.2);
+}
+.route-check:active{transform:scale(0.92)}
+
+.route-row-info{min-width:0}
+.route-row-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:2px}
+.route-unit{font-family:var(--font-mono);font-size:13px;font-weight:700;color:white}
+.route-miles{
+  font-family:var(--font-mono);font-size:11px;font-weight:600;
+  color:var(--blue-bright);background:rgba(0,168,255,0.1);
+  padding:2px 7px;border-radius:99px;border:1px solid rgba(0,168,255,0.2);
+  flex-shrink:0;
+}
+.route-addr{font-size:12px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.route-city{font-size:11px;color:var(--ink-3);margin-bottom:7px;font-family:var(--font-mono)}
+.route-tag-select{
+  width:100%;padding:6px 8px;border-radius:8px;font-size:11px;font-weight:500;
+  background:var(--navy-2);border:1px solid var(--line-2);color:var(--ink-2);
+  font-family:var(--font-body);cursor:pointer;
+  -webkit-appearance:none;appearance:none;
+}
+.route-tag-select:focus{outline:none;border-color:var(--blue-electric)}
+
+.route-gps-btn{
+  width:40px;height:40px;border-radius:12px;
+  background:linear-gradient(135deg,#5fd5ff 0%,var(--blue-electric) 50%,#0080d0 100%);
+  display:grid;place-items:center;color:white;flex-shrink:0;text-decoration:none;
+  box-shadow:0 3px 10px rgba(0,168,255,0.4);
+}
+.route-gps-btn:active{transform:scale(0.92)}
 </style>
 
 </head>
@@ -1208,25 +1277,20 @@ main{padding:14px var(--pad) 22px}
   </section>
 
   <section class="view" id="view-stores">
-    <div class="search-bar">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="color:var(--ink-3)"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-      <input type="text" id="storeSearch" placeholder="Buscar por número, dirección, RGM, ciudad..." oninput="renderStores()">
+    <div class="route-header">
+      <div class="route-header-top">
+        <div>
+          <div class="route-title">Ruta Fort Myers / Naples</div>
+          <div class="route-sub" id="routeProgress">0 / 20 completadas</div>
+        </div>
+        <button class="route-reset-btn" onclick="resetRouteProgress()">Reiniciar</button>
+      </div>
+      <div class="route-anchor">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 1 8 8c0 4.5-8 12-8 12s-8-7.5-8-12a8 8 0 0 1 8-8z"/></svg>
+        Distancias desde #42854 · 8835 Davis Blvd, Naples
+      </div>
     </div>
-    <div class="filter-chips" id="filterChips">
-      <button class="chip active" data-filter="all" onclick="setFilter(this)">Todas · <span id="cntAll">54</span></button>
-      <button class="chip" data-filter="route" onclick="setFilter(this)">En Ruta</button>
-      <button class="chip" data-filter="done" onclick="setFilter(this)">Listas · <span id="cntDone">0</span></button>
-      <button class="chip" data-filter="pending" onclick="setFilter(this)">Pendientes · <span id="cntPending">54</span></button>
-      <button class="chip" data-filter="A40201" onclick="setFilter(this)">Gonzalez · 7</button>
-      <button class="chip" data-filter="A40202" onclick="setFilter(this)">Juarez · 8</button>
-      <button class="chip" data-filter="A40204" onclick="setFilter(this)">Paulino · 8</button>
-      <button class="chip" data-filter="A40206" onclick="setFilter(this)">Cabrera · 7</button>
-      <button class="chip" data-filter="A40207" onclick="setFilter(this)">Sosa · 7</button>
-      <button class="chip" data-filter="A40208" onclick="setFilter(this)">Menjivar · 6</button>
-      <button class="chip" data-filter="A40209" onclick="setFilter(this)">Hernandez · 6</button>
-      <button class="chip" data-filter="A40210" onclick="setFilter(this)">Silvera · 6</button>
-    </div>
-    <div id="storesList"></div>
+    <div id="routeList"></div>
   </section>
 
   <section class="view active" id="view-gps">
@@ -1650,6 +1714,117 @@ const ALL_LOCATABLE_STORES = (() => {
   return out;
 })();
 
+
+// ── FORT MYERS / NAPLES ROUTE ──
+// Ordered by distance from anchor store 42854 (8835 Davis Blvd, Naples)
+// Positions 1-2 are already-visited stores, position 3 is the anchor
+const FORT_MYERS_ROUTE = [
+  { unit:"42848", addr:"11 Hancock Bridge Pkwy West", city:"Cape Coral",        miles:null,  note:"Visited 1st" },
+  { unit:"42846", addr:"2424 Pine Ridge Road",         city:"Naples",            miles:null,  note:"Visited 2nd" },
+  { unit:"42854", addr:"8835 Davis Blvd",              city:"Naples",            miles:0,     note:"Anchor" },
+  { unit:"42859", addr:"4201 Tamiami Trail",           city:"Naples",            miles:1.5   },
+  { unit:"42858", addr:"9000 Sage Ave",                city:"Naples",            miles:3.3   },
+  { unit:"42857", addr:"2482 Immokalee Rd",            city:"Naples",            miles:9.5   },
+  { unit:"42851", addr:"28370 Trails Edge Blvd",       city:"Bonita Springs",    miles:13.7  },
+  { unit:"42850", addr:"11290 Summerlin Square Dr",    city:"Fort Myers Beach",  miles:22.8  },
+  { unit:"42844", addr:"9400 Daniels Pkwy",            city:"Fort Myers",        miles:26.1  },
+  { unit:"42856", addr:"17460 Ben Hill Griffin Pkwy",  city:"Fort Myers",        miles:27.8  },
+  { unit:"42855", addr:"8389 Dani Drive",              city:"Fort Myers",        miles:28.6  },
+  { unit:"42853", addr:"12851 S Cleveland Ave",        city:"Fort Myers",        miles:30.5  },
+  { unit:"42841", addr:"1616 Del Prado Blvd S",        city:"Cape Coral",        miles:30.9  },
+  { unit:"42852", addr:"2714 Lee Blvd",                city:"Lehigh Acres",      miles:33.8  },
+  { unit:"42842", addr:"3431 Cleveland Ave",           city:"Fort Myers",        miles:34.0  },
+  { unit:"42849", addr:"4860 Palm Beach Blvd",         city:"Fort Myers",        miles:35.2  },
+  { unit:"42847", addr:"14041 N Cleveland Ave",        city:"North Fort Myers",  miles:39.9  },
+  { unit:"42845", addr:"50 North Lee Street",          city:"La Belle",          miles:48.4  },
+  { unit:"42843", addr:"1001 Kings Hwy",               city:"Port Charlotte",    miles:59.9  },
+  { unit:"42860", addr:"1710 Tamiami Trail",           city:"Port Charlotte",    miles:60.8  },
+];
+
+// Route state helpers
+function getRouteState() {
+  const cid = 'fm_route_v1';
+  if (!STATE.cycleData[cid]) STATE.cycleData[cid] = { checked: {}, routeTag: {} };
+  return STATE.cycleData[cid];
+}
+
+function toggleRouteCheck(unit) {
+  const rs = getRouteState();
+  rs.checked[unit] = !rs.checked[unit];
+  renderRouteList();
+  updateRouteProgress();
+  pushAction('replace', { cycleData: STATE.cycleData }).catch(()=>{});
+}
+
+function setRouteTag(unit, val) {
+  const rs = getRouteState();
+  rs.routeTag[unit] = val;
+  pushAction('replace', { cycleData: STATE.cycleData }).catch(()=>{});
+}
+
+function resetRouteProgress() {
+  if (!confirm('¿Reiniciar todas las marcas y etiquetas de esta ruta?')) return;
+  STATE.cycleData['fm_route_v1'] = { checked: {}, routeTag: {} };
+  renderRouteList();
+  updateRouteProgress();
+  pushAction('replace', { cycleData: STATE.cycleData }).catch(()=>{});
+  toast('Ruta reiniciada');
+}
+
+function updateRouteProgress() {
+  const rs = getRouteState();
+  const done = Object.values(rs.checked).filter(Boolean).length;
+  const el = document.getElementById('routeProgress');
+  if (el) el.textContent = `${done} / ${FORT_MYERS_ROUTE.length} completadas`;
+}
+
+function renderRouteList() {
+  const list = document.getElementById('routeList');
+  if (!list) return;
+  const rs = getRouteState();
+  let h = '';
+  FORT_MYERS_ROUTE.forEach((s, i) => {
+    const checked = !!rs.checked[s.unit];
+    const tag = rs.routeTag[s.unit] || '';
+    const isAnchor = s.unit === '42854';
+    const isVisited = s.note && s.note.startsWith('Visited');
+    const milesLabel = s.miles === null ? '—' : s.miles === 0 ? 'Aquí' : s.miles.toFixed(1) + ' mi';
+    const rowCls = checked ? 'route-row checked' : (isAnchor ? 'route-row anchor' : 'route-row');
+    const fullAddr = `${s.addr}, ${s.city}, FL`;
+    const enc = encodeURIComponent(fullAddr);
+
+    h += `<div class="${rowCls}">
+      <div class="route-row-num">${i + 1}</div>
+      <button class="route-check" onclick="toggleRouteCheck('${s.unit}')" aria-label="Marcar">
+        ${checked
+          ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`
+          : ''}
+      </button>
+      <div class="route-row-info">
+        <div class="route-row-top">
+          <span class="route-unit">#${s.unit}</span>
+          <span class="route-miles">${milesLabel}</span>
+        </div>
+        <div class="route-addr">${s.addr}</div>
+        <div class="route-city">${s.city}, FL</div>
+        <select class="route-tag-select" onchange="setRouteTag('${s.unit}', this.value)">
+          <option value="" ${!tag ? 'selected' : ''}>— Tipo de ruta —</option>
+          <option value="small"  ${tag==='small'  ? 'selected' : ''}>🟢 Pequeña</option>
+          <option value="medium" ${tag==='medium' ? 'selected' : ''}>🟡 Mediana</option>
+          <option value="large"  ${tag==='large'  ? 'selected' : ''}>🔴 Grande</option>
+        </select>
+      </div>
+      <a class="route-gps-btn" href="https://www.google.com/maps/search/?api=1&query=${enc}" target="_blank" aria-label="GPS">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 1 8 8c0 4.5-8 12-8 12s-8-7.5-8-12a8 8 0 0 1 8-8z"/></svg>
+      </a>
+    </div>`;
+  });
+  list.innerHTML = h;
+  updateRouteProgress();
+}
+
+// Sync fm_route_v1 state from KV pull
+// (handled by existing pullState replace logic since we use STATE.cycleData)
 
 // Cycle anchor: Wed May 20, 2026 — every 4 weeks (28 days)
 const CYCLE_ANCHOR = new Date(2026, 4, 20); // Month is 0-indexed: 4=May
@@ -2093,7 +2268,7 @@ function switchView(v) {
   document.querySelectorAll('.botnav-btn').forEach(el => el.classList.toggle('active', el.dataset.view === v));
   document.querySelectorAll('.botnav-fab').forEach(el => el.classList.toggle('active', el.dataset.view === v));
   if (v === 'cal') renderCalendar();
-  if (v === 'stores') renderStores();
+  if (v === 'stores') renderRouteList();
   if (v === 'gps') {
     renderGpsResults();
     setTimeout(() => { const inp = document.getElementById('gpsSearch'); if (inp) inp.focus(); }, 350);
@@ -2109,7 +2284,7 @@ function renderAll() {
   renderWeatherShifts();
   renderPullShifts();
   if (STATE.currentView === 'cal') renderCalendar();
-  if (STATE.currentView === 'stores') renderStores();
+  if (STATE.currentView === 'stores') renderRouteList();
 }
 
 function renderHero() {
