@@ -1183,6 +1183,8 @@ main{padding:14px var(--pad) 22px}
   box-shadow:0 3px 10px rgba(0,168,255,0.4);
 }
 .route-gps-btn:active{transform:scale(0.92)}
+
+.gps-result-tag.wendys{background:rgba(255,59,59,0.12);color:#ff6b6b;border:1px solid rgba(255,59,59,0.35)}
 </style>
 
 </head>
@@ -1383,6 +1385,26 @@ main{padding:14px var(--pad) 22px}
         </div>
         <button class="btn btn-primary btn-full" onclick="applyWeatherShift()">🌧️ Posponer 1 Día</button>
         <div id="weatherShiftsList"></div>
+      </div>
+
+      <div class="mgmt-section">
+        <h4>🍔 Wendy's — Agregar al Ciclo</h4>
+        <p style="font-size:12px;color:var(--ink-3);margin-bottom:14px;line-height:1.5">Estas tiendas se hacen esporádicamente. Al agregarlas, busca automáticamente la próxima noche con 2 o menos paradas y las pone ahí.</p>
+        <div id="wendysSlotInfo" style="font-size:12px;color:var(--blue-bright);font-family:var(--font-mono);margin-bottom:12px;min-height:16px"></div>
+        <div class="btn-row" style="flex-direction:column;gap:8px">
+          <button class="btn btn-secondary" style="width:100%;justify-content:flex-start;gap:10px;padding:12px 14px" onclick="addWendysToCycle('Luar')">
+            <span style="font-family:var(--font-mono);color:white;font-weight:700">Luar</span>
+            <span style="color:var(--ink-2);font-size:12px">18880 S Dixie Hwy, Miami</span>
+          </button>
+          <button class="btn btn-secondary" style="width:100%;justify-content:flex-start;gap:10px;padding:12px 14px" onclick="addWendysToCycle('Wenram')">
+            <span style="font-family:var(--font-mono);color:white;font-weight:700">Wenram</span>
+            <span style="color:var(--ink-2);font-size:12px">20975 S Dixie Hwy, Miami</span>
+          </button>
+          <button class="btn btn-secondary" style="width:100%;justify-content:center;gap:10px;padding:12px 14px" onclick="addWendysToCycle('both')">
+            <span style="color:var(--blue-bright);font-weight:600">⚡ Agregar Ambas</span>
+          </button>
+        </div>
+        <div id="wendysCycleStatus" style="margin-top:10px"></div>
       </div>
 
       <div class="mgmt-section">
@@ -1699,6 +1721,12 @@ const AREA_MANAGERS = {
   'A40404': { name: 'Astride Alexis',       phone: '',  email: 'astride.alexis@yum.com' },
 };
 
+// ── WENDY'S STORES (GPS-only) ──
+const WENDYS_STORES = [
+  { unit:"Luar",   brand:"Wendys", dma:"", rgm:"", addr:"18880 South Dixie Hwy", city:"Miami", state:"FL", zip:"33157", phone:"" },
+  { unit:"Wenram", brand:"Wendys", dma:"", rgm:"", addr:"20975 South Dixie Hwy", city:"Miami", state:"FL", zip:"33189", phone:"" },
+];
+
 // Stores that exist in the cycle database but are EXCLUDED from the pressure-wash cycle.
 // Reasons: closed location, contract change, ownership change, etc.
 // These still appear in the GPS search feature.
@@ -1709,6 +1737,7 @@ const CYCLE_EXCLUSIONS = new Set(['41779']);
 const ALL_LOCATABLE_STORES = (() => {
   const seen = new Set();
   const out = [];
+  WENDYS_STORES.forEach(s => { if (!seen.has(s.unit)) { seen.add(s.unit); out.push(s); } });
   GPS_STORES.forEach(s => { if (!seen.has(s.unit)) { seen.add(s.unit); out.push(s); } });
   STORES.forEach(s => { if (!seen.has(s.unit)) { seen.add(s.unit); out.push(s); } });
   return out;
@@ -2162,19 +2191,27 @@ function ensureCycle(cycleStart) {
 function renderGpsResults() {
   const inp = document.getElementById('gpsSearch');
   if (!inp) return;
-  const q = (inp.value || '').replace(/\D/g, '');
-  if (q !== inp.value) inp.value = q;
+  const raw = inp.value || '';
+  const isText = /[a-zA-Z]/.test(raw);
+  const q = isText ? raw.toLowerCase().trim() : raw.replace(/\D/g, '');
+  if (!isText && q !== raw) inp.value = q;
   const clearBtn = document.getElementById('gpsClear');
-  if (clearBtn) clearBtn.classList.toggle('show', q.length > 0);
+  if (clearBtn) clearBtn.classList.toggle('show', raw.length > 0);
   const list = document.getElementById('gpsResults');
   if (!list) return;
-  if (q.length === 0) {
-    list.innerHTML = `<div class="gps-empty"><div class="gps-empty-icon">🔢</div><h3>Escribe el número de tienda</h3><p>Ej: 42897, 4642, 19579...<br>Aparecerán todas las tiendas que coincidan.</p></div>`;
+  if (raw.length === 0) {
+    list.innerHTML = `<div class="gps-empty"><div class="gps-empty-icon">🔢</div><h3>Escribe el número de tienda</h3><p>Ej: 42897, 4642, 19579...<br>O escribe "Wendys" para buscar Wendy's.</p></div>`;
     return;
   }
-  const matches = ALL_LOCATABLE_STORES.filter(s => s.unit.includes(q));
+  const matches = ALL_LOCATABLE_STORES.filter(s => {
+    if (isText) {
+      const blob = (s.unit + ' ' + (s.brand||'') + ' ' + s.addr + ' ' + s.city).toLowerCase();
+      return blob.includes(q);
+    }
+    return s.unit.includes(q);
+  });
   if (matches.length === 0) {
-    list.innerHTML = `<div class="gps-empty"><div class="gps-empty-icon">🔍</div><h3>Sin resultados</h3><p>No se encontró ninguna tienda con ese número.</p></div>`;
+    list.innerHTML = `<div class="gps-empty"><div class="gps-empty-icon">🔍</div><h3>Sin resultados</h3><p>No se encontró ninguna tienda.</p></div>`;
     return;
   }
   matches.sort((a, b) => {
@@ -2184,17 +2221,18 @@ function renderGpsResults() {
     return a.unit.localeCompare(b.unit);
   });
   const capped = matches.slice(0, 20);
-  let html = '';
+  let h = '';
   capped.forEach(s => {
-    const isGpsOnly = GPS_STORES.some(g => g.unit === s.unit);
-    const tagClass = isGpsOnly ? 'gps-only' : 'cycle';
-    const tagText = isGpsOnly ? 'GPS' : 'CICLO';
-    html += `<div class="gps-result-card" onclick="openStoreSheet('${s.unit}')">
+    const isWendys = s.brand === 'Wendys';
+    const isGpsOnly = !isWendys && GPS_STORES.some(g => g.unit === s.unit);
+    const tagClass = isWendys ? 'wendys' : (isGpsOnly ? 'gps-only' : 'cycle');
+    const tagText = isWendys ? "🍔 Wendy's" : (isGpsOnly ? 'GPS' : 'CICLO');
+    h += `<div class="gps-result-card" onclick="openStoreSheet('${s.unit}')">
       <div class="gps-result-unit">${s.unit}</div>
       <div class="gps-result-info">
         <div class="gps-result-addr">${s.addr}</div>
         <div class="gps-result-meta">${s.city}, ${s.state} ${s.zip || ''}</div>
-        <span class="gps-result-tag ${tagClass}">${tagText}${s.dma ? ' · ' + s.dma : ''}</span>
+        <span class="gps-result-tag ${tagClass}">${tagText}${!isWendys && s.dma ? ' · ' + s.dma : ''}</span>
       </div>
       <div class="gps-result-go" aria-label="Ver detalles">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg>
@@ -2202,9 +2240,9 @@ function renderGpsResults() {
     </div>`;
   });
   if (matches.length > 20) {
-    html += `<div class="gps-empty" style="padding:20px"><p>+${matches.length - 20} más resultados. Escribe más dígitos para refinar.</p></div>`;
+    h += `<div class="gps-empty" style="padding:20px"><p>+${matches.length - 20} más resultados.</p></div>`;
   }
-  list.innerHTML = html;
+  list.innerHTML = h;
 }
 
 function clearGpsSearch() {
@@ -2945,6 +2983,81 @@ function renderWeatherShifts() {
   h += '</div>';
   wrap.innerHTML = h;
 }
+
+// ─── WENDY'S CYCLE INSERTION ──────────────────────────────────────────────────
+function addWendysToCycle(which) {
+  const cycle = STATE.cycleData[cycleId(STATE.currentCycleStart)];
+  if (!cycle) { toast('No hay ciclo activo', 'error'); return; }
+
+  const toAdd = which === 'both'
+    ? ['Luar', 'Wenram']
+    : [which];
+
+  // Check which are already in the cycle
+  const alreadyIn = toAdd.filter(u =>
+    Object.values(cycle.schedule).some(slots => slots.includes(u))
+  );
+  if (alreadyIn.length > 0) {
+    const status = document.getElementById('wendysCycleStatus');
+    if (status) status.innerHTML = alreadyIn.map(u =>
+      `<div style="font-size:12px;color:#fbbf24;font-family:var(--font-mono);margin-top:4px">⚠ ${u} ya está en el ciclo</div>`
+    ).join('');
+    if (alreadyIn.length === toAdd.length) return;
+  }
+
+  const toInsert = toAdd.filter(u => !alreadyIn.includes(u));
+
+  // Find nights with 2 or fewer stores, from today onward, sorted earliest first
+  const cycleEnd = new Date(STATE.currentCycleStart);
+  cycleEnd.setDate(cycleEnd.getDate() + CYCLE_LENGTH_DAYS - 1);
+  const cycleEndKey = localDateKey(cycleEnd);
+
+  const availableNights = Object.keys(cycle.schedule)
+    .filter(d => d >= STATE.todayKey && d <= cycleEndKey)
+    .filter(d => (cycle.schedule[d] || []).length <= 2)
+    .sort();
+
+  if (availableNights.length < toInsert.length) {
+    toast('No hay suficientes noches con espacio disponible', 'error');
+    return;
+  }
+
+  // Insert each store into the earliest available night
+  const placements = [];
+  const usedNights = new Set();
+  for (const u of toInsert) {
+    const night = availableNights.find(d => !usedNights.has(d));
+    if (!night) { toast('No hay espacio para todas las tiendas', 'error'); return; }
+    cycle.schedule[night] = [...(cycle.schedule[night] || []), u];
+    placements.push({ unit: u, night });
+    // If night now has 3+ stores, don't reuse it for the next store
+    if (cycle.schedule[night].length >= 3) usedNights.add(night);
+  }
+
+  // Show result
+  const statusEl = document.getElementById('wendysCycleStatus');
+  if (statusEl) {
+    statusEl.innerHTML = placements.map(p =>
+      `<div style="font-size:12px;color:var(--signal);font-family:var(--font-mono);margin-top:6px">
+        ✓ ${p.unit} → ${formatDate(parseDate(p.night), 'EEE d MMM')} (${cycle.schedule[p.night].length} paradas esa noche)
+      </div>`
+    ).join('');
+  }
+
+  const names = placements.map(p => p.unit).join(' y ');
+  toast(`✓ ${names} agregada(s) al ciclo`, 'success');
+  addInboxNote({
+    type: 'emergency',
+    unit: toInsert[0],
+    date: placements[0].night,
+    notes: `Wendy's agregada(s) al ciclo: ${placements.map(p => p.unit + ' → ' + formatDate(parseDate(p.night), 'd MMM')).join(', ')}`,
+  });
+
+  renderAll();
+  renderInboxBadge();
+  pushAction('replace', { cycleData: STATE.cycleData }).catch(()=>{});
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 // ─── PULL FORWARD (Noche Extra) ───────────────────────────────────────────────
 // Auto-fill the source field with the next scheduled night after the target date
