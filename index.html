@@ -2010,7 +2010,7 @@ function nightMiles(slots) {
   const points = [{lat: HQ_LAT, lng: HQ_LNG}];
   slots.forEach(slot => {
     const u = slotUnit(slot);
-    const s = STORES.find(x => x.unit === u);
+    const s = findStore(u);
     if (s && s.lat && s.lng) points.push({lat: s.lat, lng: s.lng});
   });
   points.push({lat: HQ_LAT, lng: HQ_LNG});
@@ -2100,6 +2100,14 @@ function renderMileageStats() {
 
 // Slot helpers — a "slot" is the schedule entry. Usually it's just the unit string,
 // but for re-do scenarios it's "unit::date" so the same store can appear twice.
+// Find a store across ALL databases (Taco Bell, GPS-only, Wendy's)
+function findStore(unit) {
+  return STORES.find(s => s.unit === unit)
+      || GPS_STORES.find(s => s.unit === unit)
+      || WENDYS_STORES.find(s => s.unit === unit)
+      || null;
+}
+
 function slotUnit(slot) {
   if (!slot) return slot;
   const i = slot.indexOf('::');
@@ -2252,7 +2260,7 @@ function clearGpsSearch() {
 }
 
 function openStoreSheet(unit) {
-  const store = ALL_LOCATABLE_STORES.find(s => s.unit === unit);
+  const store = ALL_LOCATABLE_findStore(unit);
   if (!store) return;
 
   const am = AREA_MANAGERS[store.dma] || {};
@@ -2288,7 +2296,7 @@ function openStoreSheet(unit) {
 }
 
 function openMapForUnit(unit) {
-  const store = ALL_LOCATABLE_STORES.find(s => s.unit === unit);
+  const store = ALL_LOCATABLE_findStore(unit);
   if (!store) { toast('Tienda no encontrada', 'error'); return; }
   const fullAddr = `${store.addr}, ${store.city}, ${store.state} ${store.zip || ''}`.trim();
   const enc = encodeURIComponent(fullAddr);
@@ -2350,7 +2358,7 @@ function renderHero() {
 
 function estimateMiles() {
   const cycle = STATE.cycleData[cycleId(STATE.currentCycleStart)];
-  const route = cycle.route.map(unit => STORES.find(s => s.unit === unit)).filter(Boolean);
+  const route = cycle.route.map(unit => findStore(unit)).filter(Boolean);
   let total = 0;
   let prev = HQ;
   for (const s of route) { total += dist(prev, s); prev = s; }
@@ -2422,18 +2430,19 @@ function renderTonight() {
   targetStores.forEach((slot) => {
     const unit = slotUnit(slot);
     const isRedo = slotIsRedo(slot);
-    const store = STORES.find(s => s.unit === unit);
+    const store = findStore(unit);
     if (!store) return;
     const isDone = !!cycle.completions[slot];
     const isEmerg = !!cycle.emergencies[slot] || !!cycle.emergencies[unit];
     const isBumped = !!(cycle.bumped && cycle.bumped[unit]);
     const seq = cycle.route.indexOf(unit) + 1;
+    const nodeLabel = seq || (store.brand === 'Wendys' ? 'W' : '?');
     // For looking up emergency notes, check both slot-keyed and unit-keyed entries
     const emergRecord = cycle.emergencies[slot] || cycle.emergencies[unit];
 
     html += `
       <li class="stop ${isDone ? 'complete' : ''} ${isEmerg ? 'emergency' : ''} ${isBumped && !isEmerg ? 'bumped' : ''}" onclick="openStore('${slot}','${targetKey}')">
-        <div class="stop-node">${seq}</div>
+        <div class="stop-node">${nodeLabel}</div>
         <div class="stop-info">
           <div class="stop-no">${store.unit} · ${store.dma}${isEmerg ? ' <span class="emerg-badge">⚡ URGENCIA</span>' : ''}${isBumped && !isEmerg ? ' <span class="bumped-badge">↻ MOVIDA</span>' : ''}${isRedo ? ' <span class="redo-badge">🔁 REPETIR</span>' : ''}</div>
           <div class="stop-name">${store.addr}</div>
@@ -2483,7 +2492,7 @@ function renderUpcoming() {
         <div class="upcoming-stores">
           ${stores.map(slot => {
             const u = slotUnit(slot);
-            const s = STORES.find(x => x.unit === u);
+            const s = findStore(u);
             const done = cycle.completions[slot];
             const emerg = cycle.emergencies[slot] || cycle.emergencies[u];
             const bumped = cycle.bumped && cycle.bumped[u];
@@ -2554,6 +2563,7 @@ function renderCalendar() {
         const isBumped = !!(dayCycle.bumped && dayCycle.bumped[u]);
         const isRedo = slotIsRedo(slot);
         const seq = (dayCycle.route || []).indexOf(u) + 1;
+        const tileLabel = seq || (u.length <= 6 ? u : u.slice(-4));
         const tcls = ['cal-tile'];
         if (isDone) tcls.push('done');
         else if (isPast) tcls.push('overdue');
@@ -2561,7 +2571,7 @@ function renderCalendar() {
         if (isEmerg) tcls.push('emerg');
         else if (isRedo) tcls.push('redo');
         else if (isBumped) tcls.push('bumped');
-        tiles += `<div class="${tcls.join(' ')}">${seq || ''}</div>`;
+        tiles += `<div class="${tcls.join(' ')}">${tileLabel}</div>`;
       });
       tiles += '</div>';
     }
@@ -2693,7 +2703,7 @@ function renderStores() {
 
 function openStore(slot, dk) {
   const unit = slotUnit(slot);
-  const store = STORES.find(s => s.unit === unit);
+  const store = findStore(unit);
   if (!store) return;
   const cycle = STATE.cycleData[cycleId(STATE.currentCycleStart)];
   const completion = cycle.completions[slot];
@@ -2805,7 +2815,7 @@ function saveStoreNote(slot, dk) {
 }
 
 function openMap(unit) {
-  const store = STORES.find(s => s.unit === unit);
+  const store = findStore(unit);
   if (!store) return;
   const fullAddr = `${store.addr}, ${store.city}, ${store.state} ${store.zip}`;
   const enc = encodeURIComponent(fullAddr);
@@ -2841,7 +2851,7 @@ function renderActiveEmergencies() {
   let h = '<div class="emerg-active-list"><div class="emerg-active-head">⚡ Urgencias activas (' + items.length + ')</div>';
   items.forEach(([key, e]) => {
     const u = slotUnit(key);
-    const s = STORES.find(x => x.unit === u);
+    const s = findStore(u);
     const newDt = parseDate(e.newDate);
     const tagText = e.isRedo ? '🔁 Repetir' : '⚡ Mover';
     h += `
