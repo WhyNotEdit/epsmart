@@ -3075,17 +3075,21 @@ function applyWendysInsert() {
   affectedDates.forEach(d => { snapshot[d] = [...cycle.schedule[d]]; });
 
   // Build pool: Wendy's stores first, then all existing stores from dateStr onward
-  // Redistribute filling to STORES_PER_NIGHT, last night gets remainder
   let pool = [...toInsert];
   affectedDates.forEach(d => { pool = pool.concat(cycle.schedule[d]); });
 
-  // All nights that will be used: dateStr + all affected nights + potentially new overflow nights
-  const nightDates = [dateStr, ...affectedDates.filter(d => d !== dateStr)];
+  // All nights available from dateStr to end of cycle — includes empty buffer nights
+  // We need to count ALL nights (occupied or empty) so the overflow check is correct
+  const allNightsInRange = allDates.filter(d => d >= dateStr && d <= cycleEndKey);
+  // If dateStr itself isn't in the schedule yet (truly free day), add it
+  const nightDates = allNightsInRange.includes(dateStr)
+    ? allNightsInRange
+    : [dateStr, ...allNightsInRange];
 
-  // Check if pool overflows all available nights — if so, check buffer dates
+  // Check if pool overflows all available nights
   const totalSlots = nightDates.length * STORES_PER_NIGHT;
   if (pool.length > totalSlots) {
-    toast('No hay suficiente espacio en el ciclo para todos las paradas', 'error');
+    toast(`No hay suficiente espacio — necesitas ${pool.length} slots pero solo hay ${totalSlots} disponibles`, 'error');
     return;
   }
 
