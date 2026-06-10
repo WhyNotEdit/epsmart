@@ -1306,8 +1306,8 @@ main{padding:14px var(--pad) 22px}
     <div class="gps-search">
       <div class="gps-input-wrap">
         <span class="gps-input-prefix">#</span>
-        <input type="tel" inputmode="numeric" pattern="[0-9]*" autocomplete="off" autocorrect="off" spellcheck="false"
-               id="gpsSearch" placeholder="42897" oninput="renderGpsResults()" maxlength="6">
+        <input type="text" inputmode="text" autocomplete="off" autocorrect="off" spellcheck="false"
+               id="gpsSearch" placeholder="42897 o Wendys..." oninput="renderGpsResults()">
         <button class="gps-clear" id="gpsClear" onclick="clearGpsSearch()" aria-label="Limpiar">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
         </button>
@@ -1389,21 +1389,28 @@ main{padding:14px var(--pad) 22px}
 
       <div class="mgmt-section">
         <h4>🍔 Wendy's — Agregar al Ciclo</h4>
-        <p style="font-size:12px;color:var(--ink-3);margin-bottom:14px;line-height:1.5">Estas tiendas se hacen esporádicamente. Al agregarlas, busca automáticamente la próxima noche con 2 o menos paradas y las pone ahí.</p>
-        <div id="wendysSlotInfo" style="font-size:12px;color:var(--blue-bright);font-family:var(--font-mono);margin-bottom:12px;min-height:16px"></div>
-        <div class="btn-row" style="flex-direction:column;gap:8px">
-          <button class="btn btn-secondary" style="width:100%;justify-content:flex-start;gap:10px;padding:12px 14px" onclick="addWendysToCycle('Luar')">
-            <span style="font-family:var(--font-mono);color:white;font-weight:700">Luar</span>
-            <span style="color:var(--ink-2);font-size:12px">18880 S Dixie Hwy, Miami</span>
-          </button>
-          <button class="btn btn-secondary" style="width:100%;justify-content:flex-start;gap:10px;padding:12px 14px" onclick="addWendysToCycle('Wenram')">
-            <span style="font-family:var(--font-mono);color:white;font-weight:700">Wenram</span>
-            <span style="color:var(--ink-2);font-size:12px">20975 S Dixie Hwy, Miami</span>
-          </button>
-          <button class="btn btn-secondary" style="width:100%;justify-content:center;gap:10px;padding:12px 14px" onclick="addWendysToCycle('both')">
-            <span style="color:var(--blue-bright);font-weight:600">⚡ Agregar Ambas</span>
-          </button>
+        <p style="font-size:12px;color:var(--ink-3);margin-bottom:14px;line-height:1.5">Elige la noche donde quieres ponerlas. Si esa noche ya tiene 4 paradas, las dos que salen se empujan hacia adelante en cascada (waterfall).</p>
+        <div class="field">
+          <label>Noche destino</label>
+          <input type="date" id="wendysDate" oninput="previewWendysPlacement()">
+          <div id="wendysPreview" style="font-size:11px;color:var(--blue-bright);font-family:var(--font-mono);margin-top:6px;min-height:16px;line-height:1.6"></div>
         </div>
+        <div class="field" style="margin-bottom:0">
+          <label>¿Cuál(es) agregar?</label>
+          <div style="display:flex;flex-direction:column;gap:6px;margin-top:6px">
+            <label style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--navy-2);border:1px solid var(--line-2);border-radius:10px;cursor:pointer">
+              <input type="checkbox" id="wendysLuar" value="Luar" style="width:16px;height:16px;accent-color:var(--blue-bright)">
+              <span style="font-family:var(--font-mono);font-weight:700;color:white">Luar</span>
+              <span style="color:var(--ink-2);font-size:11px">18880 S Dixie Hwy</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--navy-2);border:1px solid var(--line-2);border-radius:10px;cursor:pointer">
+              <input type="checkbox" id="wendysWenram" value="Wenram" style="width:16px;height:16px;accent-color:var(--blue-bright)">
+              <span style="font-family:var(--font-mono);font-weight:700;color:white">Wenram</span>
+              <span style="color:var(--ink-2);font-size:11px">20975 S Dixie Hwy</span>
+            </label>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-full" style="margin-top:14px" onclick="applyWendysInsert()">🍔 Insertar al Ciclo</button>
         <div id="wendysCycleStatus" style="margin-top:10px"></div>
       </div>
 
@@ -2260,7 +2267,7 @@ function clearGpsSearch() {
 }
 
 function openStoreSheet(unit) {
-  const store = ALL_LOCATABLE_findStore(unit);
+  const store = findStore(unit);
   if (!store) return;
 
   const am = AREA_MANAGERS[store.dma] || {};
@@ -2296,7 +2303,7 @@ function openStoreSheet(unit) {
 }
 
 function openMapForUnit(unit) {
-  const store = ALL_LOCATABLE_findStore(unit);
+  const store = findStore(unit);
   if (!store) { toast('Tienda no encontrada', 'error'); return; }
   const fullAddr = `${store.addr}, ${store.city}, ${store.state} ${store.zip || ''}`.trim();
   const enc = encodeURIComponent(fullAddr);
@@ -2995,75 +3002,150 @@ function renderWeatherShifts() {
 }
 
 // ─── WENDY'S CYCLE INSERTION ──────────────────────────────────────────────────
-function addWendysToCycle(which) {
+function previewWendysPlacement() {
+  const dateStr = document.getElementById('wendysDate').value;
+  const preview = document.getElementById('wendysPreview');
+  if (!dateStr || !preview) return;
+
   const cycle = STATE.cycleData[cycleId(STATE.currentCycleStart)];
-  if (!cycle) { toast('No hay ciclo activo', 'error'); return; }
+  if (!cycle) { preview.textContent = ''; return; }
 
-  const toAdd = which === 'both'
-    ? ['Luar', 'Wenram']
-    : [which];
+  const existing = cycle.schedule[dateStr] || [];
+  const dt = parseDate(dateStr);
+  const dayName = formatDate(dt, 'EEE d MMM');
 
-  // Check which are already in the cycle
-  const alreadyIn = toAdd.filter(u =>
+  if (existing.length === 0) {
+    preview.textContent = `${dayName} está libre — se pueden poner hasta 4 paradas`;
+  } else if (existing.length < 4) {
+    const space = 4 - existing.length;
+    preview.textContent = `${dayName} tiene ${existing.length} parada(s) — hay espacio para ${space} más`;
+  } else {
+    // Find how many nights would cascade
+    const cycleEnd = new Date(STATE.currentCycleStart);
+    cycleEnd.setDate(cycleEnd.getDate() + CYCLE_LENGTH_DAYS - 1);
+    const cycleEndKey = localDateKey(cycleEnd);
+    const allDates = Object.keys(cycle.schedule).sort();
+    const affected = allDates.filter(d =>
+      d >= dateStr && d <= cycleEndKey && (cycle.schedule[d] || []).length > 0
+    );
+    preview.textContent = `${dayName} llena (4) — ${affected.length} noche(s) se moverán en cascada hacia adelante`;
+  }
+}
+
+function applyWendysInsert() {
+  const dateStr = document.getElementById('wendysDate').value;
+  const luarCk = document.getElementById('wendysLuar').checked;
+  const wenramCk = document.getElementById('wendysWenram').checked;
+  const statusEl = document.getElementById('wendysCycleStatus');
+
+  if (!dateStr) { toast('Elige una fecha destino', 'error'); return; }
+  if (!luarCk && !wenramCk) { toast('Selecciona al menos una tienda', 'error'); return; }
+
+  const toInsert = [];
+  if (luarCk) toInsert.push('Luar');
+  if (wenramCk) toInsert.push('Wenram');
+
+  const cycleStart = getCycleStart(parseDate(dateStr));
+  ensureCycle(cycleStart);
+  const cycle = STATE.cycleData[cycleId(cycleStart)];
+
+  // Check already in cycle
+  const alreadyIn = toInsert.filter(u =>
     Object.values(cycle.schedule).some(slots => slots.includes(u))
   );
   if (alreadyIn.length > 0) {
-    const status = document.getElementById('wendysCycleStatus');
-    if (status) status.innerHTML = alreadyIn.map(u =>
-      `<div style="font-size:12px;color:#fbbf24;font-family:var(--font-mono);margin-top:4px">⚠ ${u} ya está en el ciclo</div>`
+    if (statusEl) statusEl.innerHTML = alreadyIn.map(u =>
+      `<div style="font-size:12px;color:#fbbf24;font-family:var(--font-mono);margin-top:4px">⚠ ${u} ya está en el ciclo — quítala primero</div>`
     ).join('');
-    if (alreadyIn.length === toAdd.length) return;
-  }
-
-  const toInsert = toAdd.filter(u => !alreadyIn.includes(u));
-
-  // Find nights with 2 or fewer stores, from today onward, sorted earliest first
-  const cycleEnd = new Date(STATE.currentCycleStart);
-  cycleEnd.setDate(cycleEnd.getDate() + CYCLE_LENGTH_DAYS - 1);
-  const cycleEndKey = localDateKey(cycleEnd);
-
-  const availableNights = Object.keys(cycle.schedule)
-    .filter(d => d >= STATE.todayKey && d <= cycleEndKey)
-    .filter(d => (cycle.schedule[d] || []).length <= 2)
-    .sort();
-
-  if (availableNights.length < toInsert.length) {
-    toast('No hay suficientes noches con espacio disponible', 'error');
     return;
   }
 
-  // Insert each store into the earliest available night
-  const placements = [];
-  const usedNights = new Set();
-  for (const u of toInsert) {
-    const night = availableNights.find(d => !usedNights.has(d));
-    if (!night) { toast('No hay espacio para todas las tiendas', 'error'); return; }
-    cycle.schedule[night] = [...(cycle.schedule[night] || []), u];
-    placements.push({ unit: u, night });
-    // If night now has 3+ stores, don't reuse it for the next store
-    if (cycle.schedule[night].length >= 3) usedNights.add(night);
+  const cycleEnd = new Date(cycleStart);
+  cycleEnd.setDate(cycleEnd.getDate() + CYCLE_LENGTH_DAYS - 1);
+  const cycleEndKey = localDateKey(cycleEnd);
+
+  // Snapshot for undo (reuse weatherShifts mechanism)
+  cycle.weatherShifts = cycle.weatherShifts || [];
+  const allDates = Object.keys(cycle.schedule).sort();
+  const affectedDates = allDates.filter(d =>
+    d >= dateStr && d <= cycleEndKey && (cycle.schedule[d] || []).length > 0
+  );
+  const snapshot = {};
+  snapshot[dateStr] = [...(cycle.schedule[dateStr] || [])];
+  affectedDates.forEach(d => { snapshot[d] = [...cycle.schedule[d]]; });
+
+  // Build pool: Wendy's stores first, then all existing stores from dateStr onward
+  // Redistribute filling to STORES_PER_NIGHT, last night gets remainder
+  let pool = [...toInsert];
+  affectedDates.forEach(d => { pool = pool.concat(cycle.schedule[d]); });
+
+  // All nights that will be used: dateStr + all affected nights + potentially new overflow nights
+  const nightDates = [dateStr, ...affectedDates.filter(d => d !== dateStr)];
+
+  // Check if pool overflows all available nights — if so, check buffer dates
+  const totalSlots = nightDates.length * STORES_PER_NIGHT;
+  if (pool.length > totalSlots) {
+    toast('No hay suficiente espacio en el ciclo para todos las paradas', 'error');
+    return;
   }
 
-  // Show result
-  const statusEl = document.getElementById('wendysCycleStatus');
+  if (!confirm(
+    `¿Insertar ${toInsert.join(' y ')} el ${formatDate(parseDate(dateStr), 'EEE d MMM')}?\n` +
+    `${affectedDates.length > 0 ? `Las paradas existentes desde esa noche se reordenan en cascada.` : 'La noche está libre — no hay cascada necesaria.'}`
+  )) return;
+
+  // Save snapshot
+  cycle.weatherShifts.push({
+    shiftedDate: dateStr,
+    appliedAt: new Date().toISOString(),
+    snapshot,
+    label: `Inserción Wendy's (${toInsert.join(', ')})`,
+  });
+
+  // Redistribute pool across nights filling to 4
+  nightDates.forEach((d, i) => {
+    const isLast = i === nightDates.length - 1;
+    const take = isLast ? pool.length : Math.min(STORES_PER_NIGHT, pool.length);
+    cycle.schedule[d] = pool.splice(0, take);
+  });
+  // Clear any overflow (shouldn't happen after check above)
+  if (pool.length > 0) {
+    const lastNight = nightDates[nightDates.length - 1];
+    cycle.schedule[lastNight] = [...cycle.schedule[lastNight], ...pool];
+  }
+
+  // Mark Wendy's stores as bumped so they show purple ↻ MOVIDA
+  cycle.bumped = cycle.bumped || {};
+  toInsert.forEach(u => {
+    cycle.bumped[u] = {
+      originalDate: null,
+      currentDate: dateStr,
+      bumpedAt: new Date().toISOString(),
+      causedBy: 'wendys',
+    };
+  });
+
   if (statusEl) {
-    statusEl.innerHTML = placements.map(p =>
-      `<div style="font-size:12px;color:var(--signal);font-family:var(--font-mono);margin-top:6px">
-        ✓ ${p.unit} → ${formatDate(parseDate(p.night), 'EEE d MMM')} (${cycle.schedule[p.night].length} paradas esa noche)
-      </div>`
+    statusEl.innerHTML = toInsert.map(u =>
+      `<div style="font-size:12px;color:var(--signal);font-family:var(--font-mono);margin-top:6px">✓ ${u} → ${formatDate(parseDate(dateStr), 'EEE d MMM')}</div>`
     ).join('');
   }
 
-  const names = placements.map(p => p.unit).join(' y ');
-  toast(`✓ ${names} agregada(s) al ciclo`, 'success');
+  toast(`✓ ${toInsert.join(' y ')} insertada(s) — ciclo reordenado`, 'success');
   addInboxNote({
     type: 'emergency',
     unit: toInsert[0],
-    date: placements[0].night,
-    notes: `Wendy's agregada(s) al ciclo: ${placements.map(p => p.unit + ' → ' + formatDate(parseDate(p.night), 'd MMM')).join(', ')}`,
+    date: dateStr,
+    notes: `Wendy's insertada: ${toInsert.join(', ')} → ${formatDate(parseDate(dateStr), 'EEE d MMM')}`,
   });
 
+  document.getElementById('wendysDate').value = '';
+  document.getElementById('wendysLuar').checked = false;
+  document.getElementById('wendysWenram').checked = false;
+  document.getElementById('wendysPreview').textContent = '';
+
   renderAll();
+  renderWeatherShifts(); // reuses the undo list
   renderInboxBadge();
   pushAction('replace', { cycleData: STATE.cycleData }).catch(()=>{});
 }
