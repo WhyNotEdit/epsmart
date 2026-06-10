@@ -3049,20 +3049,18 @@ function applyWendysInsert() {
   ensureCycle(cycleStart);
   const cycle = STATE.cycleData[cycleId(cycleStart)];
 
-  // Check already in cycle
-  const alreadyIn = toInsert.filter(u =>
-    Object.values(cycle.schedule).some(slots => slots.includes(u))
-  );
-  if (alreadyIn.length > 0) {
-    if (statusEl) statusEl.innerHTML = alreadyIn.map(u =>
-      `<div style="font-size:12px;color:#fbbf24;font-family:var(--font-mono);margin-top:4px">⚠ ${u} ya está en el ciclo — quítala primero</div>`
-    ).join('');
-    return;
-  }
+  // Remove the already-in-cycle check — we clean up existing placements above
+  // so re-inserting to a new date always works cleanly
 
   const cycleEnd = new Date(cycleStart);
   cycleEnd.setDate(cycleEnd.getDate() + CYCLE_LENGTH_DAYS - 1);
   const cycleEndKey = localDateKey(cycleEnd);
+
+  // First: remove Wendy's stores from wherever they currently sit in the schedule
+  // (they may have been added previously to a different date)
+  Object.keys(cycle.schedule).forEach(d => {
+    cycle.schedule[d] = (cycle.schedule[d] || []).filter(u => !toInsert.includes(u));
+  });
 
   // Snapshot for undo (reuse weatherShifts mechanism)
   cycle.weatherShifts = cycle.weatherShifts || [];
