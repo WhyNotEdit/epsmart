@@ -3690,6 +3690,7 @@ const SYNC = {
   apiUrl: '/api/state',
   lastSyncedAt: null,
   syncing: false,
+  pushing: false, // true while a push is in flight — blocks pulls from overwriting local state
   offline: false,
   pollMs: 30000, // background refresh every 30s
   pollTimer: null,
@@ -3732,6 +3733,7 @@ function tickSyncLabel() {
 
 async function pullState() {
   if (SYNC.syncing) return;
+  if (SYNC.pushing) return; // don't overwrite local state while a push is in flight
   SYNC.syncing = true;
   setSyncStatus('syncing', 'Sincronizando...');
   try {
@@ -3778,6 +3780,8 @@ async function pullState() {
 
 async function pushAction(action, payload) {
   // Optimistic UI: caller has already updated STATE locally. Now push to server.
+  // Block any concurrent pulls while we're pushing so they don't overwrite local state.
+  SYNC.pushing = true;
   setSyncStatus('syncing', 'Guardando...');
   try {
     const res = await fetch(SYNC.apiUrl, {
@@ -3797,6 +3801,9 @@ async function pushAction(action, payload) {
     setSyncStatus('offline', 'Sin conexión');
     toast('Cambios guardados solo en este teléfono', 'error');
     throw err;
+  } finally {
+    // Allow pulls again, but wait a beat so the server has settled
+    setTimeout(() => { SYNC.pushing = false; }, 3000);
   }
 }
 
