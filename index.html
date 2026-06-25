@@ -3056,33 +3056,36 @@ function applyWendysInsert() {
   cycleEnd.setDate(cycleEnd.getDate() + CYCLE_LENGTH_DAYS - 1);
   const cycleEndKey = localDateKey(cycleEnd);
 
-  // First: remove Wendy's stores from wherever they currently sit in the schedule
-  // (they may have been added previously to a different date)
+  // Compute affected dates BEFORE removing Wendy's so we don't miss nights
+  // that currently ONLY contain Wendy's stores
+  const allDatesBeforeClean = Object.keys(cycle.schedule).sort();
+  const affectedDates = allDatesBeforeClean.filter(d =>
+    d >= dateStr && d <= cycleEndKey && (cycle.schedule[d] || []).length > 0
+  );
+
+  // Now remove Wendy's from wherever they currently sit
   Object.keys(cycle.schedule).forEach(d => {
     cycle.schedule[d] = (cycle.schedule[d] || []).filter(u => !toInsert.includes(u));
   });
 
-  // Snapshot for undo (reuse weatherShifts mechanism)
-  cycle.weatherShifts = cycle.weatherShifts || [];
-  const allDates = Object.keys(cycle.schedule).sort();
-  const affectedDates = allDates.filter(d =>
-    d >= dateStr && d <= cycleEndKey && (cycle.schedule[d] || []).length > 0
-  );
-  const snapshot = {};
-  snapshot[dateStr] = [...(cycle.schedule[dateStr] || [])];
-  affectedDates.forEach(d => { snapshot[d] = [...cycle.schedule[d]]; });
-
-  // Build pool: Wendy's stores first, then all existing stores from dateStr onward
+  // Build pool: Wendy's first, then existing stores from dateStr onward (after cleanup)
   let pool = [...toInsert];
-  affectedDates.forEach(d => { pool = pool.concat(cycle.schedule[d]); });
+  affectedDates.forEach(d => {
+    // Use post-cleanup slots (Wendy's already removed to avoid duplicates)
+    pool = pool.concat(cycle.schedule[d] || []);
+  });
 
-  // All nights available from dateStr to end of cycle — includes empty buffer nights
-  // We need to count ALL nights (occupied or empty) so the overflow check is correct
-  const allNightsInRange = allDates.filter(d => d >= dateStr && d <= cycleEndKey);
-  // If dateStr itself isn't in the schedule yet (truly free day), add it
+  // All nights from dateStr to cycle end — always include dateStr even if empty
+  const allDatesAfterClean = Object.keys(cycle.schedule).sort();
+  const allNightsInRange = allDatesAfterClean.filter(d => d >= dateStr && d <= cycleEndKey);
   const nightDates = allNightsInRange.includes(dateStr)
     ? allNightsInRange
     : [dateStr, ...allNightsInRange];
+
+  // Snapshot AFTER cleanup so undo restores the post-cleanup state
+  cycle.weatherShifts = cycle.weatherShifts || [];
+  const snapshot = {};
+  nightDates.forEach(d => { snapshot[d] = [...(cycle.schedule[d] || [])]; });
 
   // Check if pool overflows all available nights
   const totalSlots = nightDates.length * STORES_PER_NIGHT;
