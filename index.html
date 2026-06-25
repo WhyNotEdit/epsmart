@@ -2330,14 +2330,17 @@ function switchView(v) {
 }
 
 function renderAll() {
-  renderHero();
-  renderTonight();
-  renderUpcoming();
-  renderMileageStats();
-  renderWeatherShifts();
-  renderPullShifts();
-  if (STATE.currentView === 'cal') renderCalendar();
-  if (STATE.currentView === 'stores') renderRouteList();
+  // Each render is isolated — if one throws, the others still run and the app
+  // stays usable instead of going blank or reloading.
+  const safe = (fn, name) => { try { fn(); } catch (e) { console.error('Render error in ' + name + ':', e); } };
+  safe(renderHero, 'renderHero');
+  safe(renderTonight, 'renderTonight');
+  safe(renderUpcoming, 'renderUpcoming');
+  safe(renderMileageStats, 'renderMileageStats');
+  safe(renderWeatherShifts, 'renderWeatherShifts');
+  safe(renderPullShifts, 'renderPullShifts');
+  if (STATE.currentView === 'cal') safe(renderCalendar, 'renderCalendar');
+  if (STATE.currentView === 'stores') safe(renderRouteList, 'renderRouteList');
 }
 
 function renderHero() {
@@ -2456,7 +2459,7 @@ function renderTonight() {
           <div class="stop-addr">${store.city}, ${store.state} ${store.zip}</div>
           <div class="stop-rgm">Gerente · ${store.rgm}</div>
           ${isEmerg && emergRecord && emergRecord.notes ? `<div class="stop-emerg-note">⚡ ${escapeHtml(emergRecord.notes)}</div>` : ''}
-          ${isBumped && !isEmerg ? `<div class="stop-bumped-note">↻ Movida desde ${formatDate(parseDate(cycle.bumped[unit].originalDate), 'EEE d MMM')}</div>` : ''}
+          ${isBumped && !isEmerg ? `<div class="stop-bumped-note">${cycle.bumped[unit].causedBy === 'wendys' ? '🍔 Wendy\'s agregada al ciclo' : '↻ Movida desde ' + formatDate(parseDate(cycle.bumped[unit].originalDate), 'EEE d MMM')}</div>` : ''}
         </div>
         <div class="stop-actions" onclick="event.stopPropagation()">
           <button class="icon-btn nav" onclick="openMap('${unit}')" aria-label="Navigate">
@@ -2729,7 +2732,7 @@ function openStore(slot, dk) {
     <div style="margin-bottom:14px">
       <div class="modal-detail-row"><span class="lbl">Estado</span><span class="val">${completion ? '<span style="color:var(--signal)">✓ Completada</span>' : '<span style="color:var(--warn)">Pendiente</span>'}</span></div>
       ${isEmerg ? '<div class="modal-detail-row"><span class="lbl">Tipo</span><span class="val" style="color:var(--blue-bright)">⚡ Urgencia</span></div>' : ''}
-      ${isBumpedM ? `<div class="modal-detail-row"><span class="lbl">Movimiento</span><span class="val" style="color:#c084fc">↻ Movida desde ${formatDate(parseDate(cycle.bumped[unit].originalDate), 'd MMM')}</span></div>` : ''}
+      ${isBumpedM ? `<div class="modal-detail-row"><span class="lbl">Movimiento</span><span class="val" style="color:#c084fc">${cycle.bumped[unit].causedBy === 'wendys' ? '🍔 Agregada al ciclo' : '↻ Movida desde ' + formatDate(parseDate(cycle.bumped[unit].originalDate), 'd MMM')}</span></div>` : ''}
       <div class="modal-detail-row"><span class="lbl">Posición en ruta</span><span class="val">#${seq} de ${STORES.length - CYCLE_EXCLUSIONS.size}</span></div>
       ${sched ? `<div class="modal-detail-row"><span class="lbl">Programada</span><span class="val">${formatDate(sched, 'EEE d MMM, yyyy')}</span></div>` : ''}
       <div class="modal-detail-row"><span class="lbl">Ciudad</span><span class="val">${store.city}, ${store.state} ${store.zip}</span></div>
@@ -3651,6 +3654,7 @@ function cleanCorruptData() {
 }
 
 function parseDate(s) {
+  if (!s || typeof s !== 'string') return new Date();
   const [y,m,d] = s.split('-').map(Number);
   return new Date(y, m-1, d);
 }
