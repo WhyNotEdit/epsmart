@@ -2143,6 +2143,21 @@ function getOperationalDate() {
   return now;
 }
 
+// True only during the active work window: 11:15 PM tonight → 11:00 AM tomorrow.
+// Between 11 AM and 11:15 PM the crew hasn't started, so tonight's stores stay hidden.
+function isWorkWindowOpen() {
+  const now = new Date();
+  const h = now.getHours();
+  const m = now.getMinutes();
+  // Late night portion of the shift (after 11:15 PM)
+  if (h === 23 && m >= 15) return true;
+  if (h === 23 && m < 15) return false;
+  // Early morning portion (before 11 AM) — still the shift that started last night
+  if (h < 11) return true;
+  // Daytime (11 AM – 11:15 PM) — not started yet
+  return false;
+}
+
 function refreshOperationalDate() {
   if (STATE.pinnedDate) return; // user is viewing a different day, leave alone
   const today = getOperationalDate();
@@ -2153,6 +2168,15 @@ function refreshOperationalDate() {
     STATE.calMonth = new Date(today.getFullYear(), today.getMonth(), 1);
     ensureCycle(STATE.currentCycleStart);
     renderAll();
+    STATE._lastWorkWindow = isWorkWindowOpen();
+    return;
+  }
+  // Also re-render when the work window opens (11:15 PM) or closes (11 AM)
+  // so tonight's stores appear/disappear automatically without a manual refresh.
+  const win = isWorkWindowOpen();
+  if (win !== STATE._lastWorkWindow) {
+    STATE._lastWorkWindow = win;
+    renderAll();
   }
 }
 
@@ -2161,6 +2185,7 @@ function init() {
   STATE.todayKey = dateKey(today);
   STATE.currentCycleStart = getCycleStart(today);
   STATE.calMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+  STATE._lastWorkWindow = isWorkWindowOpen();
 
   loadInboxReadMarks();
   ensureCycle(STATE.currentCycleStart);
@@ -2192,14 +2217,27 @@ function ensureCycle(cycleStart) {
       emergencies: {},
       route: built.route.map(r => r.unit),
     };
-    // Notify server so other devices see the same schedule
-    if (typeof pushAction === 'function') {
-      pushAction('ensureCycle', {
-        cycleId: id,
-        schedule: built.schedule,
-        route: built.route.map(r => r.unit),
-      }).catch(()=>{});
-    }
+    // NOTE: do NOT push here. On page load this runs before pullState(),
+    // and pushing a freshly-built empty cycle would overwrite the server's
+    // existing data (completions, Wendy's inserts, weather shifts). The cycle
+    // gets persisted to the server only when the user makes a real change
+    // (completion, emergency, insert, etc.) via pushAction. pullState() is
+    // responsible for loading server data and seeding brand-new cycles.
+  }
+}
+
+// Push a locally-built cycle to the server ONLY when we've confirmed the
+// server doesn't already have it (called from pullState after merge).
+function seedCycleToServerIfMissing(id, serverHadIt) {
+  if (serverHadIt) return;
+  const c = STATE.cycleData[id];
+  if (!c) return;
+  if (typeof pushAction === 'function') {
+    pushAction('ensureCycle', {
+      cycleId: id,
+      schedule: c.schedule,
+      route: c.route,
+    }).catch(()=>{});
   }
 }
 
@@ -2384,6 +2422,23 @@ function renderTonight() {
 
   const tag = document.getElementById('tonightTag');
   const card = document.getElementById('tonightCard');
+
+  // Work-window gate: when viewing the CURRENT day (not pinned via calendar),
+  // hide tonight's stores until 11:15 PM. The crew hasn't started before then.
+  if (!STATE.pinnedDate && targetStores && targetStores.length > 0 && !isWorkWindowOpen()) {
+    const td = parseDate(targetKey);
+    const count = targetStores.length;
+    tag.textContent = 'Por empezar';
+    card.innerHTML = `
+      <div class="empty">
+        <div class="empty-icon">🌙</div>
+        <h3>Las paradas aparecen a las 11:15 PM</h3>
+        <p>Esta noche · <strong style="color:white">${count} parada${count !== 1 ? 's' : ''}</strong><br>
+          <span style="color:var(--ink-3);font-size:12px">El recorrido se desbloquea cuando empieza el turno</span>
+        </p>
+      </div>`;
+    return;
+  }
 
   if (!targetStores || targetStores.length === 0) {
     const dates = Object.keys(cycle.schedule).sort();
@@ -2913,39 +2968,55 @@ function applyWeatherShift() {
     return;
   }
 
-  // Check that there is at least one buffer day available after the last affected date
-  const lastDate = affectedDates[affectedDates.length - 1];
-  const lastDt = parseDate(lastDate);
-  const nextDt = new Date(lastDt); nextDt.setDate(nextDt.getDate() + 1);
-  const nextKey = localDateKey(nextDt);
-  if (nextDt > cycleEnd) {
-    toast('No hay días de margen al final del ciclo para absorber el turno', 'error');
+  // Snapshot current state for undo — capture the whole affected range + any
+  // work nights the cascade could spill into, through end of cycle.
+  cycle.weatherShifts = cycle.weatherShifts || [];
+  const snapshot = {};
+  // Snapshot every date from the rained-out night to cycle end (covers all landing spots)
+  {
+    let cur = parseDate(dateStr);
+    while (localDateKey(cur) <= cycleEndKey) {
+      const k = localDateKey(cur);
+      snapshot[k] = cycle.schedule[k] ? [...cycle.schedule[k]] : [];
+      cur.setDate(cur.getDate() + 1);
+    }
+  }
+
+  // Collect each affected night's stores as ordered groups
+  const groups = affectedDates.map(d => [...cycle.schedule[d]]);
+
+  // Clear all affected dates
+  affectedDates.forEach(d => { cycle.schedule[d] = []; });
+
+  // Re-lay the groups onto consecutive WORK nights (Mon–Thu), starting the day
+  // AFTER the rained-out night. This cascades everything forward without leaving
+  // empty work nights and without stranding stores on the weekend.
+  const isWorkNight = (key) => { const x = parseDate(key).getDay(); return x >= 1 && x <= 4; };
+  let cursor = parseDate(dateStr); cursor.setDate(cursor.getDate() + 1);
+  let overflow = false;
+  for (const group of groups) {
+    // advance to the next work night within the cycle
+    while (!isWorkNight(localDateKey(cursor)) && localDateKey(cursor) <= cycleEndKey) {
+      cursor.setDate(cursor.getDate() + 1);
+    }
+    if (localDateKey(cursor) > cycleEndKey) { overflow = true; break; }
+    const key = localDateKey(cursor);
+    cycle.schedule[key] = [...(cycle.schedule[key] || []), ...group];
+    cursor.setDate(cursor.getDate() + 1);
+  }
+
+  if (overflow) {
+    // Roll back — not enough work nights left in the cycle
+    Object.entries(snapshot).forEach(([d, slots]) => { cycle.schedule[d] = slots; });
+    toast('No hay suficientes noches de trabajo en el ciclo para correr el turno', 'error');
     return;
   }
 
-  // Snapshot current state for undo — include all affected dates plus the buffer landing day
-  cycle.weatherShifts = cycle.weatherShifts || [];
-  const snapshot = {};
-  affectedDates.forEach(d => { snapshot[d] = [...cycle.schedule[d]]; });
-  snapshot[nextKey] = cycle.schedule[nextKey] ? [...cycle.schedule[nextKey]] : [];
   cycle.weatherShifts.push({
     shiftedDate: dateStr,
     appliedAt: new Date().toISOString(),
     snapshot,
   });
-
-  // Shift: work backwards from the LAST affected date so we don't overwrite
-  // before reading. Each night moves to the next day.
-  for (let i = affectedDates.length - 1; i >= 0; i--) {
-    const fromDate = affectedDates[i];
-    const fromDt = parseDate(fromDate);
-    const toDt = new Date(fromDt); toDt.setDate(toDt.getDate() + 1);
-    const toDate = localDateKey(toDt);
-    // Merge into the destination (don't overwrite — these are the buffer days)
-    const existing = cycle.schedule[toDate] || [];
-    cycle.schedule[toDate] = [...existing, ...cycle.schedule[fromDate]];
-    cycle.schedule[fromDate] = [];
-  }
 
   toast('🌧️ Posposición aplicada — usa "Deshacer turno" para revertir', 'success');
   addInboxNote({
@@ -3748,12 +3819,17 @@ async function pullState() {
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
     if (data && data.cycleData) {
+      // Track which cycles the server already knows about
+      const currentId = cycleId(STATE.currentCycleStart);
+      const serverHadCurrent = !!data.cycleData[currentId];
+
       // Merge server state into client state. Server is source of truth for completions/emergencies.
       Object.entries(data.cycleData).forEach(([cid, srv]) => {
         if (!STATE.cycleData[cid]) {
           STATE.cycleData[cid] = srv;
         } else {
-          // Keep client-built schedule/route, overwrite tracked data
+          // Server wins for ALL tracked data — this is the authoritative copy.
+          // We only keep the locally-built schedule/route if the server lacks them.
           STATE.cycleData[cid].completions = srv.completions || {};
           STATE.cycleData[cid].emergencies = srv.emergencies || {};
           if (srv.schedule) STATE.cycleData[cid].schedule = srv.schedule;
@@ -3766,7 +3842,14 @@ async function pullState() {
         }
       });
       SYNC.lastSyncedAt = data.updatedAt || new Date().toISOString();
+
+      // If the server didn't have the current cycle yet, seed it now (first run ever)
+      seedCycleToServerIfMissing(currentId, serverHadCurrent);
     } else {
+      // Server returned nothing at all — this is a brand-new database.
+      // Seed the current cycle so it persists going forward.
+      const currentId = cycleId(STATE.currentCycleStart);
+      seedCycleToServerIfMissing(currentId, false);
       SYNC.lastSyncedAt = new Date().toISOString();
     }
     SYNC.offline = false;
