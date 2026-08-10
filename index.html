@@ -1168,6 +1168,15 @@ main{padding:14px var(--pad) 22px}
 }
 .route-addr{font-size:12px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .route-city{font-size:11px;color:var(--ink-3);margin-bottom:7px;font-family:var(--font-mono)}
+.route-problem{font-size:11px;color:#fbbf24;margin-bottom:7px;font-weight:500;line-height:1.3}
+.route-wo{font-size:10px;color:var(--blue-bright);font-family:var(--font-mono);font-weight:600;letter-spacing:0.04em;margin-bottom:3px}
+.route-comment-wrap{display:flex;flex-direction:column;gap:6px}
+.route-comment{width:100%;min-height:52px;padding:8px 10px;border-radius:8px;background:var(--navy-2);border:1px solid var(--line-2);color:white;font-family:var(--font-body);font-size:12px;resize:vertical;line-height:1.4}
+.route-comment:focus{outline:none;border-color:var(--blue-electric)}
+.route-comment::placeholder{color:var(--ink-3)}
+.route-comment-save{align-self:flex-start;padding:6px 14px;border-radius:8px;font-size:11px;font-weight:600;background:var(--navy-2);color:var(--ink-2);border:1px solid var(--line-2);cursor:pointer;font-family:var(--font-body);transition:all .15s}
+.route-comment-save.dirty{background:rgba(0,168,255,0.12);color:var(--blue-bright);border-color:rgba(0,168,255,0.35)}
+.route-comment-save:active{transform:scale(0.96)}
 .route-tag-select{
   width:100%;padding:6px 8px;border-radius:8px;font-size:11px;font-weight:500;
   background:var(--navy-2);border:1px solid var(--line-2);color:var(--ink-2);
@@ -1282,14 +1291,14 @@ main{padding:14px var(--pad) 22px}
     <div class="route-header">
       <div class="route-header-top">
         <div>
-          <div class="route-title">Ruta Fort Myers / Naples</div>
+          <div class="route-title">Ruta Reparaciones — Grout / Sellado</div>
           <div class="route-sub" id="routeProgress">0 / 20 completadas</div>
         </div>
         <button class="route-reset-btn" onclick="resetRouteProgress()">Reiniciar</button>
       </div>
       <div class="route-anchor">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 1 8 8c0 4.5-8 12-8 12s-8-7.5-8-12a8 8 0 0 1 8-8z"/></svg>
-        Distancias desde #42854 · 8835 Davis Blvd, Naples
+        Distancias desde #042899 · 3450 SE Federal Hwy, Stuart
       </div>
     </div>
     <div id="routeList"></div>
@@ -1755,33 +1764,20 @@ const ALL_LOCATABLE_STORES = (() => {
 // Ordered by distance from anchor store 42854 (8835 Davis Blvd, Naples)
 // Positions 1-2 are already-visited stores, position 3 is the anchor
 const FORT_MYERS_ROUTE = [
-  { unit:"42848", addr:"11 Hancock Bridge Pkwy West", city:"Cape Coral",        miles:null,  note:"Visited 1st" },
-  { unit:"42846", addr:"2424 Pine Ridge Road",         city:"Naples",            miles:null,  note:"Visited 2nd" },
-  { unit:"42854", addr:"8835 Davis Blvd",              city:"Naples",            miles:0,     note:"Anchor" },
-  { unit:"42859", addr:"4201 Tamiami Trail",           city:"Naples",            miles:1.5   },
-  { unit:"42858", addr:"9000 Sage Ave",                city:"Naples",            miles:3.3   },
-  { unit:"42857", addr:"2482 Immokalee Rd",            city:"Naples",            miles:9.5   },
-  { unit:"42851", addr:"28370 Trails Edge Blvd",       city:"Bonita Springs",    miles:13.7  },
-  { unit:"42850", addr:"11290 Summerlin Square Dr",    city:"Fort Myers Beach",  miles:22.8  },
-  { unit:"42844", addr:"9400 Daniels Pkwy",            city:"Fort Myers",        miles:26.1  },
-  { unit:"42856", addr:"17460 Ben Hill Griffin Pkwy",  city:"Fort Myers",        miles:27.8  },
-  { unit:"42855", addr:"8389 Dani Drive",              city:"Fort Myers",        miles:28.6  },
-  { unit:"42853", addr:"12851 S Cleveland Ave",        city:"Fort Myers",        miles:30.5  },
-  { unit:"42841", addr:"1616 Del Prado Blvd S",        city:"Cape Coral",        miles:30.9  },
-  { unit:"42852", addr:"2714 Lee Blvd",                city:"Lehigh Acres",      miles:33.8  },
-  { unit:"42842", addr:"3431 Cleveland Ave",           city:"Fort Myers",        miles:34.0  },
-  { unit:"42849", addr:"4860 Palm Beach Blvd",         city:"Fort Myers",        miles:35.2  },
-  { unit:"42847", addr:"14041 N Cleveland Ave",        city:"North Fort Myers",  miles:39.9  },
-  { unit:"42845", addr:"50 North Lee Street",          city:"La Belle",          miles:48.4  },
-  { unit:"42843", addr:"1001 Kings Hwy",               city:"Port Charlotte",    miles:59.9  },
-  { unit:"42860", addr:"1710 Tamiami Trail",           city:"Port Charlotte",    miles:60.8  },
+  { unit:"042899", wo:"6494651", addr:"3450 S.E. Federal Highway", city:"Stuart",       miles:0,    problem:"Sellar/Parchar Huecos — Techo Baño", input:"comment" },
+  { unit:"042893", wo:"6511134", addr:"2958 N West Federal Hwy",   city:"Jensen Beach", miles:5.7,  problem:"Reparación de Pared — Comedor (Dañado)", input:"comment" },
+  { unit:"042893", wo:"6221519", addr:"2958 N West Federal Hwy",   city:"Jensen Beach", miles:5.7,  problem:"Grout — Piso Cocina" },
+  { unit:"042894", wo:"6490907", addr:"1812 S US Hwy 1",           city:"Fort Pierce",  miles:18.5, problem:"Grout — Piso Cocina" },
+  { unit:"042896", wo:"6208191", addr:"1985 41st Ave",             city:"Vero Beach",   miles:34.2, problem:"Grout — Piso Cocina" },
 ];
 
 // Route state helpers
 function getRouteState() {
   const cid = 'fm_route_v1';
-  if (!STATE.cycleData[cid]) STATE.cycleData[cid] = { checked: {}, routeTag: {} };
-  return STATE.cycleData[cid];
+  if (!STATE.cycleData[cid]) STATE.cycleData[cid] = { checked: {}, routeTag: {}, comment: {} };
+  const rs = STATE.cycleData[cid];
+  if (!rs.comment) rs.comment = {}; // ensure comment map exists for older saved state
+  return rs;
 }
 
 function toggleRouteCheck(unit) {
@@ -1798,9 +1794,24 @@ function setRouteTag(unit, val) {
   pushAction('replace', { cycleData: STATE.cycleData }).catch(()=>{});
 }
 
+function markCommentDirty(key) {
+  const btn = document.getElementById('cmtsave-' + key);
+  if (btn) { btn.classList.add('dirty'); btn.textContent = 'Guardar nota'; }
+}
+
+function saveRouteComment(key) {
+  const rs = getRouteState();
+  const ta = document.getElementById('cmt-' + key);
+  if (!ta) return;
+  rs.comment[key] = ta.value;
+  const btn = document.getElementById('cmtsave-' + key);
+  if (btn) { btn.classList.remove('dirty'); btn.textContent = '✓ Guardada'; }
+  pushAction('replace', { cycleData: STATE.cycleData }).catch(()=>{});
+}
+
 function resetRouteProgress() {
   if (!confirm('¿Reiniciar todas las marcas y etiquetas de esta ruta?')) return;
-  STATE.cycleData['fm_route_v1'] = { checked: {}, routeTag: {} };
+  STATE.cycleData['fm_route_v1'] = { checked: {}, routeTag: {}, comment: {} };
   renderRouteList();
   updateRouteProgress();
   pushAction('replace', { cycleData: STATE.cycleData }).catch(()=>{});
@@ -1820,18 +1831,17 @@ function renderRouteList() {
   const rs = getRouteState();
   let h = '';
   FORT_MYERS_ROUTE.forEach((s, i) => {
-    const checked = !!rs.checked[s.unit];
-    const tag = rs.routeTag[s.unit] || '';
-    const isAnchor = s.unit === '42854';
-    const isVisited = s.note && s.note.startsWith('Visited');
+    const key = s.wo || s.unit; // key state by work-order number so each WO is independent
+    const checked = !!rs.checked[key];
+    const tag = rs.routeTag[key] || '';
     const milesLabel = s.miles === null ? '—' : s.miles === 0 ? 'Aquí' : s.miles.toFixed(1) + ' mi';
-    const rowCls = checked ? 'route-row checked' : (isAnchor ? 'route-row anchor' : 'route-row');
+    const rowCls = checked ? 'route-row checked' : 'route-row';
     const fullAddr = `${s.addr}, ${s.city}, FL`;
     const enc = encodeURIComponent(fullAddr);
 
     h += `<div class="${rowCls}">
       <div class="route-row-num">${i + 1}</div>
-      <button class="route-check" onclick="toggleRouteCheck('${s.unit}')" aria-label="Marcar">
+      <button class="route-check" onclick="toggleRouteCheck('${key}')" aria-label="Marcar">
         ${checked
           ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`
           : ''}
@@ -1841,14 +1851,22 @@ function renderRouteList() {
           <span class="route-unit">#${s.unit}</span>
           <span class="route-miles">${milesLabel}</span>
         </div>
+        ${s.wo ? `<div class="route-wo">WO #${s.wo}</div>` : ''}
         <div class="route-addr">${s.addr}</div>
         <div class="route-city">${s.city}, FL</div>
-        <select class="route-tag-select" onchange="setRouteTag('${s.unit}', this.value)">
-          <option value="" ${!tag ? 'selected' : ''}>— Tipo de ruta —</option>
-          <option value="small"  ${tag==='small'  ? 'selected' : ''}>🟢 Pequeña</option>
-          <option value="medium" ${tag==='medium' ? 'selected' : ''}>🟡 Mediana</option>
-          <option value="large"  ${tag==='large'  ? 'selected' : ''}>🔴 Grande</option>
-        </select>
+        ${s.problem ? `<div class="route-problem">🔧 ${s.problem}</div>` : ''}
+        ${s.input === 'comment'
+          ? `<div class="route-comment-wrap">
+              <textarea class="route-comment" id="cmt-${key}" placeholder="Nota: qué se necesita hacer..." oninput="markCommentDirty('${key}')">${escapeHtml(rs.comment && rs.comment[key] ? rs.comment[key] : '')}</textarea>
+              <button class="route-comment-save" id="cmtsave-${key}" onclick="saveRouteComment('${key}')">Guardar nota</button>
+            </div>`
+          : `<select class="route-tag-select" onchange="setRouteTag('${key}', this.value)">
+              <option value="" ${!tag ? 'selected' : ''}>— Tipo de ruta —</option>
+              <option value="small"  ${tag==='small'  ? 'selected' : ''}>🟢 Pequeña</option>
+              <option value="medium" ${tag==='medium' ? 'selected' : ''}>🟡 Mediana</option>
+              <option value="large"  ${tag==='large'  ? 'selected' : ''}>🔴 Grande</option>
+            </select>`
+        }
       </div>
       <a class="route-gps-btn" href="https://www.waze.com/ul?q=${enc}&navigate=yes" target="_blank" aria-label="Waze">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
