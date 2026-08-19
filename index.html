@@ -2360,9 +2360,25 @@ function getStoreTiming(unit) {
       const slots = cycle.schedule[d] || [];
       const hasUnit = slots.some(s => slotUnit(s) === unit);
       if (!hasUnit) continue;
-      // is it already completed on that date?
       const doneOnThatDate = slots.some(s => slotUnit(s) === unit && cycle.completions[s]);
       if (!doneOnThatDate) { nextDueDate = d; break; }
+    }
+  }
+
+  // If nothing left in the current cycle (already done, or its slot has passed),
+  // project into the NEXT cycle. The schedule is deterministic, so we build the
+  // next cycle's schedule and find this unit's date there. Keep rolling forward
+  // a few cycles just in case (e.g. store excluded this round).
+  if (!nextDueDate) {
+    let probeStart = new Date(STATE.currentCycleStart);
+    for (let hop = 0; hop < 4 && !nextDueDate; hop++) {
+      probeStart.setDate(probeStart.getDate() + CYCLE_LENGTH_DAYS);
+      const built = buildSchedule(probeStart);
+      const dates = Object.keys(built.schedule).sort();
+      for (const d of dates) {
+        const slots = built.schedule[d] || [];
+        if (slots.some(s => slotUnit(s) === unit)) { nextDueDate = d; break; }
+      }
     }
   }
 
