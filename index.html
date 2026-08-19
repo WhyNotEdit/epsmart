@@ -1100,6 +1100,13 @@ main{padding:14px var(--pad) 22px}
 .ssheet-city{font-size:13px;color:var(--ink-2);margin-bottom:16px}
 .ssheet-section{background:linear-gradient(180deg,var(--navy-1) 0%,var(--navy) 100%);border:1px solid var(--line-2);border-radius:12px;padding:13px 14px;margin-bottom:10px}
 .ssheet-section-label{font-family:var(--font-mono);font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-3);font-weight:500;margin-bottom:10px}
+.ssheet-timing-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ssheet-timing-item{background:var(--navy-2);border:1px solid var(--line-2);border-radius:10px;padding:10px 12px}
+.ssheet-timing-cap{font-size:10px;color:var(--ink-3);font-family:var(--font-mono);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:5px}
+.ssheet-timing-val{font-size:13px;font-weight:600;line-height:1.25}
+.ssheet-timing-val.done{color:var(--signal)}
+.ssheet-timing-val.next{color:var(--blue-bright)}
+.ssheet-timing-val.none{color:var(--ink-3);font-weight:500;font-style:italic}
 .ssheet-contact-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .ssheet-contact-info{flex:1;min-width:0}
 .ssheet-contact-name{font-size:14px;font-weight:600;color:white;letter-spacing:-0.01em}
@@ -2322,6 +2329,46 @@ function clearGpsSearch() {
   renderGpsResults();
 }
 
+// Compute when a store was last pressure-washed and when it's next scheduled.
+// - Last done: searches ALL cycles' completions for this unit → most recent date.
+//   This persists across cycles (a new cycle doesn't erase the prior done-date;
+//   it just gets superseded when the store is washed again).
+// - Next due: searches the CURRENT cycle's schedule for this unit → the earliest
+//   scheduled date on/after today that isn't already completed.
+function getStoreTiming(unit) {
+  let lastDoneDate = null;
+
+  // Search every cycle for completions of this unit (bare or date-stamped slots)
+  Object.values(STATE.cycleData || {}).forEach(cyc => {
+    if (!cyc || !cyc.completions) return;
+    Object.entries(cyc.completions).forEach(([slot, comp]) => {
+      if (!comp) return;
+      const u = slotUnit(slot);
+      if (u !== unit) return;
+      const d = comp.date || (comp.completedAt ? comp.completedAt.slice(0,10) : null);
+      if (d && (!lastDoneDate || d > lastDoneDate)) lastDoneDate = d;
+    });
+  });
+
+  // Next due: earliest scheduled date >= today in the current cycle not yet completed
+  let nextDueDate = null;
+  const cycle = STATE.cycleData[cycleId(STATE.currentCycleStart)];
+  if (cycle && cycle.schedule) {
+    const dates = Object.keys(cycle.schedule).sort();
+    for (const d of dates) {
+      if (d < STATE.todayKey) continue;
+      const slots = cycle.schedule[d] || [];
+      const hasUnit = slots.some(s => slotUnit(s) === unit);
+      if (!hasUnit) continue;
+      // is it already completed on that date?
+      const doneOnThatDate = slots.some(s => slotUnit(s) === unit && cycle.completions[s]);
+      if (!doneOnThatDate) { nextDueDate = d; break; }
+    }
+  }
+
+  return { lastDoneDate, nextDueDate };
+}
+
 function openStoreSheet(unit) {
   const store = findStore(unit);
   if (!store) return;
@@ -2330,10 +2377,37 @@ function openStoreSheet(unit) {
   const fullAddr = `${store.addr}, ${store.city}, ${store.state} ${store.zip || ''}`.trim();
   const isGpsOnly = GPS_STORES.some(g => g.unit === unit);
 
+  // Compute timing (only meaningful for cycle stores, but harmless for GPS-only)
+  const timing = getStoreTiming(unit);
+  const lastLabel = timing.lastDoneDate
+    ? formatDate(parseDate(timing.lastDoneDate), 'EEE d MMM yyyy')
+    : 'Sin registro';
+  const nextLabel = timing.nextDueDate
+    ? formatDate(parseDate(timing.nextDueDate), 'EEE d MMM yyyy')
+    : 'No programada';
+
+  // Only show the timing block for cycle stores (not GPS-only or Wendy's without cycle)
+  const showTiming = !isGpsOnly && store.brand !== 'Wendys';
+  const timingBlock = showTiming ? `
+    <div class="ssheet-section">
+      <div class="ssheet-section-label">Lavado a Presión</div>
+      <div class="ssheet-timing-row">
+        <div class="ssheet-timing-item">
+          <div class="ssheet-timing-cap">Última vez</div>
+          <div class="ssheet-timing-val ${timing.lastDoneDate ? 'done' : 'none'}">${lastLabel}</div>
+        </div>
+        <div class="ssheet-timing-item">
+          <div class="ssheet-timing-cap">Próxima vez</div>
+          <div class="ssheet-timing-val ${timing.nextDueDate ? 'next' : 'none'}">${nextLabel}</div>
+        </div>
+      </div>
+    </div>` : '';
+
   document.getElementById('storeSheetContent').innerHTML = `
     <div class="ssheet-unit">#${store.unit} <span class="ssheet-tag ${isGpsOnly ? 'gps-only' : 'cycle'}">${isGpsOnly ? 'GPS' : 'CICLO'} · ${store.dma}</span></div>
     <div class="ssheet-addr">${store.addr}</div>
     <div class="ssheet-city">${store.city}, ${store.state} ${store.zip || ''}</div>
+    ${timingBlock}
 
     <div class="ssheet-section">
       <div class="ssheet-section-label">Area Coach (AC)</div>
