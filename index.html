@@ -1322,8 +1322,8 @@ main{padding:14px var(--pad) 22px}
     <div class="gps-search">
       <div class="gps-input-wrap">
         <span class="gps-input-prefix">#</span>
-        <input type="text" inputmode="text" autocomplete="off" autocorrect="off" spellcheck="false"
-               id="gpsSearch" placeholder="42897 o Wendys..." oninput="renderGpsResults()">
+        <input type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" autocorrect="off" spellcheck="false"
+               id="gpsSearch" placeholder="42897..." oninput="renderGpsResults()">
         <button class="gps-clear" id="gpsClear" onclick="clearGpsSearch()" aria-label="Limpiar">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
         </button>
