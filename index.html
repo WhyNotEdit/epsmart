@@ -1456,6 +1456,10 @@ main{padding:14px var(--pad) 22px}
         <div class="btn-row" style="margin-top:8px">
           <button class="btn btn-secondary" style="font-size:12px;color:#fbbf24;border-color:rgba(251,191,36,0.3)" onclick="cleanCorruptData()">🧹 Limpiar Datos Corruptos</button>
         </div>
+        <div class="btn-row" style="margin-top:8px">
+          <button class="btn btn-secondary" style="font-size:12px;color:#5fd5ff;border-color:rgba(0,168,255,0.35)" onclick="fixSeptSchedule()">📅 Arreglar Semana (Sep 9-18)</button>
+        </div>
+        <div id="fixSeptStatus" style="margin-top:8px"></div>
         <button class="btn btn-secondary btn-full" style="margin-top:8px" onclick="mgmtLock()">Bloquear y Salir</button>
       </div>
     </div>
@@ -3803,6 +3807,105 @@ function resetCycle() {
   toast('Ciclo reiniciado', 'success');
   pushAction('resetCycle', { cycleId: id }).catch(()=>{});
 }
+
+// ─── ONE-TIME SEPTEMBER SCHEDULE FIX ──────────────────────────────────────────
+// Plan (confirmed with Pablo):
+//   Sep 9  (Wed): stores 1-4 → MARK COMPLETE (done Fri Sep 4), stay visible today
+//   Sep 10 (Thu): stores 5-8   (already correct)
+//   Sep 11 (Fri): stores 9-12  (fixes duplication)
+//   Sep 14-17 (Mon-Thu): CLEARED — no work
+//   Sep 18 (Fri): stores 13-16 (moved from Sep 15)
+//   Sep 21+: normal Mon-Thu resumes, remaining stores 17-54 cascade 4/night
+function fixSeptSchedule() {
+  const statusEl = document.getElementById('fixSeptStatus');
+  const say = (msg, color) => { if (statusEl) statusEl.innerHTML = `<div style="font-size:12px;color:${color||'var(--signal)'};font-family:var(--font-mono);margin-top:4px;line-height:1.6">${msg}</div>`; };
+
+  const cycleStart = getCycleStart(parseDate('2026-09-09'));
+  const cid = cycleId(cycleStart);
+  ensureCycle(cycleStart);
+  const cycle = STATE.cycleData[cid];
+  if (!cycle) { say('❌ No se encontró el ciclo de septiembre', '#ff6b7a'); return; }
+
+  // Build the canonical route order (deterministic) to get positions 1-54
+  const route = (cycle.route && cycle.route.length) ? cycle.route.slice() : buildRoute().map(r => r.unit);
+  if (route.length < 16) { say('❌ Ruta incompleta — no se puede reordenar', '#ff6b7a'); return; }
+
+  // Helper: stores by 1-based position range (inclusive)
+  const pos = (a, b) => route.slice(a - 1, b); // pos(1,4) → indices 0..3
+
+  if (!confirm('¿Arreglar el horario del 9 al 18 de septiembre?\n\n' +
+    '• Sep 9: tiendas 1-4 marcadas COMPLETAS (se hicieron el vie 4)\n' +
+    '• Sep 10: tiendas 5-8\n' +
+    '• Sep 11: tiendas 9-12\n' +
+    '• Sep 14-17: SIN trabajo (limpio)\n' +
+    '• Sep 18: tiendas 13-16\n' +
+    '• Sep 21+: normal, el resto se reparte\n\n' +
+    'Esto solo cambia este ciclo.')) return;
+
+  // Snapshot for undo via weatherShifts
+  cycle.weatherShifts = cycle.weatherShifts || [];
+  const affectedDates = ['2026-09-09','2026-09-10','2026-09-11','2026-09-14','2026-09-15',
+                         '2026-09-16','2026-09-17','2026-09-18','2026-09-21','2026-09-22',
+                         '2026-09-23','2026-09-24','2026-09-28','2026-09-29','2026-09-30',
+                         '2026-10-01','2026-10-05','2026-10-06'];
+  const snapshot = {};
+  affectedDates.forEach(d => { snapshot[d] = cycle.schedule[d] ? [...cycle.schedule[d]] : []; });
+  cycle.weatherShifts.push({
+    shiftedDate: '2026-09-09',
+    appliedAt: new Date().toISOString(),
+    snapshot,
+    label: 'Arreglo manual semana Sep 9-18',
+  });
+
+  // 1. Assign the fixed days
+  cycle.schedule['2026-09-09'] = pos(1, 4);
+  cycle.schedule['2026-09-10'] = pos(5, 8);
+  cycle.schedule['2026-09-11'] = pos(9, 12);
+  // Clear the coming Mon-Thu
+  cycle.schedule['2026-09-14'] = [];
+  cycle.schedule['2026-09-15'] = [];
+  cycle.schedule['2026-09-16'] = [];
+  cycle.schedule['2026-09-17'] = [];
+  // Friday gets 13-16
+  cycle.schedule['2026-09-18'] = pos(13, 16);
+
+  // 2. Remaining stores (position 17 onward) cascade onto normal Mon-Thu nights from Sep 21
+  const remaining = route.slice(16); // positions 17..end
+  const workNights = ['2026-09-21','2026-09-22','2026-09-23','2026-09-24',
+                      '2026-09-28','2026-09-29','2026-09-30','2026-10-01',
+                      '2026-10-05','2026-10-06'];
+  // clear them first
+  workNights.forEach(d => { cycle.schedule[d] = []; });
+  // fill 4 per night, last night gets remainder
+  let idx = 0;
+  for (let i = 0; i < workNights.length && idx < remaining.length; i++) {
+    const isLast = i === workNights.length - 1;
+    const take = isLast ? (remaining.length - idx) : Math.min(STORES_PER_NIGHT, remaining.length - idx);
+    cycle.schedule[workNights[i]] = remaining.slice(idx, idx + take);
+    idx += take;
+  }
+
+  // 3. Mark Sep 9 stores complete (done Fri Sep 4)
+  cycle.completions = cycle.completions || {};
+  pos(1, 4).forEach(unit => {
+    cycle.completions[unit] = {
+      date: '2026-09-09',
+      completedAt: new Date('2026-09-04T23:30:00').toISOString(),
+      notes: 'Completado el viernes 4 sep (marcado manualmente)',
+      by: getDeviceId ? getDeviceId() : 'admin',
+    };
+  });
+
+  const leftover = remaining.length - idx;
+  say(`✓ Listo. Sep 9 (1-4) completas · Sep 10 (5-8) · Sep 11 (9-12) · ` +
+      `Sep 14-17 limpio · Sep 18 (13-16) · resto repartido Sep 21-Oct 6` +
+      (leftover > 0 ? ` · ⚠ ${leftover} sin cabida` : ''));
+
+  renderAll();
+  renderWeatherShifts();
+  pushAction('replace', { cycleData: STATE.cycleData }).catch(()=>{});
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 function cleanCorruptData() {
   if (!confirm('¿Limpiar entradas duplicadas del horario? Las completadas, notas y urgencias NO se tocan.')) return;
