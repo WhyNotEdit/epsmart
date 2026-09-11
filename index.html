@@ -1460,6 +1460,10 @@ main{padding:14px var(--pad) 22px}
           <button class="btn btn-secondary" style="font-size:12px;color:#5fd5ff;border-color:rgba(0,168,255,0.35)" onclick="fixSeptSchedule()">📅 Arreglar Semana (Sep 9-18)</button>
         </div>
         <div id="fixSeptStatus" style="margin-top:8px"></div>
+        <div class="btn-row" style="margin-top:8px">
+          <button class="btn btn-secondary" style="font-size:12px;color:#93c5fd;border-color:rgba(147,197,253,0.35)" onclick="revertAndInsertUrgent()">⚡ Revertir + 6 Urgentes (Sep 14/16)</button>
+        </div>
+        <div id="urgentFixStatus" style="margin-top:8px"></div>
         <button class="btn btn-secondary btn-full" style="margin-top:8px" onclick="mgmtLock()">Bloquear y Salir</button>
       </div>
     </div>
@@ -3807,6 +3811,122 @@ function resetCycle() {
   toast('Ciclo reiniciado', 'success');
   pushAction('resetCycle', { cycleId: id }).catch(()=>{});
 }
+
+// ─── ONE-TIME: REVERT SEPT FIX + INSERT 6 URGENT STORES ───────────────────────
+// Plan (confirmed with Pablo):
+//   1. Revert everything to normal using the snapshot saved by fixSeptSchedule
+//   2. Insert urgent stores keeping 4/night total, bumping regulars forward:
+//        Sep 14: 18574, 24746, 42937 (3 urgent) → 1 regular stays, 3 bump forward
+//        Sep 16: 42939, 42940 (2 urgent)        → 2 regulars stay, 2 bump forward
+//   3. The 5 bumped regulars cascade into the very next nights, filling 4/night
+function revertAndInsertUrgent() {
+  const statusEl = document.getElementById('urgentFixStatus');
+  const say = (msg, color) => { if (statusEl) statusEl.innerHTML = `<div style="font-size:12px;color:${color||'var(--signal)'};font-family:var(--font-mono);margin-top:4px;line-height:1.6">${msg}</div>`; };
+
+  const cycleStart = getCycleStart(parseDate('2026-09-14'));
+  const cid = cycleId(cycleStart);
+  ensureCycle(cycleStart);
+  const cycle = STATE.cycleData[cid];
+  if (!cycle) { say('❌ No se encontró el ciclo', '#ff6b7a'); return; }
+
+  const URGENT_14 = ['18574','24746','42937'];
+  const URGENT_16 = ['42939','42940'];
+
+  if (!confirm('¿Revertir la semana a normal y luego meter las 6 urgentes?\n\n' +
+    '1. Todo vuelve a lo normal (Lun-Jue, 4 por noche)\n' +
+    '2. Sep 14: 18574, 24746, 42937 (urgentes)\n' +
+    '3. Sep 16: 42939, 42940 (urgentes)\n' +
+    '4. Cada noche queda con 4 — las regulares desplazadas se corren adelante\n\n' +
+    'Esto solo cambia este ciclo.')) return;
+
+  // ── STEP 1: Revert from the September fix snapshot ──
+  cycle.weatherShifts = cycle.weatherShifts || [];
+  const septFix = [...cycle.weatherShifts].reverse().find(w => w.label === 'Arreglo manual semana Sep 9-18');
+  if (septFix && septFix.snapshot) {
+    Object.entries(septFix.snapshot).forEach(([d, slots]) => { cycle.schedule[d] = [...slots]; });
+    // remove that shift entry so it's cleanly reverted
+    const i = cycle.weatherShifts.indexOf(septFix);
+    if (i >= 0) cycle.weatherShifts.splice(i, 1);
+  }
+  // Also clear the Sep 9 completions the fix added (positions 1-4 were marked done)
+  // Only if they carry the fix's note — leave any genuine completions alone
+  Object.keys(cycle.completions || {}).forEach(slot => {
+    const comp = cycle.completions[slot];
+    if (comp && comp.notes === 'Completado el viernes 4 sep (marcado manualmente)') {
+      delete cycle.completions[slot];
+    }
+  });
+
+  // ── STEP 2+3: Insert urgent, keep 4/night, cascade bumped regulars forward ──
+  // Snapshot for undo before we modify
+  const cycleEnd = new Date(cycleStart); cycleEnd.setDate(cycleEnd.getDate() + CYCLE_LENGTH_DAYS - 1);
+  const cycleEndKey = localDateKey(cycleEnd);
+  const snapAll = {};
+  Object.keys(cycle.schedule).forEach(d => {
+    if (d >= '2026-09-14' && d <= cycleEndKey) snapAll[d] = [...cycle.schedule[d]];
+  });
+  cycle.weatherShifts.push({
+    shiftedDate: '2026-09-14',
+    appliedAt: new Date().toISOString(),
+    snapshot: snapAll,
+    label: 'Insertar 6 urgentes Sep 14/16',
+  });
+
+  // Mark all 6 as emergencies (light-blue ⚡)
+  cycle.emergencies = cycle.emergencies || {};
+  [...URGENT_14, ...URGENT_16].forEach(u => {
+    cycle.emergencies[u] = { type: 'urgent', addedAt: new Date().toISOString(), notes: 'Puerta urgente' };
+  });
+
+  // Gather all normal work-night dates from Sep 14 onward (Mon-Thu with stores or empty)
+  const isWorkNight = (key) => { const x = parseDate(key).getDay(); return x >= 1 && x <= 4; };
+  const allWork = [];
+  { let cur = parseDate('2026-09-14');
+    while (localDateKey(cur) <= cycleEndKey) {
+      if (isWorkNight(localDateKey(cur))) allWork.push(localDateKey(cur));
+      cur.setDate(cur.getDate() + 1);
+    } }
+
+  // Pull the current regular stores in order across all work nights (excluding the urgents)
+  const urgentSet = new Set([...URGENT_14, ...URGENT_16]);
+  let regularPool = [];
+  allWork.forEach(d => {
+    (cycle.schedule[d] || []).forEach(slot => {
+      const u = slotUnit(slot);
+      if (!urgentSet.has(u)) regularPool.push(slot);
+    });
+  });
+
+  // Rebuild each work night:
+  //   Sep 14 → 3 urgent + next 1 regular = 4
+  //   Sep 16 → 2 urgent + next 2 regular = 4
+  //   every other work night → next 4 regular (last night gets remainder)
+  let ri = 0;
+  allWork.forEach((d, i) => {
+    if (d === '2026-09-14') {
+      const fill = regularPool.slice(ri, ri + 1); ri += 1;
+      cycle.schedule[d] = [...URGENT_14, ...fill];
+    } else if (d === '2026-09-16') {
+      const fill = regularPool.slice(ri, ri + 2); ri += 2;
+      cycle.schedule[d] = [...URGENT_16, ...fill];
+    } else {
+      const isLast = i === allWork.length - 1;
+      const take = isLast ? (regularPool.length - ri) : Math.min(STORES_PER_NIGHT, regularPool.length - ri);
+      cycle.schedule[d] = regularPool.slice(ri, ri + Math.max(0, take));
+      ri += Math.max(0, take);
+    }
+  });
+
+  const leftover = regularPool.length - ri;
+  say(`✓ Revertido y urgentes insertadas. Sep 14: 3 urgentes + 1 regular · ` +
+      `Sep 16: 2 urgentes + 2 regulares · resto corrido 4/noche` +
+      (leftover > 0 ? ` · ⚠ ${leftover} sin cabida` : ''), leftover > 0 ? '#fbbf24' : undefined);
+
+  renderAll();
+  renderWeatherShifts();
+  pushAction('replace', { cycleData: STATE.cycleData }).catch(()=>{});
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 // ─── ONE-TIME SEPTEMBER SCHEDULE FIX ──────────────────────────────────────────
 // Plan (confirmed with Pablo):
