@@ -1457,7 +1457,7 @@ main{padding:14px var(--pad) 22px}
           <button class="btn btn-secondary" style="font-size:12px;color:#fbbf24;border-color:rgba(251,191,36,0.3)" onclick="cleanCorruptData()">🧹 Limpiar Datos Corruptos</button>
         </div>
         <div class="btn-row" style="margin-top:8px">
-          <button class="btn btn-secondary" style="font-size:12px;color:#a7f3d0;border-color:rgba(0,232,160,0.3)" onclick="fixSep11()">🔧 Arreglar Sep 11 (9-12)</button>
+          <button class="btn btn-secondary" style="font-size:12px;color:#a7f3d0;border-color:rgba(0,232,160,0.3)" onclick="rebuildSeptember()">🔧 Reconstruir Septiembre</button>
         </div>
         <div id="sep11Status" style="margin-top:8px"></div>
         <button class="btn btn-secondary btn-full" style="margin-top:8px" onclick="mgmtLock()">Bloquear y Salir</button>
@@ -3808,8 +3808,16 @@ function resetCycle() {
   pushAction('resetCycle', { cycleId: id }).catch(()=>{});
 }
 
-// ─── ONE-TIME: FIX SEP 11 (should be stores 9-12, not duplicated 5-8) ──────────
-function fixSep11() {
+// ─── ONE-TIME: FULL SEPTEMBER REBUILD (clean, no duplicates) ──────────────────
+// Lays the whole cycle down deterministically from the route order:
+//   Sep 9:  positions 1-4   (marked DONE)
+//   Sep 10: positions 5-8   (marked DONE)
+//   Sep 11: positions 9-12  (marked DONE)
+//   Sep 14: 3 urgent (18574,24746,42937) + next regular
+//   Sep 16: 2 urgent (42939,42940) + next 2 regulars
+//   The 5 urgent units are pulled OUT of their normal route slots so they're
+//   never done twice. Everything else fills 4/night through the cycle.
+function rebuildSeptember() {
   const statusEl = document.getElementById('sep11Status');
   const say = (msg, color) => { if (statusEl) statusEl.innerHTML = `<div style="font-size:12px;color:${color||'var(--signal)'};font-family:var(--font-mono);margin-top:4px;line-height:1.6">${msg}</div>`; };
 
@@ -3820,26 +3828,90 @@ function fixSep11() {
   if (!cycle) { say('❌ No se encontró el ciclo', '#ff6b7a'); return; }
 
   const route = (cycle.route && cycle.route.length) ? cycle.route.slice() : buildRoute().map(r => r.unit);
-  if (route.length < 12) { say('❌ Ruta incompleta', '#ff6b7a'); return; }
+  if (route.length < 20) { say('❌ Ruta incompleta', '#ff6b7a'); return; }
 
-  const want = route.slice(8, 12); // positions 9,10,11,12 (0-indexed 8..11)
-  const current = cycle.schedule['2026-09-11'] || [];
+  const U14 = ['18574','24746','42937'];
+  const U16 = ['42939','42940'];
+  const urgentSet = new Set([...U14, ...U16]);
 
-  if (!confirm('¿Poner las tiendas 9, 10, 11, 12 en el viernes 11 de sep?\n\n' +
-    `Ahora: ${current.map(slotUnit).join(', ') || '(vacío)'}\n` +
-    `Nuevo: ${want.join(', ')}`)) return;
+  if (!confirm('¿Reconstruir todo septiembre limpio?\n\n' +
+    '• Sep 9: tiendas 1-4 (COMPLETAS)\n' +
+    '• Sep 10: tiendas 5-8 (COMPLETAS)\n' +
+    '• Sep 11: tiendas 9-12 (COMPLETAS)\n' +
+    '• Sep 14: 3 urgentes + 1 regular\n' +
+    '• Sep 16: 2 urgentes + 2 regulares\n' +
+    '• El resto se reparte 4 por noche, sin duplicados\n\n' +
+    'Las 5 urgentes se sacan de su lugar normal para no repetirse.')) return;
 
+  // The 12 "done" stores are the first 12 route positions
+  const donePos = route.slice(0, 12); // positions 1-12
+  // Regular pool = positions 13+ MINUS any urgent units (they go on their urgent nights)
+  const restPool = route.slice(12).filter(u => !urgentSet.has(u));
+
+  // Also make sure none of the done-12 are urgent units (they shouldn't be, but guard)
+  const doneClean = donePos.filter(u => !urgentSet.has(u));
+
+  // Snapshot for undo — capture the whole cycle window
+  const cycleEnd = new Date(cycleStart); cycleEnd.setDate(cycleEnd.getDate() + CYCLE_LENGTH_DAYS - 1);
+  const cycleEndKey = localDateKey(cycleEnd);
   cycle.weatherShifts = cycle.weatherShifts || [];
+  const snap = {};
+  Object.keys(cycle.schedule).forEach(d => { snap[d] = [...cycle.schedule[d]]; });
   cycle.weatherShifts.push({
-    shiftedDate: '2026-09-11',
+    shiftedDate: '2026-09-09',
     appliedAt: new Date().toISOString(),
-    snapshot: { '2026-09-11': [...current] },
-    label: 'Arreglo Sep 11 (9-12)',
+    snapshot: snap,
+    label: 'Reconstrucción septiembre',
   });
 
-  cycle.schedule['2026-09-11'] = want;
+  // Clear the whole cycle window first (so no stale entries linger)
+  { let cur = new Date(cycleStart);
+    while (localDateKey(cur) <= cycleEndKey) { cycle.schedule[localDateKey(cur)] = []; cur.setDate(cur.getDate()+1); } }
 
-  say(`✓ Sep 11 ahora tiene: ${want.join(', ')}`);
+  // Lay down the fixed done nights
+  cycle.schedule['2026-09-09'] = doneClean.slice(0, 4);
+  cycle.schedule['2026-09-10'] = doneClean.slice(4, 8);
+  cycle.schedule['2026-09-11'] = doneClean.slice(8, 12);
+
+  // Urgent nights + fills
+  let idx = 0;
+  cycle.schedule['2026-09-14'] = [...U14, restPool[idx++]].filter(Boolean);
+  cycle.schedule['2026-09-15'] = restPool.slice(idx, idx + 4); idx += 4;
+  cycle.schedule['2026-09-16'] = [...U16, restPool[idx++], restPool[idx++]].filter(Boolean);
+  cycle.schedule['2026-09-17'] = restPool.slice(idx, idx + 4); idx += 4;
+
+  // Remaining regulars onto Mon-Thu from Sep 21
+  const workNights = ['2026-09-21','2026-09-22','2026-09-23','2026-09-24',
+                      '2026-09-28','2026-09-29','2026-09-30','2026-10-01',
+                      '2026-10-05','2026-10-06'];
+  for (let i = 0; i < workNights.length && idx < restPool.length; i++) {
+    const isLast = i === workNights.length - 1;
+    const take = isLast ? (restPool.length - idx) : Math.min(STORES_PER_NIGHT, restPool.length - idx);
+    cycle.schedule[workNights[i]] = restPool.slice(idx, idx + take);
+    idx += take;
+  }
+
+  // Mark Sep 9/10/11 stores complete
+  cycle.completions = cycle.completions || {};
+  [...cycle.schedule['2026-09-09'], ...cycle.schedule['2026-09-10'], ...cycle.schedule['2026-09-11']].forEach(unit => {
+    cycle.completions[unit] = {
+      date: '2026-09-11',
+      completedAt: new Date('2026-09-11T02:00:00').toISOString(),
+      notes: 'Completado (reconstrucción septiembre)',
+      by: getDeviceId ? getDeviceId() : 'admin',
+    };
+  });
+
+  // Mark the 6 urgent as emergencies (⚡)
+  cycle.emergencies = cycle.emergencies || {};
+  [...U14, ...U16].forEach(u => {
+    cycle.emergencies[u] = { type: 'urgent', addedAt: new Date().toISOString(), notes: 'Puerta urgente' };
+  });
+
+  const leftover = restPool.length - idx;
+  say(`✓ Septiembre reconstruido. 1-12 completas · urgentes en Sep 14/16 · resto repartido` +
+      (leftover > 0 ? ` · ⚠ ${leftover} sin cabida` : ''), leftover > 0 ? '#fbbf24' : undefined);
+
   renderAll();
   renderWeatherShifts();
   pushAction('replace', { cycleData: STATE.cycleData }).catch(()=>{});
