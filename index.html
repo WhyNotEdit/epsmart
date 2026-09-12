@@ -2155,6 +2155,7 @@ function openWODetail(kind, id) {
       <a class="btn btn-primary" style="flex:1;text-decoration:none;text-align:center" href="https://www.waze.com/ul?q=${navAddr}&navigate=yes" target="_blank">🧭 Navegar</a>
       ${o.photos ? `<a class="btn btn-secondary" style="flex:1;text-decoration:none;text-align:center" href="${escapeHtml(o.photos)}" target="_blank">🖼 Fotos WO</a>` : ''}
     </div>
+    <button class="btn btn-secondary btn-full" style="margin-top:8px" onclick="openWOEdit('${kind}','${o.id}')">✏️ Editar</button>
     ${o.status !== 'completado' ? `<button class="btn btn-success btn-full" style="margin-top:8px" onclick="toggleWODone('${kind}','${o.id}');closeWODetail()">✓ Marcar Completado</button>` : ''}
   `;
   document.getElementById('woDetailOverlay').classList.add('show');
@@ -2162,6 +2163,64 @@ function openWODetail(kind, id) {
 function closeWODetail() {
   document.getElementById('woDetailOverlay').classList.remove('show');
 }
+
+// ── Edit an existing work order ──
+function openWOEdit(kind, id) {
+  const pl = pipeline(kind);
+  const o = pl.orders.find(x => x.id === id) || pl.completed.find(x => x.id === id);
+  if (!o) return;
+  const s = getWOState();
+  const empOpts = s.employees.map(e => `<option value="${escapeHtml(e)}" ${e===o.assigned?'selected':''}>${escapeHtml(e)}</option>`).join('');
+  const priOpt = (v,lbl) => `<option value="${v}" ${String(o.priority)===String(v)?'selected':''}>${lbl}</option>`;
+
+  document.getElementById('woDetailBody').innerHTML = `
+    <div class="wod-store" style="margin-bottom:14px">Editar Trabajo</div>
+    <div class="field"><label># de Tienda</label><input type="text" id="edStore" value="${escapeHtml(o.store||'')}"></div>
+    <div class="field"><label>Dirección</label><input type="text" id="edAddr" value="${escapeHtml(o.addr||'')}"></div>
+    <div class="field"><label># de Work Order</label><input type="text" id="edNum" value="${escapeHtml(o.wo||'')}"></div>
+    <div class="field"><label>Tipo de Servicio</label><input type="text" id="edSvc" value="${escapeHtml(o.service||'')}"></div>
+    <div class="field"><label>Prioridad</label>
+      <select id="edPriority">
+        <option value="" ${o.priority===null||o.priority===undefined?'selected':''}>— Sin prioridad —</option>
+        ${priOpt(0,'⚠️ Emergencia')}
+        ${priOpt(1,'1 (más urgente)')}
+        ${priOpt(2,'2')}${priOpt(3,'3')}${priOpt(4,'4')}${priOpt(5,'5')}
+      </select>
+    </div>
+    <div class="field"><label>Fecha Límite</label><input type="date" id="edDue" value="${o.due||''}"></div>
+    <div class="field"><label>Asignado a</label>
+      <select id="edAssigned"><option value="" ${!o.assigned?'selected':''}>— Nadie —</option>${empOpts}</select>
+    </div>
+    <div class="field"><label>Link de Fotos</label><input type="url" id="edPhotos" value="${escapeHtml(o.photos||'')}"></div>
+    <div class="field"><label>Notas</label><textarea id="edNotes" style="min-height:60px">${escapeHtml(o.notes||'')}</textarea></div>
+    <button class="btn btn-primary btn-full" style="margin-top:8px" onclick="saveWOEdit('${kind}','${o.id}')">Guardar Cambios</button>
+    <button class="btn btn-secondary btn-full" style="margin-top:8px" onclick="openWODetail('${kind}','${o.id}')">Cancelar</button>
+  `;
+}
+
+function saveWOEdit(kind, id) {
+  const pl = pipeline(kind);
+  const o = pl.orders.find(x => x.id === id) || pl.completed.find(x => x.id === id);
+  if (!o) return;
+  o.store   = document.getElementById('edStore').value.trim();
+  o.addr    = document.getElementById('edAddr').value.trim();
+  o.wo      = document.getElementById('edNum').value.trim();
+  o.service = document.getElementById('edSvc').value.trim();
+  const pv  = document.getElementById('edPriority').value;
+  o.priority = pv === '' ? null : parseInt(pv, 10);
+  o.due     = document.getElementById('edDue').value;
+  o.assigned= document.getElementById('edAssigned').value;
+  o.photos  = document.getElementById('edPhotos').value.trim();
+  o.notes   = document.getElementById('edNotes').value.trim();
+
+  toast('Cambios guardados', 'success');
+  renderAllWO();
+  openWODetail(kind, id); // back to detail view showing updates
+  pushAction('replace', { cycleData: STATE.cycleData }).catch(err => {
+    console.error(err); toast('⚠️ No se pudo guardar en la nube', 'error');
+  });
+}
+
 
 
 // Lightbox to view photos full-screen
