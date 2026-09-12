@@ -1154,6 +1154,8 @@ main{padding:14px var(--pad) 22px}
 .wo-check:active{transform:scale(0.92)}
 .wo-nav-btn{width:40px;height:40px;border-radius:11px;background:linear-gradient(135deg,#5fd5ff 0%,var(--blue-electric) 50%,#0080d0 100%);display:grid;place-items:center;color:white;flex-shrink:0;text-decoration:none;box-shadow:0 3px 10px rgba(0,168,255,0.4)}
 .wo-nav-btn:active{transform:scale(0.92)}
+.wo-photos-btn{display:inline-flex;align-items:center;gap:7px;padding:9px 14px;margin-bottom:10px;border-radius:9px;font-size:12px;font-weight:600;text-decoration:none;background:rgba(167,139,250,0.12);color:#c4b5fd;border:1px solid rgba(167,139,250,0.3);width:100%;justify-content:center}
+.wo-photos-btn:active{background:rgba(167,139,250,0.2)}
 
 .gest-card{display:flex;gap:12px;align-items:flex-start;background:linear-gradient(180deg,var(--navy-1) 0%,var(--navy) 100%);border:1px solid var(--line-2);border-radius:14px;padding:14px;margin-bottom:10px}
 .gest-num{width:26px;height:26px;border-radius:8px;background:rgba(0,168,255,0.12);color:var(--blue-bright);display:grid;place-items:center;font-family:var(--font-mono);font-size:12px;font-weight:700;flex-shrink:0}
@@ -1430,6 +1432,7 @@ main{padding:14px var(--pad) 22px}
           <div class="field"><label>Tipo de Servicio</label><input type="text" id="qSvc" placeholder="Grout, pintura, asfalto..."></div>
           <div class="field"><label>Fecha Límite</label><input type="date" id="qDue"></div>
           <div class="field"><label>Notas</label><textarea id="qNotes" placeholder="Detalles..." style="min-height:60px"></textarea></div>
+          <div class="field"><label>Link de Fotos (opcional)</label><input type="url" id="qPhotos" placeholder="Pega el link a las fotos del work order"></div>
           <button class="btn btn-primary btn-full" onclick="saveNewWO('quote')">Agregar Cotización</button>
         </div>
       </div>
@@ -1467,6 +1470,7 @@ main{padding:14px var(--pad) 22px}
           <div class="field"><label>Tipo de Servicio</label><input type="text" id="wSvc" placeholder="Grout, pintura, asfalto..."></div>
           <div class="field"><label>Fecha Límite</label><input type="date" id="wDue"></div>
           <div class="field"><label>Notas</label><textarea id="wNotes" placeholder="Detalles..." style="min-height:60px"></textarea></div>
+          <div class="field"><label>Link de Fotos (opcional)</label><input type="url" id="wPhotos" placeholder="Pega el link a las fotos del work order"></div>
           <button class="btn btn-primary btn-full" onclick="saveNewWO('work')">Agregar Trabajo</button>
         </div>
       </div>
@@ -2002,15 +2006,26 @@ function saveNewWO(kind) {
   const svc   = document.getElementById(p+'Svc').value.trim();
   const due   = document.getElementById(p+'Due').value;
   const notes = document.getElementById(p+'Notes').value.trim();
+  const photos = document.getElementById(p+'Photos') ? document.getElementById(p+'Photos').value.trim() : '';
 
   if (!store && !addr) { toast('Pon al menos el # de tienda o la dirección', 'error'); return; }
 
+  // Confirm before saving so an accidental tap doesn't create a stray order
+  const label = kind === 'quote' ? 'cotización' : 'trabajo';
+  const summary = `¿Guardar ${label}?\n\n` +
+    `${store ? 'Tienda: #'+store+'\n' : ''}` +
+    `${wonum ? 'WO: '+wonum+'\n' : ''}` +
+    `${svc ? 'Servicio: '+svc+'\n' : ''}` +
+    `${addr ? 'Dirección: '+addr+'\n' : ''}` +
+    `${due ? 'Fecha: '+due : ''}`;
+  if (!confirm(summary)) return;
+
   pipeline(kind).orders.push({
     id: woGenId(), store, addr, wo: wonum, service: svc, due,
-    assigned: '', status: 'pendiente', notes, createdAt: new Date().toISOString(),
+    assigned: '', status: 'pendiente', notes, photos, createdAt: new Date().toISOString(),
   });
 
-  [p+'Store',p+'Addr',p+'Num',p+'Svc',p+'Due',p+'Notes'].forEach(id => {
+  [p+'Store',p+'Addr',p+'Num',p+'Svc',p+'Due',p+'Notes',p+'Photos'].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = '';
   });
   toast(kind === 'quote' ? 'Cotización agregada' : 'Trabajo agregado', 'success');
@@ -2153,6 +2168,10 @@ function woCardHTML(o, kind, s, empOptions) {
       <span class="wo-due">📅 ${dueLabel}</span>
       ${o.notes ? `<span class="wo-notes-tag">📝 ${escapeHtml(o.notes)}</span>`:''}
     </div>
+    ${o.photos ? `<a class="wo-photos-btn" href="${escapeHtml(o.photos)}" target="_blank" rel="noopener">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+      Ver Fotos
+    </a>` : ''}
     <div class="wo-actions">
       <select class="wo-assign" onchange="assignWO('${kind}','${o.id}', this.value)">
         <option value="" ${!o.assigned?'selected':''}>— Asignar —</option>
@@ -2282,14 +2301,14 @@ function parseImportText(text) {
   const lines = text.split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('#'));
   return lines.map(line => {
     const parts = line.split('|').map(p => p.trim());
-    const [store, wo, service, due, addr, notes] = [parts[0]||'',parts[1]||'',parts[2]||'',parts[3]||'',parts[4]||'',parts[5]||''];
+    const [store, wo, service, due, addr, notes, photos] = [parts[0]||'',parts[1]||'',parts[2]||'',parts[3]||'',parts[4]||'',parts[5]||'',parts[6]||''];
     const woClean = wo.replace(/^WO\s*/i, '');
     let finalAddr = addr;
     if (!finalAddr && store) {
       const found = findStore(store);
       if (found) finalAddr = `${found.addr}, ${found.city}, ${found.state} ${found.zip||''}`.trim();
     }
-    return { store, wo: woClean, service, due, addr: finalAddr, notes };
+    return { store, wo: woClean, service, due, addr: finalAddr, notes, photos };
   });
 }
 
@@ -2321,7 +2340,7 @@ function confirmImport(kind) {
   let added = 0;
   pend.forEach(p => {
     if (!p.store && !p.addr) return;
-    pl.orders.push({ id: woGenId(), store:p.store, addr:p.addr, wo:p.wo, service:p.service, due:p.due, assigned:'', status:'pendiente', notes:p.notes, createdAt:new Date().toISOString() });
+    pl.orders.push({ id: woGenId(), store:p.store, addr:p.addr, wo:p.wo, service:p.service, due:p.due, assigned:'', status:'pendiente', notes:p.notes, photos:p.photos||'', createdAt:new Date().toISOString() });
     added++;
   });
   _pendingImport[kind] = [];
