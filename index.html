@@ -1156,6 +1156,22 @@ main{padding:14px var(--pad) 22px}
 .wo-nav-btn:active{transform:scale(0.92)}
 .wo-photos-btn{display:inline-flex;align-items:center;gap:7px;padding:9px 14px;margin-bottom:10px;border-radius:9px;font-size:12px;font-weight:600;text-decoration:none;background:rgba(167,139,250,0.12);color:#c4b5fd;border:1px solid rgba(167,139,250,0.3);width:100%;justify-content:center}
 .wo-photos-btn:active{background:rgba(167,139,250,0.2)}
+.wo-card.emerg{border-color:rgba(255,71,87,0.5);box-shadow:0 0 0 1px rgba(255,71,87,0.3)}
+.wo-emerg-banner{background:linear-gradient(135deg,#ff4757,#c0392b);color:white;font-size:12px;font-weight:800;letter-spacing:0.08em;text-align:center;padding:6px;border-radius:8px;margin-bottom:10px}
+.wo-pri-badge{display:inline-block;background:rgba(251,191,36,0.15);color:#fbbf24;font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px;border:1px solid rgba(251,191,36,0.35);vertical-align:middle}
+.wo-pics{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+.wo-pic{width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--line-2);cursor:pointer}
+.wo-pic:active{transform:scale(0.95)}
+.photo-thumbs{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.photo-thumb{position:relative;width:60px;height:60px}
+.photo-thumb img{width:100%;height:100%;object-fit:cover;border-radius:8px;border:1px solid var(--line-2)}
+.photo-thumb button{position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:#ff4757;border:2px solid var(--navy);color:white;display:grid;place-items:center;cursor:pointer;padding:0}
+.trab-filter-bar{display:flex;gap:8px;margin-top:12px}
+.trab-filter{flex:1;padding:9px 10px;border-radius:9px;font-size:12px;font-weight:500;background:var(--navy-2);border:1px solid var(--line-2);color:white;font-family:var(--font-body);cursor:pointer;-webkit-appearance:none;appearance:none}
+.trab-filter:focus{outline:none;border-color:var(--blue-electric)}
+.photo-lightbox{position:fixed;inset:0;z-index:200;background:rgba(0,5,20,0.95);display:none;align-items:center;justify-content:center;padding:20px}
+.photo-lightbox.show{display:flex}
+.photo-lightbox img{max-width:100%;max-height:100%;border-radius:12px}
 
 .gest-card{display:flex;gap:12px;align-items:flex-start;background:linear-gradient(180deg,var(--navy-1) 0%,var(--navy) 100%);border:1px solid var(--line-2);border-radius:14px;padding:14px;margin-bottom:10px}
 .gest-num{width:26px;height:26px;border-radius:8px;background:rgba(0,168,255,0.12);color:var(--blue-bright);display:grid;place-items:center;font-family:var(--font-mono);font-size:12px;font-weight:700;flex-shrink:0}
@@ -1363,6 +1379,7 @@ main{padding:14px var(--pad) 22px}
           <div class="route-sub" id="trabajosSub">Órdenes de trabajo asignadas</div>
         </div>
       </div>
+      <div id="trabFilterBar" class="trab-filter-bar"></div>
     </div>
     <div id="trabajosList"></div>
   </section>
@@ -1431,8 +1448,24 @@ main{padding:14px var(--pad) 22px}
           <div class="field"><label># de Work Order</label><input type="text" id="qNum" placeholder="6511134"></div>
           <div class="field"><label>Tipo de Servicio</label><input type="text" id="qSvc" placeholder="Grout, pintura, asfalto..."></div>
           <div class="field"><label>Fecha Límite</label><input type="date" id="qDue"></div>
+          <div class="field"><label>Prioridad</label>
+            <select id="qPriority">
+              <option value="">— Sin prioridad —</option>
+              <option value="0">⚠️ Emergencia</option>
+              <option value="1">1 (más urgente)</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+            </select>
+          </div>
           <div class="field"><label>Notas</label><textarea id="qNotes" placeholder="Detalles..." style="min-height:60px"></textarea></div>
           <div class="field"><label>Link de Fotos (opcional)</label><input type="url" id="qPhotos" placeholder="Pega el link a las fotos del work order"></div>
+          <div class="field">
+            <label>Subir Fotos (hasta 5)</label>
+            <input type="file" id="qPhotoUpload" accept="image/*" multiple capture="environment" onchange="handlePhotoUpload('quote', this)" style="font-size:12px">
+            <div id="qPhotoThumbs" class="photo-thumbs"></div>
+          </div>
           <button class="btn btn-primary btn-full" onclick="saveNewWO('quote')">Agregar Cotización</button>
         </div>
       </div>
@@ -1469,8 +1502,24 @@ main{padding:14px var(--pad) 22px}
           <div class="field"><label># de Work Order</label><input type="text" id="wNum" placeholder="6511134"></div>
           <div class="field"><label>Tipo de Servicio</label><input type="text" id="wSvc" placeholder="Grout, pintura, asfalto..."></div>
           <div class="field"><label>Fecha Límite</label><input type="date" id="wDue"></div>
+          <div class="field"><label>Prioridad</label>
+            <select id="wPriority">
+              <option value="">— Sin prioridad —</option>
+              <option value="0">⚠️ Emergencia</option>
+              <option value="1">1 (más urgente)</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+            </select>
+          </div>
           <div class="field"><label>Notas</label><textarea id="wNotes" placeholder="Detalles..." style="min-height:60px"></textarea></div>
           <div class="field"><label>Link de Fotos (opcional)</label><input type="url" id="wPhotos" placeholder="Pega el link a las fotos del work order"></div>
+          <div class="field">
+            <label>Subir Fotos (hasta 5)</label>
+            <input type="file" id="wPhotoUpload" accept="image/*" multiple capture="environment" onchange="handlePhotoUpload('work', this)" style="font-size:12px">
+            <div id="wPhotoThumbs" class="photo-thumbs"></div>
+          </div>
           <button class="btn btn-primary btn-full" onclick="saveNewWO('work')">Agregar Trabajo</button>
         </div>
       </div>
@@ -1993,6 +2042,79 @@ function pipeline(kind) {
   return kind === 'quote' ? s.quote : s.work;
 }
 
+// ── PHOTO UPLOAD (mobile) — compress to tiny thumbnails so sync stays safe ──
+// Staged photos per pipeline before the order is saved
+const _stagedPhotos = { work: [], quote: [] };
+const MAX_PHOTOS = 5;
+
+function handlePhotoUpload(kind, input) {
+  const files = Array.from(input.files || []);
+  if (!files.length) return;
+  const staged = _stagedPhotos[kind];
+  const room = MAX_PHOTOS - staged.length;
+  if (room <= 0) { toast(`Máximo ${MAX_PHOTOS} fotos`, 'error'); input.value=''; return; }
+  files.slice(0, room).forEach(file => compressImage(file, dataUrl => {
+    staged.push(dataUrl);
+    renderPhotoThumbs(kind);
+  }));
+  input.value = ''; // allow re-picking
+}
+
+// Resize longest side to 640px, JPEG quality 0.55 → ~30-50KB
+function compressImage(file, cb) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      const maxDim = 640;
+      let { width, height } = img;
+      if (width > height && width > maxDim) { height = height * maxDim / width; width = maxDim; }
+      else if (height > maxDim) { width = width * maxDim / height; height = maxDim; }
+      const canvas = document.createElement('canvas');
+      canvas.width = width; canvas.height = height;
+      canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+      cb(canvas.toDataURL('image/jpeg', 0.55));
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function renderPhotoThumbs(kind) {
+  const p = kind === 'quote' ? 'q' : 'w';
+  const wrap = document.getElementById(p+'PhotoThumbs');
+  if (!wrap) return;
+  const staged = _stagedPhotos[kind];
+  wrap.innerHTML = staged.map((src, i) => `
+    <div class="photo-thumb">
+      <img src="${src}" alt="foto ${i+1}">
+      <button onclick="removeStagedPhoto('${kind}', ${i})" aria-label="Quitar">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>`).join('');
+}
+
+function removeStagedPhoto(kind, idx) {
+  _stagedPhotos[kind].splice(idx, 1);
+  renderPhotoThumbs(kind);
+}
+
+// Lightbox to view photos full-screen
+function openPhotoLightbox(dataUrl) {
+  let lb = document.getElementById('photoLightbox');
+  if (!lb) {
+    lb = document.createElement('div');
+    lb.id = 'photoLightbox';
+    lb.className = 'photo-lightbox';
+    lb.onclick = () => lb.classList.remove('show');
+    lb.innerHTML = '<img id="lightboxImg" src="" alt="">';
+    document.body.appendChild(lb);
+  }
+  document.getElementById('lightboxImg').src = dataUrl;
+  lb.classList.add('show');
+}
+
+
 function woGenId() {
   return 'wo_' + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
 }
@@ -2007,25 +2129,34 @@ function saveNewWO(kind) {
   const due   = document.getElementById(p+'Due').value;
   const notes = document.getElementById(p+'Notes').value.trim();
   const photos = document.getElementById(p+'Photos') ? document.getElementById(p+'Photos').value.trim() : '';
+  const priVal = document.getElementById(p+'Priority') ? document.getElementById(p+'Priority').value : '';
+  const priority = priVal === '' ? null : parseInt(priVal, 10);
+  const pics = [..._stagedPhotos[kind]];
 
   if (!store && !addr) { toast('Pon al menos el # de tienda o la dirección', 'error'); return; }
 
   // Confirm before saving so an accidental tap doesn't create a stray order
   const label = kind === 'quote' ? 'cotización' : 'trabajo';
+  const priLabel = priority === 0 ? '⚠️ EMERGENCIA' : (priority ? 'Prioridad '+priority : '');
   const summary = `¿Guardar ${label}?\n\n` +
     `${store ? 'Tienda: #'+store+'\n' : ''}` +
     `${wonum ? 'WO: '+wonum+'\n' : ''}` +
     `${svc ? 'Servicio: '+svc+'\n' : ''}` +
+    `${priLabel ? priLabel+'\n' : ''}` +
+    `${pics.length ? pics.length+' foto(s)\n' : ''}` +
     `${addr ? 'Dirección: '+addr+'\n' : ''}` +
     `${due ? 'Fecha: '+due : ''}`;
   if (!confirm(summary)) return;
 
   pipeline(kind).orders.push({
     id: woGenId(), store, addr, wo: wonum, service: svc, due,
-    assigned: '', status: 'pendiente', notes, photos, createdAt: new Date().toISOString(),
+    assigned: '', status: 'pendiente', notes, photos, priority, pics,
+    createdAt: new Date().toISOString(),
   });
 
-  [p+'Store',p+'Addr',p+'Num',p+'Svc',p+'Due',p+'Notes',p+'Photos'].forEach(id => {
+  _stagedPhotos[kind] = [];
+  renderPhotoThumbs(kind);
+  [p+'Store',p+'Addr',p+'Num',p+'Svc',p+'Due',p+'Notes',p+'Photos',p+'Priority'].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = '';
   });
   toast(kind === 'quote' ? 'Cotización agregada' : 'Trabajo agregado', 'success');
@@ -2132,14 +2263,60 @@ function renderAllWO() {
   renderWOHistory('quote');
 }
 
+// Sort: Emergencia (priority 0) first, then priority 1-5, then no-priority, then by due date
+function woSortFn(a, b) {
+  const pa = (a.priority === null || a.priority === undefined) ? 999 : a.priority;
+  const pb = (b.priority === null || b.priority === undefined) ? 999 : b.priority;
+  if (pa !== pb) return pa - pb;
+  return (a.due||'9999') < (b.due||'9999') ? -1 : 1;
+}
+
+// Current Trabajos filters
+let _trabFilterEmp = '';
+let _trabFilterPri = '';
+
+function setTrabFilter(which, val) {
+  if (which === 'emp') _trabFilterEmp = val;
+  if (which === 'pri') _trabFilterPri = val;
+  renderTrabajos();
+}
+
 // ── Employee Trabajos tab — WORK pipeline only ──
 function renderTrabajos() {
   const list = document.getElementById('trabajosList');
   if (!list) return;
   const s = getWOState();
-  const orders = [...s.work.orders].sort((a,b) => (a.due||'9999') < (b.due||'9999') ? -1 : 1);
+  let orders = [...s.work.orders];
+
+  // Apply filters
+  if (_trabFilterEmp) orders = orders.filter(o => o.assigned === _trabFilterEmp);
+  if (_trabFilterPri === 'emerg') orders = orders.filter(o => o.priority === 0);
+  else if (_trabFilterPri) orders = orders.filter(o => String(o.priority) === _trabFilterPri);
+
+  orders.sort(woSortFn);
+
+  // Render filter bar
+  const filterBar = document.getElementById('trabFilterBar');
+  if (filterBar) {
+    const empOpts = s.employees.map(e => `<option value="${escapeHtml(e)}" ${e===_trabFilterEmp?'selected':''}>${escapeHtml(e)}</option>`).join('');
+    filterBar.innerHTML = `
+      <select class="trab-filter" onchange="setTrabFilter('emp', this.value)">
+        <option value="">👷 Todos</option>${empOpts}
+      </select>
+      <select class="trab-filter" onchange="setTrabFilter('pri', this.value)">
+        <option value="">🎯 Toda prioridad</option>
+        <option value="emerg" ${_trabFilterPri==='emerg'?'selected':''}>⚠️ Emergencia</option>
+        <option value="1" ${_trabFilterPri==='1'?'selected':''}>Prioridad 1</option>
+        <option value="2" ${_trabFilterPri==='2'?'selected':''}>Prioridad 2</option>
+        <option value="3" ${_trabFilterPri==='3'?'selected':''}>Prioridad 3</option>
+        <option value="4" ${_trabFilterPri==='4'?'selected':''}>Prioridad 4</option>
+        <option value="5" ${_trabFilterPri==='5'?'selected':''}>Prioridad 5</option>
+      </select>`;
+  }
+
   if (!orders.length) {
-    list.innerHTML = `<div class="empty"><div class="empty-icon">📋</div><h3>No hay trabajos</h3><p>El manager sube los trabajos del día antes de las 8 AM.</p></div>`;
+    const anyFilter = _trabFilterEmp || _trabFilterPri;
+    list.innerHTML = `<div class="empty"><div class="empty-icon">📋</div><h3>${anyFilter?'Nada con ese filtro':'No hay trabajos'}</h3><p>${anyFilter?'Cambia el filtro para ver más.':'El manager sube los trabajos del día antes de las 8 AM.'}</p></div>`;
     return;
   }
   const empOptions = (sel) => s.employees.map(e =>
@@ -2152,11 +2329,15 @@ function woCardHTML(o, kind, s, empOptions) {
   const done = o.status === 'completado';
   const dueLabel = o.due ? formatDate(parseDate(o.due), 'EEE d MMM') : 'Sin fecha';
   const navAddr = encodeURIComponent(o.addr || o.store);
+  const isEmerg = o.priority === 0;
+  const priBadge = isEmerg ? '' : (o.priority ? `<span class="wo-pri-badge">P${o.priority}</span>` : '');
+  const pics = o.pics || [];
   return `
-  <div class="wo-card ${done?'done':''}">
+  <div class="wo-card ${done?'done':''} ${isEmerg?'emerg':''}">
+    ${isEmerg ? `<div class="wo-emerg-banner">⚠️ EMERGENCIA</div>` : ''}
     <div class="wo-card-head">
       <div>
-        <div class="wo-store">${o.store ? '#'+escapeHtml(o.store) : 'Sin #'} ${o.wo ? `<span class="wo-num">WO ${escapeHtml(o.wo)}</span>`:''}</div>
+        <div class="wo-store">${o.store ? '#'+escapeHtml(o.store) : 'Sin #'} ${priBadge} ${o.wo ? `<span class="wo-num">WO ${escapeHtml(o.wo)}</span>`:''}</div>
         ${o.service ? `<div class="wo-svc">${escapeHtml(o.service)}</div>`:''}
       </div>
       <button class="wo-check ${done?'on':''}" onclick="toggleWODone('${kind}','${o.id}')" aria-label="Completar">
@@ -2168,6 +2349,7 @@ function woCardHTML(o, kind, s, empOptions) {
       <span class="wo-due">📅 ${dueLabel}</span>
       ${o.notes ? `<span class="wo-notes-tag">📝 ${escapeHtml(o.notes)}</span>`:''}
     </div>
+    ${pics.length ? `<div class="wo-pics">${pics.map(src => `<img src="${src}" class="wo-pic" onclick="openPhotoLightbox('${src}')" alt="foto">`).join('')}</div>` : ''}
     ${o.photos ? `<a class="wo-photos-btn" href="${escapeHtml(o.photos)}" target="_blank" rel="noopener">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
       Ver Fotos
@@ -2189,7 +2371,7 @@ function renderWorkManage() {
   const list = document.getElementById('workManageList');
   if (!list) return;
   const s = getWOState();
-  const orders = [...s.work.orders].sort((a,b) => (a.due||'9999') < (b.due||'9999') ? -1 : 1);
+  const orders = [...s.work.orders].sort(woSortFn);
   const countEl = document.getElementById('workCount');
   if (countEl) countEl.textContent = `${orders.length} activo${orders.length!==1?'s':''}`;
   if (!orders.length) {
@@ -2226,7 +2408,7 @@ function renderQuoteManage() {
   const list = document.getElementById('quoteManageList');
   if (!list) return;
   const s = getWOState();
-  const orders = [...s.quote.orders].sort((a,b) => (a.due||'9999') < (b.due||'9999') ? -1 : 1);
+  const orders = [...s.quote.orders].sort(woSortFn);
   const countEl = document.getElementById('quoteCount');
   if (countEl) countEl.textContent = `${orders.length} por cotizar`;
   if (!orders.length) {
@@ -2340,7 +2522,7 @@ function confirmImport(kind) {
   let added = 0;
   pend.forEach(p => {
     if (!p.store && !p.addr) return;
-    pl.orders.push({ id: woGenId(), store:p.store, addr:p.addr, wo:p.wo, service:p.service, due:p.due, assigned:'', status:'pendiente', notes:p.notes, photos:p.photos||'', createdAt:new Date().toISOString() });
+    pl.orders.push({ id: woGenId(), store:p.store, addr:p.addr, wo:p.wo, service:p.service, due:p.due, assigned:'', status:'pendiente', notes:p.notes, photos:p.photos||'', priority:null, pics:[], createdAt:new Date().toISOString() });
     added++;
   });
   _pendingImport[kind] = [];
