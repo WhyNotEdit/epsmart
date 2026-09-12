@@ -1123,6 +1123,65 @@ main{padding:14px var(--pad) 22px}
 .ssheet-map-icon{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;color:white;font-weight:700;font-size:15px;box-shadow:0 2px 8px rgba(0,0,0,0.3)}
 
 /* ═══ FORT MYERS ROUTE LIST ═══ */
+/* ═══ WORK ORDER HUB ═══ */
+.gest-header{background:linear-gradient(180deg,var(--navy-1) 0%,var(--navy) 100%);border:1px solid var(--line-2);border-radius:16px;padding:16px;margin-bottom:14px}
+.gest-header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.gest-gear{width:40px;height:40px;border-radius:11px;background:var(--navy-2);border:1px solid var(--line-2);display:grid;place-items:center;color:var(--ink-2);cursor:pointer;flex-shrink:0}
+.gest-gear:active{transform:scale(0.94);color:white}
+.gest-tabs{display:flex;gap:6px}
+.gest-toggle{display:flex;gap:6px;margin-bottom:10px;background:var(--navy-2);padding:4px;border-radius:11px;border:1px solid var(--line)}
+.gest-toggle-btn{flex:1;padding:10px;border-radius:8px;font-size:13px;font-weight:600;background:transparent;border:none;color:var(--ink-2);cursor:pointer;font-family:var(--font-body);transition:all .15s}
+.gest-toggle-btn.active{background:linear-gradient(135deg,var(--blue-electric),#0080d0);color:white;box-shadow:0 2px 8px rgba(0,168,255,0.35)}
+.gest-tab{flex:1;padding:9px 8px;border-radius:9px;font-size:12px;font-weight:600;background:var(--navy-2);border:1px solid var(--line-2);color:var(--ink-2);cursor:pointer;font-family:var(--font-body)}
+.gest-tab.active{background:rgba(0,168,255,0.12);color:var(--blue-bright);border-color:rgba(0,168,255,0.35)}
+.gest-tabview{display:none}
+.gest-tabview.active{display:block}
+
+.wo-card{background:linear-gradient(180deg,var(--navy-1) 0%,var(--navy) 100%);border:1px solid var(--line-2);border-radius:14px;padding:14px;margin-bottom:10px}
+.wo-card.done{opacity:0.5}
+.wo-card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:6px}
+.wo-store{font-family:var(--font-mono);font-size:15px;font-weight:700;color:white;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.wo-num{font-size:10px;font-weight:600;color:var(--blue-bright);background:rgba(0,168,255,0.1);padding:2px 7px;border-radius:99px;border:1px solid rgba(0,168,255,0.25)}
+.wo-svc{font-size:12px;color:#fbbf24;margin-top:3px;font-weight:500}
+.wo-addr{font-size:13px;color:var(--ink-2);margin-bottom:8px;line-height:1.4}
+.wo-meta{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.wo-due,.wo-notes-tag{font-size:11px;color:var(--ink-2);font-family:var(--font-mono);background:var(--navy-2);padding:4px 8px;border-radius:7px;border:1px solid var(--line)}
+.wo-actions{display:flex;gap:8px;align-items:center}
+.wo-assign{flex:1;padding:9px 10px;border-radius:9px;font-size:12px;font-weight:500;background:var(--navy-2);border:1px solid var(--line-2);color:white;font-family:var(--font-body);cursor:pointer;-webkit-appearance:none;appearance:none}
+.wo-assign:focus{outline:none;border-color:var(--blue-electric)}
+.wo-check{width:34px;height:34px;border-radius:9px;border:2px solid var(--line-2);background:var(--navy-1);display:grid;place-items:center;color:var(--signal);cursor:pointer;flex-shrink:0}
+.wo-check.on{background:linear-gradient(135deg,var(--signal),#00c48c);border-color:var(--signal);box-shadow:0 0 0 3px rgba(0,232,160,0.2)}
+.wo-check:active{transform:scale(0.92)}
+.wo-nav-btn{width:40px;height:40px;border-radius:11px;background:linear-gradient(135deg,#5fd5ff 0%,var(--blue-electric) 50%,#0080d0 100%);display:grid;place-items:center;color:white;flex-shrink:0;text-decoration:none;box-shadow:0 3px 10px rgba(0,168,255,0.4)}
+.wo-nav-btn:active{transform:scale(0.92)}
+
+.gest-card{display:flex;gap:12px;align-items:flex-start;background:linear-gradient(180deg,var(--navy-1) 0%,var(--navy) 100%);border:1px solid var(--line-2);border-radius:14px;padding:14px;margin-bottom:10px}
+.gest-num{width:26px;height:26px;border-radius:8px;background:rgba(0,168,255,0.12);color:var(--blue-bright);display:grid;place-items:center;font-family:var(--font-mono);font-size:12px;font-weight:700;flex-shrink:0}
+.gest-info{flex:1;min-width:0}
+.gest-store{font-family:var(--font-mono);font-size:14px;font-weight:700;color:white;display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:3px}
+.gest-addr{font-size:12px;color:var(--ink-2);margin-bottom:3px}
+.gest-svc{font-size:11px;color:#fbbf24;margin-bottom:2px}
+.gest-due{font-size:11px;color:var(--blue-bright);font-family:var(--font-mono)}
+.gest-actions{display:flex;flex-direction:column;gap:6px;flex-shrink:0}
+.gest-del{width:36px;height:36px;border-radius:9px;background:rgba(255,71,87,0.08);border:1px solid rgba(255,71,87,0.25);color:#ff6b7a;display:grid;place-items:center;cursor:pointer}
+.gest-del:active{transform:scale(0.92)}
+
+.emp-list{display:flex;flex-wrap:wrap;gap:8px}
+.emp-chip{display:flex;align-items:center;gap:8px;padding:8px 10px 8px 14px;background:var(--navy-2);border:1px solid var(--line-2);border-radius:99px;font-size:13px;color:white;font-weight:500}
+.emp-chip button{width:20px;height:20px;border-radius:50%;background:rgba(255,71,87,0.15);border:none;color:#ff6b7a;display:grid;place-items:center;cursor:pointer}
+
+.import-preview-row{display:flex;gap:10px;align-items:flex-start;padding:10px;background:var(--navy-2);border:1px solid var(--line);border-radius:10px;margin-bottom:6px}
+.import-preview-num{width:22px;height:22px;border-radius:6px;background:rgba(0,168,255,0.12);color:var(--blue-bright);display:grid;place-items:center;font-family:var(--font-mono);font-size:11px;font-weight:700;flex-shrink:0}
+.hist-card{display:flex;gap:12px;align-items:flex-start;background:linear-gradient(180deg,var(--navy-1) 0%,var(--navy) 100%);border:1px solid var(--line-2);border-radius:14px;padding:14px;margin-bottom:10px;opacity:0.85}
+.hist-info{flex:1;min-width:0}
+.hist-store{font-family:var(--font-mono);font-size:14px;font-weight:700;color:white;display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:3px}
+.hist-svc{font-size:11px;color:#fbbf24;margin-bottom:2px}
+.hist-addr{font-size:12px;color:var(--ink-2);margin-bottom:4px}
+.hist-meta{font-size:11px;color:var(--signal);font-family:var(--font-mono)}
+.hist-actions{display:flex;flex-direction:column;gap:6px;flex-shrink:0}
+.hist-restore{width:36px;height:36px;border-radius:9px;background:rgba(0,168,255,0.1);border:1px solid rgba(0,168,255,0.3);color:var(--blue-bright);display:grid;place-items:center;cursor:pointer}
+.hist-restore:active{transform:scale(0.92)}
+
 .route-header{
   background:linear-gradient(180deg,var(--navy-1) 0%,var(--navy) 100%);
   border:1px solid var(--line-2);border-radius:16px;
@@ -1298,17 +1357,12 @@ main{padding:14px var(--pad) 22px}
     <div class="route-header">
       <div class="route-header-top">
         <div>
-          <div class="route-title">Ruta Reparaciones — Grout / Sellado</div>
-          <div class="route-sub" id="routeProgress">0 / 20 completadas</div>
+          <div class="route-title">Trabajos</div>
+          <div class="route-sub" id="trabajosSub">Órdenes de trabajo asignadas</div>
         </div>
-        <button class="route-reset-btn" onclick="resetRouteProgress()">Reiniciar</button>
-      </div>
-      <div class="route-anchor">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 1 8 8c0 4.5-8 12-8 12s-8-7.5-8-12a8 8 0 0 1 8-8z"/></svg>
-        Distancias desde #042899 · 3450 SE Federal Hwy, Stuart
       </div>
     </div>
-    <div id="routeList"></div>
+    <div id="trabajosList"></div>
   </section>
 
   <section class="view active" id="view-gps">
@@ -1334,6 +1388,133 @@ main{padding:14px var(--pad) 22px}
   </section>
 
   <section class="view" id="view-mgmt">
+    <div class="gest-header">
+      <div class="gest-header-top">
+        <div>
+          <div class="route-title">Gestión</div>
+          <div class="route-sub" id="gestSubLabel">Cotizaciones y Trabajos</div>
+        </div>
+        <button class="gest-gear" onclick="openAdminSettings()" aria-label="Configuración">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </button>
+      </div>
+      <!-- TOP-LEVEL TOGGLE: Cotizaciones vs Trabajos -->
+      <div class="gest-toggle">
+        <button class="gest-toggle-btn active" data-pipe="quote" onclick="switchPipe('quote')">💲 Cotizaciones</button>
+        <button class="gest-toggle-btn" data-pipe="work" onclick="switchPipe('work')">👷 Trabajos</button>
+      </div>
+      <!-- Sub-tabs (shared, re-point per pipeline) -->
+      <div class="gest-tabs">
+        <button class="gest-tab active" data-gtab="list" onclick="switchGestTab('list')">Lista</button>
+        <button class="gest-tab" data-gtab="new" onclick="switchGestTab('new')">+ Nuevo</button>
+        <button class="gest-tab" data-gtab="import" onclick="switchGestTab('import')">Importar</button>
+        <button class="gest-tab" data-gtab="history" onclick="switchGestTab('history')">Historial</button>
+        <button class="gest-tab" data-gtab="team" onclick="switchGestTab('team')">Equipo</button>
+      </div>
+    </div>
+
+    <!-- ══ QUOTE PIPELINE ══ -->
+    <div class="pipe-views" data-pipe="quote">
+      <div id="gtab-list-quote" class="gest-tabview active">
+        <div class="mgmt-section" style="padding-bottom:6px">
+          <h4>Por Cotizar <span class="badge" id="quoteCount">0 por cotizar</span></h4>
+        </div>
+        <div id="quoteManageList"></div>
+      </div>
+      <div id="gtab-new-quote" class="gest-tabview">
+        <div class="mgmt-section">
+          <h4>Nueva Cotización</h4>
+          <div class="field"><label># de Tienda</label><input type="text" id="qStore" placeholder="42897" oninput="woAutofillStore('quote')"></div>
+          <div class="field"><label>Dirección</label><input type="text" id="qAddr" placeholder="Se llena sola si la tienda existe"></div>
+          <div class="field"><label># de Work Order</label><input type="text" id="qNum" placeholder="6511134"></div>
+          <div class="field"><label>Tipo de Servicio</label><input type="text" id="qSvc" placeholder="Grout, pintura, asfalto..."></div>
+          <div class="field"><label>Fecha Límite</label><input type="date" id="qDue"></div>
+          <div class="field"><label>Notas</label><textarea id="qNotes" placeholder="Detalles..." style="min-height:60px"></textarea></div>
+          <button class="btn btn-primary btn-full" onclick="saveNewWO('quote')">Agregar Cotización</button>
+        </div>
+      </div>
+      <div id="gtab-import-quote" class="gest-tabview">
+        <div class="mgmt-section">
+          <h4>Importar Cotizaciones (Bulk)</h4>
+          <p style="font-size:11px;color:var(--blue-bright);font-family:var(--font-mono);margin-bottom:12px">tienda | WO# | servicio | fecha | dirección | notas</p>
+          <textarea id="qImportBox" placeholder="5485 | | Grout | 2026-09-25 | | Cotizar piso&#10;17721 | | Pintura | 2026-09-26 | |" style="min-height:120px;font-family:var(--font-mono);font-size:12px" oninput="previewImport('quote')"></textarea>
+          <div style="font-size:10px;color:var(--ink-3);margin-top:6px">💡 Deja campos vacíos entre barras. Dirección se llena sola si la tienda existe.</div>
+          <div id="qImportPreview"></div>
+        </div>
+      </div>
+      <div id="gtab-history-quote" class="gest-tabview">
+        <div class="mgmt-section" style="padding-bottom:6px">
+          <h4>Cotizaciones Completadas <span class="badge" id="quoteHistCount">0 completados</span></h4>
+        </div>
+        <div id="quoteHistoryList"></div>
+      </div>
+    </div>
+
+    <!-- ══ WORK PIPELINE ══ -->
+    <div class="pipe-views" data-pipe="work" style="display:none">
+      <div id="gtab-list-work" class="gest-tabview active">
+        <div class="mgmt-section" style="padding-bottom:6px">
+          <h4>Trabajos del Día <span class="badge" id="workCount">0 activos</span></h4>
+        </div>
+        <div id="workManageList"></div>
+      </div>
+      <div id="gtab-new-work" class="gest-tabview">
+        <div class="mgmt-section">
+          <h4>Nuevo Trabajo</h4>
+          <div class="field"><label># de Tienda</label><input type="text" id="wStore" placeholder="42897" oninput="woAutofillStore('work')"></div>
+          <div class="field"><label>Dirección</label><input type="text" id="wAddr" placeholder="Se llena sola si la tienda existe"></div>
+          <div class="field"><label># de Work Order</label><input type="text" id="wNum" placeholder="6511134"></div>
+          <div class="field"><label>Tipo de Servicio</label><input type="text" id="wSvc" placeholder="Grout, pintura, asfalto..."></div>
+          <div class="field"><label>Fecha Límite</label><input type="date" id="wDue"></div>
+          <div class="field"><label>Notas</label><textarea id="wNotes" placeholder="Detalles..." style="min-height:60px"></textarea></div>
+          <button class="btn btn-primary btn-full" onclick="saveNewWO('work')">Agregar Trabajo</button>
+        </div>
+      </div>
+      <div id="gtab-import-work" class="gest-tabview">
+        <div class="mgmt-section">
+          <h4>Importar Trabajos (Bulk)</h4>
+          <p style="font-size:11px;color:var(--blue-bright);font-family:var(--font-mono);margin-bottom:12px">tienda | WO# | servicio | fecha | dirección | notas</p>
+          <textarea id="wImportBox" placeholder="42893 | 6511134 | Grout | 2026-09-20 | | Piso cocina&#10;42899 | 6494651 | Sellado | 2026-09-20 | |" style="min-height:120px;font-family:var(--font-mono);font-size:12px" oninput="previewImport('work')"></textarea>
+          <div style="font-size:10px;color:var(--ink-3);margin-top:6px">💡 Subir antes de las 8 AM. Dirección se llena sola si la tienda existe.</div>
+          <div id="wImportPreview"></div>
+        </div>
+      </div>
+      <div id="gtab-history-work" class="gest-tabview">
+        <div class="mgmt-section" style="padding-bottom:6px">
+          <h4>Trabajos Completados <span class="badge" id="workHistCount">0 completados</span></h4>
+        </div>
+        <div id="workHistoryList"></div>
+      </div>
+    </div>
+
+    <!-- Team (shared across both pipelines) -->
+    <div id="gtab-team-shared" class="gest-tabview" style="display:none">
+      <div class="mgmt-section">
+        <h4>Equipo / Camiones</h4>
+        <p style="font-size:12px;color:var(--ink-3);margin-bottom:12px">Estos nombres aparecen en "Asignar" de cada trabajo.</p>
+        <div id="empListWrap" class="emp-list"></div>
+        <div class="field" style="margin-top:12px">
+          <label>Agregar empleado</label>
+          <div style="display:flex;gap:8px">
+            <input type="text" id="newEmpName" placeholder="Nombre" onkeydown="if(event.key==='Enter')addEmployee()">
+            <button class="btn btn-primary" style="flex-shrink:0" onclick="addEmployee()">+</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Admin settings modal (gated by 305) -->
+  <div class="modal-overlay" id="adminSettingsOverlay" onclick="if(event.target===this)closeAdminSettings()">
+    <div class="modal" style="max-width:520px;max-height:88vh;overflow-y:auto">
+      <div class="modal-handle"></div>
+      <div class="modal-head">
+        <div class="modal-title">⚙️ Configuración Admin</div>
+        <button class="modal-close" onclick="closeAdminSettings()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div id="adminSettingsBody">
     <div id="mgmtLockedView">
       <div class="mgmt-locked">
         <div class="mgmt-locked-icon">
@@ -1343,7 +1524,7 @@ main{padding:14px var(--pad) 22px}
         <p>Acceso restringido · Solo Elio y Pablo</p>
         <div style="max-width:280px;margin:0 auto">
           <div class="field">
-            <input type="password" id="mgmtPass" placeholder="Ingresa la contraseña" onkeydown="if(event.key==='Enter')mgmtUnlock()">
+            <input type="tel" inputmode="numeric" pattern="[0-9]*" id="mgmtPass" placeholder="Contraseña" onkeydown="if(event.key==='Enter')mgmtUnlock()">
           </div>
           <button class="btn btn-primary btn-full" onclick="mgmtUnlock()">Desbloquear</button>
           
@@ -1463,7 +1644,9 @@ main{padding:14px var(--pad) 22px}
         <button class="btn btn-secondary btn-full" style="margin-top:8px" onclick="mgmtLock()">Bloquear y Salir</button>
       </div>
     </div>
-  </section>
+      </div>
+    </div>
+  </div>
 
   <div class="inbox-overlay" id="inboxOverlay" onclick="if(event.target===this)closeInbox()">
     <div class="inbox-panel">
@@ -1525,12 +1708,12 @@ main{padding:14px var(--pad) 22px}
     <span class="fab-label">GPS</span>
   </button>
   <button class="botnav-btn" data-view="stores" onclick="switchView('stores')">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-    Tiendas
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    Trabajos
   </button>
   <button class="botnav-btn" data-view="mgmt" onclick="switchView('mgmt')">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6m11-7h-6m-10 0H1"/></svg>
-    Admin
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>
+    Gestión
   </button>
 </nav>
 
@@ -1774,6 +1957,382 @@ const ALL_LOCATABLE_STORES = (() => {
 // ── FORT MYERS / NAPLES ROUTE ──
 // Ordered by distance from anchor store 42854 (8835 Davis Blvd, Naples)
 // Positions 1-2 are already-visited stores, position 3 is the anchor
+// ═══════════════════════════════════════════════════════════════════
+// WORK ORDER HUB — two independent pipelines:
+//   • work  → daily crew jobs (employees see these in Trabajos tab)
+//   • quote → stores the manager must go quote (manager only)
+// Each pipeline has its own active list + completed archive.
+// Stored under one KV key, synced like everything else. Add-only imports.
+// ═══════════════════════════════════════════════════════════════════
+
+const WO_STORE_KEY = 'workorders_v1';
+const DEFAULT_EMPLOYEES = ['Reiniel', 'Guillermo'];
+
+function getWOState() {
+  let s = STATE.cycleData[WO_STORE_KEY];
+  if (!s) {
+    s = {};
+    STATE.cycleData[WO_STORE_KEY] = s;
+  }
+  // Two separate pipelines
+  if (!s.work)  s.work  = { orders: [], completed: [] };
+  if (!s.quote) s.quote = { orders: [], completed: [] };
+  if (!s.employees || !s.employees.length) s.employees = [...DEFAULT_EMPLOYEES];
+  // Migrate any old single-list data into the work pipeline (one-time, safe)
+  if (s.orders && s.orders.length) { s.work.orders.push(...s.orders); delete s.orders; }
+  if (s.completed && s.completed.length) { s.work.completed.push(...s.completed); delete s.completed; }
+  return s;
+}
+
+function pipeline(kind) {
+  const s = getWOState();
+  return kind === 'quote' ? s.quote : s.work;
+}
+
+function woGenId() {
+  return 'wo_' + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+}
+
+// ── Create a single order (kind = 'work' | 'quote') ──
+function saveNewWO(kind) {
+  const p = kind === 'quote' ? 'q' : 'w';
+  const store = document.getElementById(p+'Store').value.trim();
+  const addr  = document.getElementById(p+'Addr').value.trim();
+  const wonum = document.getElementById(p+'Num').value.trim();
+  const svc   = document.getElementById(p+'Svc').value.trim();
+  const due   = document.getElementById(p+'Due').value;
+  const notes = document.getElementById(p+'Notes').value.trim();
+
+  if (!store && !addr) { toast('Pon al menos el # de tienda o la dirección', 'error'); return; }
+
+  pipeline(kind).orders.push({
+    id: woGenId(), store, addr, wo: wonum, service: svc, due,
+    assigned: '', status: 'pendiente', notes, createdAt: new Date().toISOString(),
+  });
+
+  [p+'Store',p+'Addr',p+'Num',p+'Svc',p+'Due',p+'Notes'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  toast(kind === 'quote' ? 'Cotización agregada' : 'Trabajo agregado', 'success');
+  renderAllWO();
+  pushAction('replace', { cycleData: STATE.cycleData }).catch(()=>{});
+}
+
+function woAutofillStore(kind) {
+  const p = kind === 'quote' ? 'q' : 'w';
+  const store = document.getElementById(p+'Store').value.trim();
+  if (!store) return;
+  const found = findStore(store);
+  if (found) {
+    const addrEl = document.getElementById(p+'Addr');
+    if (addrEl && !addrEl.value.trim()) {
+      addrEl.value = `${found.addr}, ${found.city}, ${found.state} ${found.zip || ''}`.trim();
+    }
+  }
+}
+
+function assignWO(kind, id, name) {
+  const o = pipeline(kind).orders.find(x => x.id === id);
+  if (!o) return;
+  o.assigned = name;
+  renderAllWO();
+  pushAction('replace', { cycleData: STATE.cycleData }).catch(()=>{});
+}
+
+function toggleWODone(kind, id) {
+  const pl = pipeline(kind);
+  const o = pl.orders.find(x => x.id === id);
+  if (!o) return;
+  o.status = 'completado';
+  o.completedAt = new Date().toISOString();
+  pl.completed.unshift(o);
+  pl.orders = pl.orders.filter(x => x.id !== id);
+  renderAllWO();
+  pushAction('replace', { cycleData: STATE.cycleData }).catch(()=>{});
+}
+
+function restoreWO(kind, id) {
+  const pl = pipeline(kind);
+  const o = pl.completed.find(x => x.id === id);
+  if (!o) return;
+  o.status = 'pendiente'; o.completedAt = null;
+  pl.orders.push(o);
+  pl.completed = pl.completed.filter(x => x.id !== id);
+  renderAllWO();
+  pushAction('replace', { cycleData: STATE.cycleData }).catch(()=>{});
+}
+
+function deleteFromHistory(kind, id) {
+  if (!confirm('¿Borrar permanentemente de la historia?')) return;
+  const pl = pipeline(kind);
+  pl.completed = pl.completed.filter(x => x.id !== id);
+  renderAllWO();
+  pushAction('replace', { cycleData: STATE.cycleData }).catch(()=>{});
+}
+
+function deleteWO(kind, id) {
+  if (!confirm('¿Borrar este trabajo?')) return;
+  const pl = pipeline(kind);
+  pl.orders = pl.orders.filter(x => x.id !== id);
+  renderAllWO();
+  pushAction('replace', { cycleData: STATE.cycleData }).catch(()=>{});
+}
+
+// ── Employees ──
+function addEmployee() {
+  const el = document.getElementById('newEmpName');
+  const name = (el.value || '').trim();
+  if (!name) return;
+  const s = getWOState();
+  if (!s.employees.includes(name)) s.employees.push(name);
+  el.value = '';
+  renderEmployeeList(); renderAllWO();
+  pushAction('replace', { cycleData: STATE.cycleData }).catch(()=>{});
+}
+function removeEmployee(name) {
+  const s = getWOState();
+  s.employees = s.employees.filter(e => e !== name);
+  renderEmployeeList(); renderAllWO();
+  pushAction('replace', { cycleData: STATE.cycleData }).catch(()=>{});
+}
+function renderEmployeeList() {
+  const wrap = document.getElementById('empListWrap');
+  if (!wrap) return;
+  const s = getWOState();
+  wrap.innerHTML = s.employees.map(name => `
+    <div class="emp-chip">
+      <span>${escapeHtml(name)}</span>
+      <button onclick="removeEmployee('${escapeHtml(name).replace(/'/g,"\\'")}')" aria-label="Quitar">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>`).join('') || '<div style="font-size:12px;color:var(--ink-3)">Sin empleados — agrega uno</div>';
+}
+
+// ── Render orchestrator ──
+function renderAllWO() {
+  renderTrabajos();       // employee tab (work only)
+  renderWorkManage();     // manager: work pipeline list
+  renderQuoteManage();    // manager: quote pipeline list
+  renderWOHistory('work');
+  renderWOHistory('quote');
+}
+
+// ── Employee Trabajos tab — WORK pipeline only ──
+function renderTrabajos() {
+  const list = document.getElementById('trabajosList');
+  if (!list) return;
+  const s = getWOState();
+  const orders = [...s.work.orders].sort((a,b) => (a.due||'9999') < (b.due||'9999') ? -1 : 1);
+  if (!orders.length) {
+    list.innerHTML = `<div class="empty"><div class="empty-icon">📋</div><h3>No hay trabajos</h3><p>El manager sube los trabajos del día antes de las 8 AM.</p></div>`;
+    return;
+  }
+  const empOptions = (sel) => s.employees.map(e =>
+    `<option value="${escapeHtml(e)}" ${e===sel?'selected':''}>${escapeHtml(e)}</option>`).join('');
+  list.innerHTML = orders.map(o => woCardHTML(o, 'work', s, empOptions)).join('');
+}
+
+// Shared work-card renderer (with assign + complete + nav)
+function woCardHTML(o, kind, s, empOptions) {
+  const done = o.status === 'completado';
+  const dueLabel = o.due ? formatDate(parseDate(o.due), 'EEE d MMM') : 'Sin fecha';
+  const navAddr = encodeURIComponent(o.addr || o.store);
+  return `
+  <div class="wo-card ${done?'done':''}">
+    <div class="wo-card-head">
+      <div>
+        <div class="wo-store">${o.store ? '#'+escapeHtml(o.store) : 'Sin #'} ${o.wo ? `<span class="wo-num">WO ${escapeHtml(o.wo)}</span>`:''}</div>
+        ${o.service ? `<div class="wo-svc">${escapeHtml(o.service)}</div>`:''}
+      </div>
+      <button class="wo-check ${done?'on':''}" onclick="toggleWODone('${kind}','${o.id}')" aria-label="Completar">
+        ${done?`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`:''}
+      </button>
+    </div>
+    ${o.addr ? `<div class="wo-addr">${escapeHtml(o.addr)}</div>`:''}
+    <div class="wo-meta">
+      <span class="wo-due">📅 ${dueLabel}</span>
+      ${o.notes ? `<span class="wo-notes-tag">📝 ${escapeHtml(o.notes)}</span>`:''}
+    </div>
+    <div class="wo-actions">
+      <select class="wo-assign" onchange="assignWO('${kind}','${o.id}', this.value)">
+        <option value="" ${!o.assigned?'selected':''}>— Asignar —</option>
+        ${empOptions(o.assigned)}
+      </select>
+      <a class="wo-nav-btn" href="https://www.waze.com/ul?q=${navAddr}&navigate=yes" target="_blank" aria-label="Waze">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+      </a>
+    </div>
+  </div>`;
+}
+
+// ── Manager: WORK pipeline list (same as employee but with delete) ──
+function renderWorkManage() {
+  const list = document.getElementById('workManageList');
+  if (!list) return;
+  const s = getWOState();
+  const orders = [...s.work.orders].sort((a,b) => (a.due||'9999') < (b.due||'9999') ? -1 : 1);
+  const countEl = document.getElementById('workCount');
+  if (countEl) countEl.textContent = `${orders.length} activo${orders.length!==1?'s':''}`;
+  if (!orders.length) {
+    list.innerHTML = `<div class="empty"><div class="empty-icon">📋</div><h3>Sin trabajos activos</h3><p>Agrega o importa los trabajos del día.</p></div>`;
+    return;
+  }
+  const empOptions = (sel) => s.employees.map(e =>
+    `<option value="${escapeHtml(e)}" ${e===sel?'selected':''}>${escapeHtml(e)}</option>`).join('');
+  list.innerHTML = orders.map(o => {
+    const navAddr = encodeURIComponent(o.addr || o.store);
+    const dueLabel = o.due ? formatDate(parseDate(o.due), 'EEE d MMM') : 'Sin fecha';
+    return `
+    <div class="gest-card">
+      <div class="gest-info">
+        <div class="gest-store">${o.store?'#'+escapeHtml(o.store):'Sin #'} ${o.wo?`<span class="wo-num">WO ${escapeHtml(o.wo)}</span>`:''}</div>
+        ${o.addr?`<div class="gest-addr">${escapeHtml(o.addr)}</div>`:''}
+        ${o.service?`<div class="gest-svc">🔧 ${escapeHtml(o.service)}</div>`:''}
+        <div class="gest-due">📅 ${dueLabel}${o.assigned?' · 👷 '+escapeHtml(o.assigned):''}</div>
+      </div>
+      <div class="gest-actions">
+        <button class="wo-check ${o.status==='completado'?'on':''}" onclick="toggleWODone('work','${o.id}')" aria-label="Completar">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </button>
+        <button class="gest-del" onclick="deleteWO('work','${o.id}')" aria-label="Borrar">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Manager: QUOTE pipeline list (no assign — just a manager to-quote list) ──
+function renderQuoteManage() {
+  const list = document.getElementById('quoteManageList');
+  if (!list) return;
+  const s = getWOState();
+  const orders = [...s.quote.orders].sort((a,b) => (a.due||'9999') < (b.due||'9999') ? -1 : 1);
+  const countEl = document.getElementById('quoteCount');
+  if (countEl) countEl.textContent = `${orders.length} por cotizar`;
+  if (!orders.length) {
+    list.innerHTML = `<div class="empty"><div class="empty-icon">💲</div><h3>Nada por cotizar</h3><p>Agrega o importa las tiendas a cotizar.</p></div>`;
+    return;
+  }
+  list.innerHTML = orders.map((o, i) => {
+    const navAddr = encodeURIComponent(o.addr || o.store);
+    const dueLabel = o.due ? formatDate(parseDate(o.due), 'EEE d MMM') : 'Sin fecha';
+    return `
+    <div class="gest-card">
+      <div class="gest-num">${i+1}</div>
+      <div class="gest-info">
+        <div class="gest-store">${o.store?'#'+escapeHtml(o.store):'Sin #'} ${o.wo?`<span class="wo-num">WO ${escapeHtml(o.wo)}</span>`:''}</div>
+        ${o.addr?`<div class="gest-addr">${escapeHtml(o.addr)}</div>`:''}
+        ${o.service?`<div class="gest-svc">🔧 ${escapeHtml(o.service)}</div>`:''}
+        <div class="gest-due">📅 ${dueLabel}</div>
+      </div>
+      <div class="gest-actions">
+        <a class="wo-nav-btn" href="https://www.waze.com/ul?q=${navAddr}&navigate=yes" target="_blank" aria-label="Waze">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+        </a>
+        <button class="wo-check ${o.status==='completado'?'on':''}" onclick="toggleWODone('quote','${o.id}')" aria-label="Cotizado">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </button>
+        <button class="gest-del" onclick="deleteWO('quote','${o.id}')" aria-label="Borrar">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── History (per pipeline) ──
+function renderWOHistory(kind) {
+  const list = document.getElementById(kind === 'quote' ? 'quoteHistoryList' : 'workHistoryList');
+  if (!list) return;
+  const done = pipeline(kind).completed || [];
+  const countEl = document.getElementById(kind === 'quote' ? 'quoteHistCount' : 'workHistCount');
+  if (countEl) countEl.textContent = `${done.length} completado${done.length!==1?'s':''}`;
+  if (!done.length) {
+    list.innerHTML = `<div class="empty"><div class="empty-icon">📦</div><h3>Sin historial</h3><p>Los completados se guardan aquí.</p></div>`;
+    return;
+  }
+  list.innerHTML = done.map(o => {
+    const compLabel = o.completedAt ? formatDate(parseDate(o.completedAt.slice(0,10)), 'EEE d MMM yyyy') : '';
+    return `
+    <div class="hist-card">
+      <div class="hist-info">
+        <div class="hist-store">${o.store?'#'+escapeHtml(o.store):'Sin #'} ${o.wo?`<span class="wo-num">WO ${escapeHtml(o.wo)}</span>`:''}</div>
+        ${o.service?`<div class="hist-svc">${escapeHtml(o.service)}</div>`:''}
+        ${o.addr?`<div class="hist-addr">${escapeHtml(o.addr)}</div>`:''}
+        <div class="hist-meta">✓ ${compLabel}${o.assigned?' · '+escapeHtml(o.assigned):''}</div>
+      </div>
+      <div class="hist-actions">
+        <button class="hist-restore" onclick="restoreWO('${kind}','${o.id}')" title="Restaurar">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+        </button>
+        <button class="gest-del" onclick="deleteFromHistory('${kind}','${o.id}')" aria-label="Borrar">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Bulk import (per pipeline) — ADD-ONLY ──
+// Format: store | WO# | service | due(YYYY-MM-DD) | address | notes
+let _pendingImport = { work: [], quote: [] };
+
+function parseImportText(text) {
+  const lines = text.split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('#'));
+  return lines.map(line => {
+    const parts = line.split('|').map(p => p.trim());
+    const [store, wo, service, due, addr, notes] = [parts[0]||'',parts[1]||'',parts[2]||'',parts[3]||'',parts[4]||'',parts[5]||''];
+    const woClean = wo.replace(/^WO\s*/i, '');
+    let finalAddr = addr;
+    if (!finalAddr && store) {
+      const found = findStore(store);
+      if (found) finalAddr = `${found.addr}, ${found.city}, ${found.state} ${found.zip||''}`.trim();
+    }
+    return { store, wo: woClean, service, due, addr: finalAddr, notes };
+  });
+}
+
+function previewImport(kind) {
+  const text = document.getElementById(kind === 'quote' ? 'qImportBox' : 'wImportBox').value;
+  const parsed = parseImportText(text);
+  const wrap = document.getElementById(kind === 'quote' ? 'qImportPreview' : 'wImportPreview');
+  if (!parsed.length) { wrap.innerHTML = '<div style="font-size:12px;color:var(--ink-3);padding:8px">Nada que importar.</div>'; _pendingImport[kind]=[]; return; }
+  _pendingImport[kind] = parsed;
+  wrap.innerHTML = `
+    <div style="font-size:12px;color:var(--blue-bright);font-family:var(--font-mono);margin:10px 0 8px">${parsed.length} — revisa antes de importar:</div>
+    ${parsed.map((p,i)=>`
+      <div class="import-preview-row">
+        <div class="import-preview-num">${i+1}</div>
+        <div>
+          <div style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:white">${p.store?'#'+escapeHtml(p.store):'Sin #'} ${p.wo?`· WO ${escapeHtml(p.wo)}`:''}</div>
+          ${p.service?`<div style="font-size:11px;color:#fbbf24">${escapeHtml(p.service)}</div>`:''}
+          ${p.addr?`<div style="font-size:11px;color:var(--ink-2)">${escapeHtml(p.addr)}</div>`:''}
+          <div style="font-size:10px;color:var(--ink-3);font-family:var(--font-mono)">${p.due?'📅 '+escapeHtml(p.due):'sin fecha'} ${p.notes?'· 📝 '+escapeHtml(p.notes):''}</div>
+        </div>
+      </div>`).join('')}
+    <button class="btn btn-primary btn-full" style="margin-top:12px" onclick="confirmImport('${kind}')">✓ Importar ${parsed.length}</button>`;
+}
+
+function confirmImport(kind) {
+  const pend = _pendingImport[kind] || [];
+  if (!pend.length) { toast('Nada que importar', 'error'); return; }
+  const pl = pipeline(kind);
+  let added = 0;
+  pend.forEach(p => {
+    if (!p.store && !p.addr) return;
+    pl.orders.push({ id: woGenId(), store:p.store, addr:p.addr, wo:p.wo, service:p.service, due:p.due, assigned:'', status:'pendiente', notes:p.notes, createdAt:new Date().toISOString() });
+    added++;
+  });
+  _pendingImport[kind] = [];
+  document.getElementById(kind==='quote'?'qImportBox':'wImportBox').value = '';
+  document.getElementById(kind==='quote'?'qImportPreview':'wImportPreview').innerHTML = '';
+  toast(`${added} importado(s)`, 'success');
+  renderAllWO();
+  pushAction('replace', { cycleData: STATE.cycleData }).catch(()=>{});
+}
+
+
 const FORT_MYERS_ROUTE = [
   { unit:"042899", wo:"6494651", addr:"3450 S.E. Federal Highway", city:"Stuart",       miles:0,    problem:"Sellar/Parchar Huecos — Techo Baño", input:"comment" },
   { unit:"042893", wo:"6511134", addr:"2958 N West Federal Hwy",   city:"Jensen Beach", miles:5.7,  problem:"Reparación de Pared — Comedor (Dañado)", input:"comment" },
@@ -2471,12 +3030,66 @@ function switchView(v) {
   document.querySelectorAll('.botnav-btn').forEach(el => el.classList.toggle('active', el.dataset.view === v));
   document.querySelectorAll('.botnav-fab').forEach(el => el.classList.toggle('active', el.dataset.view === v));
   if (v === 'cal') renderCalendar();
-  if (v === 'stores') renderRouteList();
+  if (v === 'stores') renderTrabajos();
+  if (v === 'mgmt') { applyGestVisibility(); renderAllWO(); renderEmployeeList(); }
   if (v === 'gps') {
     renderGpsResults();
     setTimeout(() => { const inp = document.getElementById('gpsSearch'); if (inp) inp.focus(); }, 350);
   }
   window.scrollTo({top:0});
+}
+
+// Current Gestión pipeline + sub-tab
+let _gestPipe = 'quote';
+let _gestTab = 'list';
+
+// Top-level toggle: Cotizaciones (quote) vs Trabajos (work)
+function switchPipe(pipe) {
+  _gestPipe = pipe;
+  document.querySelectorAll('.gest-toggle-btn').forEach(el => el.classList.toggle('active', el.dataset.pipe === pipe));
+  applyGestVisibility();
+  renderAllWO();
+  renderEmployeeList();
+}
+
+// Sub-tab: list / new / import / history / team
+function switchGestTab(t) {
+  _gestTab = t;
+  document.querySelectorAll('.gest-tab').forEach(el => el.classList.toggle('active', el.dataset.gtab === t));
+  applyGestVisibility();
+  if (t === 'team') renderEmployeeList();
+  else renderAllWO();
+}
+
+// Show the right pipeline's views + the right sub-tab within it
+function applyGestVisibility() {
+  const isTeam = _gestTab === 'team';
+  // Pipeline containers
+  document.querySelectorAll('.pipe-views').forEach(el => {
+    el.style.display = (!isTeam && el.dataset.pipe === _gestPipe) ? 'block' : 'none';
+  });
+  // Team is shared, shown only when team tab active
+  const team = document.getElementById('gtab-team-shared');
+  if (team) team.style.display = isTeam ? 'block' : 'none';
+  // Within the active pipeline, show only the active sub-tab
+  if (!isTeam) {
+    const suffix = _gestPipe; // 'quote' or 'work'
+    ['list','new','import','history'].forEach(tab => {
+      const el = document.getElementById(`gtab-${tab}-${suffix}`);
+      if (el) el.classList.toggle('active', tab === _gestTab);
+    });
+  }
+  // Sub-label
+  const sub = document.getElementById('gestSubLabel');
+  if (sub) sub.textContent = _gestPipe === 'quote' ? '💲 Cotizaciones' : '👷 Trabajos del día';
+}
+
+// Gear icon → open the password-gated admin settings modal
+function openAdminSettings() {
+  document.getElementById('adminSettingsOverlay').classList.add('show');
+}
+function closeAdminSettings() {
+  document.getElementById('adminSettingsOverlay').classList.remove('show');
 }
 
 function renderAll() {
@@ -2490,7 +3103,8 @@ function renderAll() {
   safe(renderWeatherShifts, 'renderWeatherShifts');
   safe(renderPullShifts, 'renderPullShifts');
   if (STATE.currentView === 'cal') safe(renderCalendar, 'renderCalendar');
-  if (STATE.currentView === 'stores') safe(renderRouteList, 'renderRouteList');
+  if (STATE.currentView === 'stores') safe(renderTrabajos, 'renderTrabajos');
+  if (STATE.currentView === 'mgmt') { safe(renderAllWO, 'renderAllWO'); safe(renderEmployeeList, 'renderEmployeeList'); }
 }
 
 function renderHero() {
@@ -3006,7 +3620,7 @@ function openMap(unit) {
 
 function mgmtUnlock() {
   const pass = document.getElementById('mgmtPass').value;
-  if (pass === 'ep305') {
+  if (pass === '305') {
     STATE.mgmtUnlocked = true;
     document.getElementById('mgmtLockedView').style.display = 'none';
     document.getElementById('mgmtPanel').style.display = 'block';
