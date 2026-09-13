@@ -1158,6 +1158,7 @@ main{padding:14px var(--pad) 22px}
 .wo-photos-btn:active{background:rgba(167,139,250,0.2)}
 .wo-card.emerg{border-color:rgba(255,71,87,0.5);box-shadow:0 0 0 1px rgba(255,71,87,0.3)}
 .wo-emerg-banner{background:linear-gradient(135deg,#ff4757,#c0392b);color:white;font-size:12px;font-weight:800;letter-spacing:0.08em;text-align:center;padding:6px;border-radius:8px;margin-bottom:10px}
+.night-alert{background:linear-gradient(135deg,#ff4757,#c0392b);color:white;font-size:13px;font-weight:700;text-align:center;padding:11px;border-radius:10px;margin-bottom:12px;box-shadow:0 3px 12px rgba(255,71,87,0.4)}
 .wo-pri-badge{display:inline-block;background:rgba(251,191,36,0.15);color:#fbbf24;font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px;border:1px solid rgba(251,191,36,0.35);vertical-align:middle}
 .wo-pics{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
 .wo-pic{width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--line-2);cursor:pointer}
@@ -1716,6 +1717,10 @@ main{padding:14px var(--pad) 22px}
         <div class="btn-row" style="margin-top:8px">
           <button class="btn btn-secondary" style="font-size:12px;color:#a7f3d0;border-color:rgba(0,232,160,0.3)" onclick="rebuildSeptember()">🔧 Reconstruir Septiembre</button>
         </div>
+        <div class="btn-row" style="margin-top:8px">
+          <button class="btn btn-secondary" style="font-size:12px;color:#fca5a5;border-color:rgba(255,71,87,0.4)" onclick="setSpecialNights()">🔴 Poner Noches 14/15/16 (Jefe)</button>
+        </div>
+        <div id="specialNightsStatus" style="margin-top:8px"></div>
         <div id="sep11Status" style="margin-top:8px"></div>
         <button class="btn btn-secondary btn-full" style="margin-top:8px" onclick="mgmtLock()">Bloquear y Salir</button>
       </div>
@@ -3555,6 +3560,7 @@ function renderTonight() {
         ${targetStores.length} paradas
       </div>
     </div>
+    ${(cycle.nightAlerts && cycle.nightAlerts[targetKey]) ? `<div class="night-alert">${escapeHtml(cycle.nightAlerts[targetKey])}</div>` : ''}
     <ul class="stops">
   `;
   targetStores.forEach((slot) => {
@@ -4770,6 +4776,60 @@ function resetCycle() {
 //   Sep 16: 2 urgent (42939,42940) + next 2 regulars
 //   The 5 urgent units are pulled OUT of their normal route slots so they're
 //   never done twice. Everything else fills 4/night through the cycle.
+// ─── ONE-TIME: SET SPECIAL NIGHTS 14/15/16 (BOSS VISIT) ───────────────────────
+function setSpecialNights() {
+  const statusEl = document.getElementById('specialNightsStatus');
+  const say = (msg, color) => { if (statusEl) statusEl.innerHTML = `<div style="font-size:12px;color:${color||'var(--signal)'};font-family:var(--font-mono);margin-top:4px;line-height:1.6">${msg}</div>`; };
+
+  const cycleStart = getCycleStart(parseDate('2026-09-14'));
+  const cid = cycleId(cycleStart);
+  ensureCycle(cycleStart);
+  const cycle = STATE.cycleData[cid];
+  if (!cycle) { say('❌ No se encontró el ciclo', '#ff6b7a'); return; }
+
+  if (!confirm('¿Poner las noches especiales 14/15/16?\n\n' +
+    '• Lun 14: 18574, 3599, 24746, 5485\n' +
+    '• Mar 15: 42906, 42911, 42966, 3669 (lavado+lobby)\n' +
+    '• Mié 16: 42964, 42935, 42940, 42939\n' +
+    '• Alerta roja: viene el jefe\n\n' +
+    'Reemplaza esas 3 noches y quita esas 12 tiendas del resto del ciclo. Lo demás no se toca.')) return;
+
+  // Replace exactly these three nights
+  const SPECIAL = {
+    '2026-09-14': ['18574','3599','24746','5485'],
+    '2026-09-15': ['42906','42911','42966','3669'],
+    '2026-09-16': ['42964','42935','42940','42939'],
+  };
+  const specialDates = Object.keys(SPECIAL);
+  const specialUnits = new Set(Object.values(SPECIAL).flat());
+
+  // First, remove all 12 special units from EVERY night in the schedule
+  // so they don't appear again later in the normal route.
+  Object.keys(cycle.schedule).forEach(d => {
+    cycle.schedule[d] = (cycle.schedule[d] || []).filter(slot => !specialUnits.has(slotUnit(slot)));
+  });
+
+  // Now set the three special nights exactly
+  specialDates.forEach(d => { cycle.schedule[d] = [...SPECIAL[d]]; });
+
+  // Special note for 3669: pressure wash + lobby
+  cycle.notes = cycle.notes || {};
+  cycle.notes['3669'] = { unit: '3669', date: '2026-09-15', notes: 'Lavado a presión + LOBBY', savedAt: new Date().toISOString() };
+
+  // Red alert banner on all three nights: boss visit
+  cycle.nightAlerts = cycle.nightAlerts || {};
+  ['2026-09-14','2026-09-15','2026-09-16'].forEach(d => {
+    cycle.nightAlerts[d] = '⚠️ Viene el jefe a visitar las tiendas';
+  });
+
+  say('✓ Noches 14/15/16 puestas · 3669 con lobby · alerta roja del jefe activada');
+  renderAll();
+  pushAction('replace', { cycleData: STATE.cycleData }).catch(err => {
+    console.error(err); say('⚠️ Guardado local, pero falló la nube', '#fbbf24');
+  });
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 function rebuildSeptember() {
   const statusEl = document.getElementById('sep11Status');
   const say = (msg, color) => { if (statusEl) statusEl.innerHTML = `<div style="font-size:12px;color:${color||'var(--signal)'};font-family:var(--font-mono);margin-top:4px;line-height:1.6">${msg}</div>`; };
@@ -5019,6 +5079,7 @@ async function pullState() {
           if (srv.weatherShifts) STATE.cycleData[cid].weatherShifts = srv.weatherShifts;
           if (srv.pullShifts) STATE.cycleData[cid].pullShifts = srv.pullShifts;
           if (srv.notes) STATE.cycleData[cid].notes = srv.notes;
+          if (srv.nightAlerts) STATE.cycleData[cid].nightAlerts = srv.nightAlerts;
         }
       });
       SYNC.lastSyncedAt = data.updatedAt || new Date().toISOString();
