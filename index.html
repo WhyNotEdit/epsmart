@@ -1721,6 +1721,10 @@ main{padding:14px var(--pad) 22px}
           <button class="btn btn-secondary" style="font-size:12px;color:#fca5a5;border-color:rgba(255,71,87,0.4)" onclick="setSpecialNights()">🔴 Reconstruir Sept (1-12 + Jefe 14/15/16)</button>
         </div>
         <div id="specialNightsStatus" style="margin-top:8px"></div>
+        <div class="btn-row" style="margin-top:8px">
+          <button class="btn btn-secondary" style="font-size:12px;color:#93c5fd;border-color:rgba(0,168,255,0.4)" onclick="setOctoberSchedule()">📅 Poner Horario de Octubre</button>
+        </div>
+        <div id="octoberStatus" style="margin-top:8px"></div>
         <div id="sep11Status" style="margin-top:8px"></div>
         <button class="btn btn-secondary btn-full" style="margin-top:8px" onclick="mgmtLock()">Bloquear y Salir</button>
       </div>
@@ -3847,6 +3851,8 @@ function openStore(slot, dk) {
   const emergRecord = cycle.emergencies[slot] || cycle.emergencies[unit];
   const isBumpedM = !!(cycle.bumped && cycle.bumped[unit]);
   const isRedo = slotIsRedo(slot);
+  // Pre-set special note for this store (e.g. "Faltó el período pasado", "visita — atención extra")
+  const specialNote = (cycle.notes && cycle.notes[unit] && cycle.notes[unit].notes) ? cycle.notes[unit].notes : '';
 
   document.getElementById('modalStoreName').textContent = store.addr;
   document.getElementById('modalStoreSub').textContent = `UNIT ${store.unit} · ${store.dma}${isRedo ? ' · 🔁 REPETIR' : ''}`;
@@ -3865,6 +3871,7 @@ function openStore(slot, dk) {
       <div class="modal-detail-row"><span class="lbl">Gerente</span><span class="val">${store.rgm}</span></div>
       <div class="modal-detail-row"><span class="lbl">Teléfono</span><span class="val"><a href="tel:${store.phone}" style="color:var(--ink);text-decoration:none">${store.phone}</a></span></div>
     </div>
+    ${specialNote ? `<div style="background:rgba(251,191,36,0.12);border:1px solid rgba(251,191,36,0.35);color:#fbbf24;font-size:13px;font-weight:600;padding:11px 13px;border-radius:10px;margin-bottom:14px">📌 ${escapeHtml(specialNote)}</div>` : ''}
 
     <div class="field">
       <label>Notas (visibles para Elio)</label>
@@ -4776,7 +4783,84 @@ function resetCycle() {
 //   Sep 16: 2 urgent (42939,42940) + next 2 regulars
 //   The 5 urgent units are pulled OUT of their normal route slots so they're
 //   never done twice. Everything else fills 4/night through the cycle.
-// ─── ONE-TIME: FULL SEPTEMBER REBUILD (done 9-11 + boss nights + normal route) ──
+// ─── OCTOBER SCHEDULE (spans two cycles: current ends Oct 6, next starts Oct 7) ──
+function setOctoberSchedule() {
+  const statusEl = document.getElementById('octoberStatus');
+  const say = (msg, color) => { if (statusEl) statusEl.innerHTML = `<div style="font-size:12px;color:${color||'var(--signal)'};font-family:var(--font-mono);margin-top:4px;line-height:1.6">${msg}</div>`; };
+
+  // Build route to map positions (42, 43...) → real unit numbers
+  const anyStart = getCycleStart(parseDate('2026-10-07'));
+  ensureCycle(anyStart);
+  const nextCycle = STATE.cycleData[cycleId(anyStart)];
+  const route = (nextCycle.route && nextCycle.route.length) ? nextCycle.route.slice() : buildRoute().map(r => r.unit);
+
+  // pos → real unit ('28507'/'39119' pass through unchanged)
+  const U = (v) => {
+    const s = String(v);
+    if (s.length >= 5) return s;           // already a real unit number
+    const n = parseInt(s, 10);
+    return route[n - 1] || s;              // route position (1-based)
+  };
+
+  // The full October schedule, by date. Positions get mapped; real units pass through.
+  const OCT = {
+    '2026-10-05': ['28507','39119', 42, 43],
+    '2026-10-06': [44, 45, 46, 47],
+    '2026-10-07': [48, 49, 51, 52],
+    '2026-10-08': [53, 54, 1, 2],
+    '2026-10-09': [3, 4, 5, 6],
+    '2026-10-12': [7, 8, 9, 10],
+    '2026-10-13': [11, 12, 13, '39119'],
+    '2026-10-14': [14, 15, 16, 17],
+    '2026-10-15': [18, 19, 28, 21],
+    '2026-10-19': [22, 23, 24, 25],
+    '2026-10-20': [26, 27, 28, 29],
+    '2026-10-21': [30, 31, 32, 33],
+    '2026-10-22': [34, 35, 36, 37],
+    '2026-10-26': [38, 39, 40, 41],
+    '2026-10-27': [42, 43, 44, 45],
+    '2026-10-28': [46, 47, 48, 49],
+    '2026-10-29': [50, 51, 52, 53],
+    '2026-10-30': [54],
+  };
+
+  if (!confirm('¿Poner TODO el horario de octubre?\n\n' +
+    '• Oct 5: 28507 (faltó período pasado), 39119 (visita, atención extra) + 2\n' +
+    '• Oct 9 y Oct 30: días extra (viernes)\n' +
+    '• 39119 vuelve el Oct 13 (visita)\n' +
+    '• Cruza dos períodos (hasta Oct 6, y Oct 7+)\n\n' +
+    'Reemplaza el horario de esas fechas en ambos ciclos.')) return;
+
+  // Write each date into whatever cycle it belongs to
+  let count = 0;
+  Object.entries(OCT).forEach(([dateStr, stores]) => {
+    const cs = getCycleStart(parseDate(dateStr));
+    ensureCycle(cs);
+    const cyc = STATE.cycleData[cycleId(cs)];
+    cyc.route = cyc.route && cyc.route.length ? cyc.route : route;
+    cyc.schedule = cyc.schedule || {};
+    cyc.schedule[dateStr] = stores.map(U);
+    count++;
+  });
+
+  // Notes on the two special stores (write to the cycle that holds Oct 5 / Oct 13)
+  const csOct5 = STATE.cycleData[cycleId(getCycleStart(parseDate('2026-10-05')))];
+  csOct5.notes = csOct5.notes || {};
+  csOct5.notes['28507'] = { unit:'28507', date:'2026-10-05', notes:'Faltó el período pasado', savedAt:new Date().toISOString() };
+  csOct5.notes['39119'] = { unit:'39119', date:'2026-10-05', notes:'Tienda de visita — atención extra', savedAt:new Date().toISOString() };
+
+  const csOct13 = STATE.cycleData[cycleId(getCycleStart(parseDate('2026-10-13')))];
+  csOct13.notes = csOct13.notes || {};
+  csOct13.notes['39119'] = { unit:'39119', date:'2026-10-13', notes:'Tienda de visita — atención extra', savedAt:new Date().toISOString() };
+
+  say(`✓ Octubre puesto (${count} noches) · 28507 y 39119 con notas · Oct 9 y 30 días extra`);
+  renderAll();
+  pushAction('replace', { cycleData: STATE.cycleData }).catch(err => {
+    console.error(err); say('⚠️ Guardado local, pero falló la nube', '#fbbf24');
+  });
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 function setSpecialNights() {
   const statusEl = document.getElementById('specialNightsStatus');
   const say = (msg, color) => { if (statusEl) statusEl.innerHTML = `<div style="font-size:12px;color:${color||'var(--signal)'};font-family:var(--font-mono);margin-top:4px;line-height:1.6">${msg}</div>`; };
