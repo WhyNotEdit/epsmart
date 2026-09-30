@@ -4804,6 +4804,7 @@ function setOctoberSchedule() {
 
   // The full October schedule, by date. Positions get mapped; real units pass through.
   const OCT = {
+    '2026-10-01': [],   // clear leftover 42-45 from the Sept cycle's normal flow
     '2026-10-05': ['28507','39119', 42, 43],
     '2026-10-06': [44, 45, 46, 47],
     '2026-10-07': [48, 49, 51, 52],
@@ -4852,6 +4853,13 @@ function setOctoberSchedule() {
   const csOct13 = STATE.cycleData[cycleId(getCycleStart(parseDate('2026-10-13')))];
   csOct13.notes = csOct13.notes || {};
   csOct13.notes['39119'] = { unit:'39119', date:'2026-10-13', notes:'Tienda de visita — atención extra', savedAt:new Date().toISOString() };
+
+  // Day-screen banners so the notes are read on the actual day
+  const csOct5b = STATE.cycleData[cycleId(getCycleStart(parseDate('2026-10-05')))];
+  csOct5b.nightAlerts = csOct5b.nightAlerts || {};
+  csOct5b.nightAlerts['2026-10-05'] = '📌 28507 faltó el período pasado · 39119 tienda de visita (atención extra)';
+  csOct13.nightAlerts = csOct13.nightAlerts || {};
+  csOct13.nightAlerts['2026-10-13'] = '📌 39119 tienda de visita — atención extra';
 
   say(`✓ Octubre puesto (${count} noches) · 28507 y 39119 con notas · Oct 9 y 30 días extra`);
   renderAll();
