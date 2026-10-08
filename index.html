@@ -4804,25 +4804,28 @@ function setOctoberSchedule() {
 
   // The full October schedule, by date. Positions get mapped; real units pass through.
   const OCT = {
-    '2026-10-01': [],   // clear leftover 42-45 from the Sept cycle's normal flow
-    '2026-10-05': ['28507','39119', 42, 43],
-    '2026-10-06': [44, 45, 46, 47],
-    '2026-10-07': [48, 49, 51, 52],
-    '2026-10-08': [53, 54, 1, 2],
-    '2026-10-09': [3, 4, 5, 6],
-    '2026-10-12': [7, 8, 9, 10],
-    '2026-10-13': [11, 12, 13, '39119'],
-    '2026-10-14': [14, 15, 16, 17],
-    '2026-10-15': [18, 19, 28, 21],
+    '2026-10-01': [],   // clear leftover from the Sept cycle's normal flow
+    '2026-10-05': ['28507','39119', 42, 43],  // done
+    '2026-10-06': [],   // moved to Oct 7 (cascade)
+    // Cascaded one work-night forward, Fri 16 & 23 now working
+    '2026-10-07': [44, 45, 46, 47],
+    '2026-10-08': [48, 49, 51, 52],
+    '2026-10-09': [53, 54, 1, 2],
+    '2026-10-12': [3, 4, 5, 6],
+    '2026-10-13': [7, 8, 9, 10],
+    '2026-10-14': [11, 12, 13, '39119'],
+    '2026-10-15': [14, 15, 16, 17],
+    '2026-10-16': [18, 19, 28, 21],   // ← Friday now works
     '2026-10-19': [22, 23, 24, 25],
     '2026-10-20': [26, 27, 28, 29],
     '2026-10-21': [30, 31, 32, 33],
     '2026-10-22': [34, 35, 36, 37],
-    '2026-10-26': [38, 39, 40, 41],
-    '2026-10-27': [42, 43, 44, 45],
-    '2026-10-28': [46, 47, 48, 49],
-    '2026-10-29': [50, 51, 52, 53],
-    '2026-10-30': [54],
+    '2026-10-23': [38, 39, 40, 41],   // ← Friday now works
+    '2026-10-26': [42, 43, 44, 45],
+    '2026-10-27': [46, 47, 48, 49],
+    '2026-10-28': [50, 51, 52, 53],
+    '2026-10-29': [54],
+    '2026-10-30': [],
   };
 
   if (!confirm('¿Poner TODO el horario de octubre?\n\n' +
@@ -4850,16 +4853,16 @@ function setOctoberSchedule() {
   csOct5.notes['28507'] = { unit:'28507', date:'2026-10-05', notes:'Faltó el período pasado', savedAt:new Date().toISOString() };
   csOct5.notes['39119'] = { unit:'39119', date:'2026-10-05', notes:'Tienda de visita — atención extra', savedAt:new Date().toISOString() };
 
-  const csOct13 = STATE.cycleData[cycleId(getCycleStart(parseDate('2026-10-13')))];
+  const csOct13 = STATE.cycleData[cycleId(getCycleStart(parseDate('2026-10-14')))];
   csOct13.notes = csOct13.notes || {};
-  csOct13.notes['39119'] = { unit:'39119', date:'2026-10-13', notes:'Tienda de visita — atención extra', savedAt:new Date().toISOString() };
+  csOct13.notes['39119'] = { unit:'39119', date:'2026-10-14', notes:'Tienda de visita — atención extra', savedAt:new Date().toISOString() };
 
   // Day-screen banners so the notes are read on the actual day
   const csOct5b = STATE.cycleData[cycleId(getCycleStart(parseDate('2026-10-05')))];
   csOct5b.nightAlerts = csOct5b.nightAlerts || {};
   csOct5b.nightAlerts['2026-10-05'] = '📌 28507 faltó el período pasado · 39119 tienda de visita (atención extra)';
   csOct13.nightAlerts = csOct13.nightAlerts || {};
-  csOct13.nightAlerts['2026-10-13'] = '📌 39119 tienda de visita — atención extra';
+  csOct13.nightAlerts['2026-10-14'] = '📌 39119 tienda de visita — atención extra';
 
   say(`✓ Octubre puesto (${count} noches) · 28507 y 39119 con notas · Oct 9 y 30 días extra`);
   renderAll();
