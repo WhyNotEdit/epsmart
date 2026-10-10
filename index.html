@@ -4783,33 +4783,36 @@ function setOct21Reschedule() {
   const say = (m,c) => { if(statusEl) statusEl.innerHTML = `<div style="font-size:12px;color:${c||'var(--signal)'};font-family:var(--font-mono);margin-top:4px;line-height:1.6">${m}</div>`; };
 
   const SCHED = {
-    "2026-10-12": ["15451", "5555", "3684", "42912"],
-    "2026-10-13": ["42905", "42908", "42979", "243"],
-    "2026-10-14": ["28507", "31023", "17721", "18574"],
-    "2026-10-15": ["3599", "24746", "42940", "42974"],
-    "2026-10-19": ["5485", "20206", "30524", "20192"],
-    "2026-10-20": ["42906", "42939", "42934", "42964"],
-    "2026-10-21": ["42907", "4258", "16100", "27690"],
+    "2026-10-07": [],
+    "2026-10-08": [],
+    "2026-10-12": ["42907", "4258", "16100", "18554"],
+    "2026-10-13": ["5555", "42905", "42908", "42979"],
+    "2026-10-14": ["243", "28507", "31023", "17721"],
+    "2026-10-15": ["18574", "3599", "24746", "42940"],
+    "2026-10-19": ["20206", "42974", "30524", "20192"],
+    "2026-10-20": ["42939", "5485", "42934", "42964"],
+    "2026-10-21": ["27690", "31588", "31630", "42912"],
     "2026-10-22": ["18554", "42982", "42966", "42911"],
-    "2026-10-23": ["31588", "3669", "36400"],
+    "2026-10-23": ["3684", "3669", "36400"],
     "2026-10-24": ["4467", "2936", "31772"],
-    "2026-10-25": ["29865", "29742", "39119", "31630"],
-    "2026-10-26": ["42910", "17108", "42909", "20501"],
-    "2026-10-27": ["30358", "28066", "42975", "42978"],
-    "2026-10-28": ["42937", "42938", "42936", "42935"],
+    "2026-10-25": ["29865", "29742", "15451", "39119"],
+    "2026-10-26": ["42910", "17108", "42909", "42906"],
+    "2026-10-27": ["30358", "20501", "28066", "42975"],
+    "2026-10-28": ["42978", "42938", "42936", "42935"],
+    "2026-10-29": ["42937"],
   };
   const LOBBY = {
     "2026-10-23": ["3669"],
     "2026-10-24": ["2936"],
   };
 
-  if (!confirm('¿Poner el ciclo de octubre (Lun 12 en adelante)?\n\n' +
-    '• Flujo en orden empezando Lun 12: 53,54,1,2...\n' +
-    '• Cambios fijados Oct 21-25 (con fills)\n' +
-    '• 3669 y 2936 LOBBY (día de 3 paradas)\n' +
+  if (!confirm('¿Poner el ciclo de octubre?\n\n' +
+    '• Lun 12: tiendas 53 y 54 (18554, 16100) + 2\n' +
+    '• Cambios fijados Oct 21-25 · 3669 y 2936 LOBBY\n' +
     '• Orden: más cerca → más lejos\n' +
-    '• Sin repetir tiendas · limpia duplicados viejos\n\n' +
-    'Reemplaza el horario del 12 oct al 28 oct.')) return;
+    '• Limpia Mié 7 y Jue 8 (quedan vacíos)\n' +
+    '• 18554 se hace Lun 12 Y Jue 22 (a propósito)\n\n' +
+    'Reemplaza el horario del 7 al 29 de octubre.')) return;
 
   const touched = new Set();
   Object.entries(SCHED).forEach(([dateStr, units]) => {
@@ -4821,7 +4824,7 @@ function setOct21Reschedule() {
     touched.add(cycleId(cs));
   });
 
-  // Lobby notes on the store panel + red day banner
+  // Lobby markings on the store panel + red day banner
   Object.entries(LOBBY).forEach(([dateStr, units]) => {
     const cs = getCycleStart(parseDate(dateStr));
     const cyc = STATE.cycleData[cycleId(cs)];
@@ -4831,7 +4834,7 @@ function setOct21Reschedule() {
     cyc.nightAlerts[dateStr] = '🪟 Día con LOBBY · ' + units.map(u=>'#'+u).join(', ');
   });
 
-  // Clear cross-period "done" bleed: drop completions for these units dated before Oct 12
+  // Clear cross-period "done" bleed for these units if dated before Oct 12
   const scheduledUnits = new Set(["15451", "16100", "17108", "17721", "18554", "18574", "20192", "20206", "20501", "243", "24746", "27690", "28066", "28507", "2936", "29742", "29865", "30358", "30524", "31023", "31588", "31630", "31772", "3599", "36400", "3669", "3684", "39119", "4258", "42905", "42906", "42907", "42908", "42909", "42910", "42911", "42912", "42934", "42935", "42936", "42937", "42938", "42939", "42940", "42964", "42966", "42974", "42975", "42978", "42979", "42982", "4467", "5485", "5555"]);
   touched.forEach(cid => {
     const cyc = STATE.cycleData[cid];
@@ -4845,11 +4848,10 @@ function setOct21Reschedule() {
     });
   });
 
-  say('✓ Ciclo octubre puesto · 3669 y 2936 LOBBY · sin repetir · duplicados limpiados');
+  say('✓ Ciclo octubre puesto · 53/54 el Lun 12 · Mié7/Jue8 limpios · LOBBY ok');
   renderAll();
   pushAction('replace', { cycleData: STATE.cycleData }).catch(err => { console.error(err); say('⚠️ Guardado local, falló la nube', '#fbbf24'); });
 }
-
 function cleanCorruptData() {
   if (!confirm('¿Limpiar entradas duplicadas del horario? Las completadas, notas y urgencias NO se tocan.')) return;
   const cycle = STATE.cycleData[cycleId(STATE.currentCycleStart)];
