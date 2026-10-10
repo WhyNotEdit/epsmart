@@ -1715,21 +1715,9 @@ main{padding:14px var(--pad) 22px}
           <button class="btn btn-secondary" style="font-size:12px;color:#fbbf24;border-color:rgba(251,191,36,0.3)" onclick="cleanCorruptData()">🧹 Limpiar Datos Corruptos</button>
         </div>
         <div class="btn-row" style="margin-top:8px">
-          <button class="btn btn-secondary" style="font-size:12px;color:#a7f3d0;border-color:rgba(0,232,160,0.3)" onclick="rebuildSeptember()">🔧 Reconstruir Septiembre</button>
-        </div>
-        <div class="btn-row" style="margin-top:8px">
-          <button class="btn btn-secondary" style="font-size:12px;color:#fca5a5;border-color:rgba(255,71,87,0.4)" onclick="setSpecialNights()">🔴 Reconstruir Sept (1-12 + Jefe 14/15/16)</button>
-        </div>
-        <div id="specialNightsStatus" style="margin-top:8px"></div>
-        <div class="btn-row" style="margin-top:8px">
-          <button class="btn btn-secondary" style="font-size:12px;color:#93c5fd;border-color:rgba(0,168,255,0.4)" onclick="setOctoberSchedule()">📅 Poner Horario de Octubre</button>
-        </div>
-        <div id="octoberStatus" style="margin-top:8px"></div>
-        <div class="btn-row" style="margin-top:8px">
-          <button class="btn btn-secondary" style="font-size:12px;color:#c4b5fd;border-color:rgba(167,139,250,0.4)" onclick="setOct21Reschedule()">🔁 Reajuste Oct 21+ (lobby/fills)</button>
+          <button class="btn btn-secondary" style="font-size:12px;color:#c4b5fd;border-color:rgba(167,139,250,0.4)" onclick="setOct21Reschedule()">📅 Poner Ciclo Octubre (12+)</button>
         </div>
         <div id="oct21Status" style="margin-top:8px"></div>
-        <div id="sep11Status" style="margin-top:8px"></div>
         <button class="btn btn-secondary btn-full" style="margin-top:8px" onclick="mgmtLock()">Bloquear y Salir</button>
       </div>
     </div>
@@ -4789,40 +4777,40 @@ function resetCycle() {
 //   never done twice. Everything else fills 4/night through the cycle.
 // ─── OCTOBER SCHEDULE (spans two cycles: current ends Oct 6, next starts Oct 7) ──
 // ─── OCT 21+ RESCHEDULE: pinned+fills, lobby tags, closest→farthest, bleed fix ──
+// ─── OCTUBRE CICLO (Lun 12 +): flujo en orden, cambios fijados, lobby, sin repetir ──
 function setOct21Reschedule() {
   const statusEl = document.getElementById('oct21Status');
   const say = (m,c) => { if(statusEl) statusEl.innerHTML = `<div style="font-size:12px;color:${c||'var(--signal)'};font-family:var(--font-mono);margin-top:4px;line-height:1.6">${m}</div>`; };
 
   const SCHED = {
-    '2026-10-21': ['42907', '4258', '27690', '31588'],
-    '2026-10-22': ['18554', '42982', '42966', '42911'],
-    '2026-10-23': ['31630', '3669', '36400'],
-    '2026-10-24': ['4467', '2936', '31772'],
-    '2026-10-25': ['29865', '29742', '39119', '42912'],
-    '2026-10-26': ['15451', '5555', '3684', '42905'],
-    '2026-10-27': ['42908', '42979', '243', '28507'],
-    '2026-10-28': ['31023', '17721', '18574', '3599'],
-    '2026-10-29': ['24746', '42940', '42974', '30524'],
-    '2026-10-30': ['5485', '42934', '20206', '20192'],
-    '2026-11-02': ['42909', '42906', '42939', '42964'],
-    '2026-11-03': ['42910', '17108', '30358', '20501'],
-    '2026-11-04': ['28066', '42975', '42978', '42938'],
-    '2026-11-05': ['16100', '42937', '42936', '42935'],
+    "2026-10-12": ["15451", "5555", "3684", "42912"],
+    "2026-10-13": ["42905", "42908", "42979", "243"],
+    "2026-10-14": ["28507", "31023", "17721", "18574"],
+    "2026-10-15": ["3599", "24746", "42940", "42974"],
+    "2026-10-19": ["5485", "20206", "30524", "20192"],
+    "2026-10-20": ["42906", "42939", "42934", "42964"],
+    "2026-10-21": ["42907", "4258", "16100", "27690"],
+    "2026-10-22": ["18554", "42982", "42966", "42911"],
+    "2026-10-23": ["31588", "3669", "36400"],
+    "2026-10-24": ["4467", "2936", "31772"],
+    "2026-10-25": ["29865", "29742", "39119", "31630"],
+    "2026-10-26": ["42910", "17108", "42909", "20501"],
+    "2026-10-27": ["30358", "28066", "42975", "42978"],
+    "2026-10-28": ["42937", "42938", "42936", "42935"],
   };
   const LOBBY = {
     "2026-10-23": ["3669"],
     "2026-10-24": ["2936"],
   };
 
-  if (!confirm('¿Aplicar el reajuste del 21 de oct en adelante?\n\n' +
-    '• Noches especiales Oct 21-25 (con fills)\n' +
-    '• 3669 y 2936 marcadas LOBBY (3 paradas ese día)\n' +
-    '• Orden: más cerca → más lejos del almacén\n' +
-    '• Resto del ciclo continúa normal (incluye viernes)\n' +
-    '• Limpia las completadas duplicadas entre períodos\n\n' +
-    'Reemplaza el horario del 21 de oct hasta el 5 de nov.')) return;
+  if (!confirm('¿Poner el ciclo de octubre (Lun 12 en adelante)?\n\n' +
+    '• Flujo en orden empezando Lun 12: 53,54,1,2...\n' +
+    '• Cambios fijados Oct 21-25 (con fills)\n' +
+    '• 3669 y 2936 LOBBY (día de 3 paradas)\n' +
+    '• Orden: más cerca → más lejos\n' +
+    '• Sin repetir tiendas · limpia duplicados viejos\n\n' +
+    'Reemplaza el horario del 12 oct al 28 oct.')) return;
 
-  // Group dates by their cycle and write
   const touched = new Set();
   Object.entries(SCHED).forEach(([dateStr, units]) => {
     const cs = getCycleStart(parseDate(dateStr));
@@ -4833,315 +4821,34 @@ function setOct21Reschedule() {
     touched.add(cycleId(cs));
   });
 
-  // Lobby notes — show on the store panel (cycle.notes[unit])
+  // Lobby notes on the store panel + red day banner
   Object.entries(LOBBY).forEach(([dateStr, units]) => {
     const cs = getCycleStart(parseDate(dateStr));
     const cyc = STATE.cycleData[cycleId(cs)];
     cyc.notes = cyc.notes || {};
-    units.forEach(u => {
-      cyc.notes[u] = { unit:u, date:dateStr, notes:'🪟 LOBBY — incluye lobby (día de 3 paradas)', savedAt:new Date().toISOString() };
-    });
-    // red day banner too
+    units.forEach(u => { cyc.notes[u] = { unit:u, date:dateStr, notes:'🪟 LOBBY — incluye lobby (día de 3 paradas)', savedAt:new Date().toISOString() }; });
     cyc.nightAlerts = cyc.nightAlerts || {};
     cyc.nightAlerts[dateStr] = '🪟 Día con LOBBY · ' + units.map(u=>'#'+u).join(', ');
   });
 
-  // CROSS-PERIOD COMPLETION BLEED FIX:
-  // For every store freshly scheduled in this reajuste, clear any completion
-  // record keyed by its bare unit in the cycles we touched — so a store done
-  // in the previous period doesn't show green on these new dates.
-  const scheduledUnits = new Set(['15451', '16100', '17108', '17721', '18554', '18574', '20192', '20206', '20501', '243', '24746', '27690', '28066', '28507', '2936', '29742', '29865', '30358', '30524', '31023', '31588', '31630', '31772', '3599', '36400', '3669', '3684', '39119', '4258', '42905', '42906', '42907', '42908', '42909', '42910', '42911', '42912', '42934', '42935', '42936', '42937', '42938', '42939', '42940', '42964', '42966', '42974', '42975', '42978', '42979', '42982', '4467', '5485', '5555']);
+  // Clear cross-period "done" bleed: drop completions for these units dated before Oct 12
+  const scheduledUnits = new Set(["15451", "16100", "17108", "17721", "18554", "18574", "20192", "20206", "20501", "243", "24746", "27690", "28066", "28507", "2936", "29742", "29865", "30358", "30524", "31023", "31588", "31630", "31772", "3599", "36400", "3669", "3684", "39119", "4258", "42905", "42906", "42907", "42908", "42909", "42910", "42911", "42912", "42934", "42935", "42936", "42937", "42938", "42939", "42940", "42964", "42966", "42974", "42975", "42978", "42979", "42982", "4467", "5485", "5555"]);
   touched.forEach(cid => {
     const cyc = STATE.cycleData[cid];
     if (!cyc || !cyc.completions) return;
     Object.keys(cyc.completions).forEach(slot => {
       const u = slot.includes('::') ? slot.split('::')[0] : slot;
-      // only clear if this completion is NOT tied to a date that still holds it done
       if (scheduledUnits.has(u)) {
         const comp = cyc.completions[slot];
-        const compDate = comp && comp.date;
-        // if the store's completion date is before Oct 21 (previous period), drop the bleed
-        if (!compDate || compDate < '2026-10-21') delete cyc.completions[slot];
+        if (!comp || !comp.date || comp.date < '2026-10-12') delete cyc.completions[slot];
       }
     });
   });
 
-  say('✓ Reajuste aplicado · 3669 y 2936 con LOBBY · orden por distancia · duplicados limpiados');
+  say('✓ Ciclo octubre puesto · 3669 y 2936 LOBBY · sin repetir · duplicados limpiados');
   renderAll();
   pushAction('replace', { cycleData: STATE.cycleData }).catch(err => { console.error(err); say('⚠️ Guardado local, falló la nube', '#fbbf24'); });
 }
-
-function setOctoberSchedule() {
-  const statusEl = document.getElementById('octoberStatus');
-  const say = (msg, color) => { if (statusEl) statusEl.innerHTML = `<div style="font-size:12px;color:${color||'var(--signal)'};font-family:var(--font-mono);margin-top:4px;line-height:1.6">${msg}</div>`; };
-
-  // Build route to map positions (42, 43...) → real unit numbers
-  const anyStart = getCycleStart(parseDate('2026-10-07'));
-  ensureCycle(anyStart);
-  const nextCycle = STATE.cycleData[cycleId(anyStart)];
-  const route = (nextCycle.route && nextCycle.route.length) ? nextCycle.route.slice() : buildRoute().map(r => r.unit);
-
-  // pos → real unit ('28507'/'39119' pass through unchanged)
-  const U = (v) => {
-    const s = String(v);
-    if (s.length >= 5) return s;           // already a real unit number
-    const n = parseInt(s, 10);
-    return route[n - 1] || s;              // route position (1-based)
-  };
-
-  // The full October schedule, by date. Positions get mapped; real units pass through.
-  const OCT = {
-    '2026-10-01': [],   // clear leftover from the Sept cycle's normal flow
-    '2026-10-05': ['28507','39119', 42, 43],  // done
-    '2026-10-06': [],   // moved to Oct 7 (cascade)
-    // Cascaded one work-night forward, Fri 16 & 23 now working
-    '2026-10-07': [43, 45, 46, 47],
-    '2026-10-08': [48, 49, 51, 52],
-    '2026-10-09': [53, 54, 1, 2],
-    '2026-10-12': [3, 4, 5, 6],
-    '2026-10-13': [7, 8, 9, 10],
-    '2026-10-14': [11, 12, 13, '39119'],
-    '2026-10-15': [14, 15, 16, 17],
-    '2026-10-16': [18, 19, 28, 21],   // ← Friday now works
-    '2026-10-19': [22, 23, 24, 25],
-    '2026-10-20': [26, 27, 28, 29],
-    '2026-10-21': [30, 31, 32, 33],
-    '2026-10-22': [34, 35, 36, 37],
-    '2026-10-23': [38, 39, 40, 41],   // ← Friday now works
-    '2026-10-26': [42, 43, 44, 45],
-    '2026-10-27': [46, 47, 48, 49],
-    '2026-10-28': [50, 51, 52, 53],
-    '2026-10-29': [54],
-    '2026-10-30': [],
-  };
-
-  if (!confirm('¿Poner TODO el horario de octubre?\n\n' +
-    '• Oct 5: 28507 (faltó período pasado), 39119 (visita, atención extra) + 2\n' +
-    '• Oct 9 y Oct 30: días extra (viernes)\n' +
-    '• 39119 vuelve el Oct 13 (visita)\n' +
-    '• Cruza dos períodos (hasta Oct 6, y Oct 7+)\n\n' +
-    'Reemplaza el horario de esas fechas en ambos ciclos.')) return;
-
-  // Write each date into whatever cycle it belongs to
-  let count = 0;
-  Object.entries(OCT).forEach(([dateStr, stores]) => {
-    const cs = getCycleStart(parseDate(dateStr));
-    ensureCycle(cs);
-    const cyc = STATE.cycleData[cycleId(cs)];
-    cyc.route = cyc.route && cyc.route.length ? cyc.route : route;
-    cyc.schedule = cyc.schedule || {};
-    cyc.schedule[dateStr] = stores.map(U);
-    count++;
-  });
-
-  // Notes on the two special stores (write to the cycle that holds Oct 5 / Oct 13)
-  const csOct5 = STATE.cycleData[cycleId(getCycleStart(parseDate('2026-10-05')))];
-  csOct5.notes = csOct5.notes || {};
-  csOct5.notes['28507'] = { unit:'28507', date:'2026-10-05', notes:'Faltó el período pasado', savedAt:new Date().toISOString() };
-  csOct5.notes['39119'] = { unit:'39119', date:'2026-10-05', notes:'Tienda de visita — atención extra', savedAt:new Date().toISOString() };
-
-  const csOct13 = STATE.cycleData[cycleId(getCycleStart(parseDate('2026-10-14')))];
-  csOct13.notes = csOct13.notes || {};
-  csOct13.notes['39119'] = { unit:'39119', date:'2026-10-14', notes:'Tienda de visita — atención extra', savedAt:new Date().toISOString() };
-
-  // Day-screen banners so the notes are read on the actual day
-  const csOct5b = STATE.cycleData[cycleId(getCycleStart(parseDate('2026-10-05')))];
-  csOct5b.nightAlerts = csOct5b.nightAlerts || {};
-  csOct5b.nightAlerts['2026-10-05'] = '📌 28507 faltó el período pasado · 39119 tienda de visita (atención extra)';
-  csOct13.nightAlerts = csOct13.nightAlerts || {};
-  csOct13.nightAlerts['2026-10-14'] = '📌 39119 tienda de visita — atención extra';
-
-  say(`✓ Octubre puesto (${count} noches) · 28507 y 39119 con notas · Oct 9 y 30 días extra`);
-  renderAll();
-  pushAction('replace', { cycleData: STATE.cycleData }).catch(err => {
-    console.error(err); say('⚠️ Guardado local, pero falló la nube', '#fbbf24');
-  });
-}
-// ─────────────────────────────────────────────────────────────────────────────
-
-function setSpecialNights() {
-  const statusEl = document.getElementById('specialNightsStatus');
-  const say = (msg, color) => { if (statusEl) statusEl.innerHTML = `<div style="font-size:12px;color:${color||'var(--signal)'};font-family:var(--font-mono);margin-top:4px;line-height:1.6">${msg}</div>`; };
-
-  const cycleStart = getCycleStart(parseDate('2026-09-14'));
-  const cid = cycleId(cycleStart);
-  ensureCycle(cycleStart);
-  const cycle = STATE.cycleData[cid];
-  if (!cycle) { say('❌ No se encontró el ciclo', '#ff6b7a'); return; }
-
-  if (!confirm('¿RECONSTRUIR todo septiembre?\n\n' +
-    '• Sep 9,10,11: posiciones 1-12 marcadas COMPLETAS\n' +
-    '• Sep 14: 18574, 3599, 24746, 5485 (jefe)\n' +
-    '• Sep 15: 42906, 42911, 42966, 3669 (lobby, jefe)\n' +
-    '• Sep 16: 42964, 42935, 42940, 42939 (jefe)\n' +
-    '• Sep 17+: ruta normal desde posición 13 (sin las 12 especiales)\n' +
-    '• Alerta roja del jefe en 14/15/16\n\n' +
-    'Esto reemplaza TODO el horario de este ciclo.')) return;
-
-  // Build canonical route order
-  const route = (cycle.route && cycle.route.length) ? cycle.route.slice() : buildRoute().map(r => r.unit);
-  cycle.route = route;
-
-  const SPECIAL = {
-    '2026-09-14': ['18574','3599','24746','5485'],
-    '2026-09-15': ['42906','42911','42966','3669'],
-    '2026-09-16': ['42964','42935','42940','42939'],
-  };
-  const specialUnits = new Set(Object.values(SPECIAL).flat());
-
-  // Wipe the whole schedule for this cycle and rebuild cleanly
-  cycle.schedule = {};
-
-  // Done nights: positions 1-12
-  cycle.schedule['2026-09-09'] = route.slice(0, 4);
-  cycle.schedule['2026-09-10'] = route.slice(4, 8);
-  cycle.schedule['2026-09-11'] = route.slice(8, 12);
-
-  // Boss nights (exact stores)
-  Object.entries(SPECIAL).forEach(([d, units]) => { cycle.schedule[d] = [...units]; });
-
-  // Normal route from position 13 onward, EXCLUDING any special units (done on boss nights)
-  const remaining = route.slice(12).filter(u => !specialUnits.has(u));
-  const workNights = ['2026-09-17','2026-09-21','2026-09-22','2026-09-23','2026-09-24',
-                      '2026-09-28','2026-09-29','2026-09-30','2026-10-01','2026-10-05','2026-10-06'];
-  let idx = 0;
-  for (let i = 0; i < workNights.length && idx < remaining.length; i++) {
-    const isLast = i === workNights.length - 1;
-    const take = isLast ? (remaining.length - idx) : Math.min(STORES_PER_NIGHT, remaining.length - idx);
-    cycle.schedule[workNights[i]] = remaining.slice(idx, idx + take);
-    idx += take;
-  }
-  const leftover = remaining.length - idx;
-
-  // Mark positions 1-12 (Sep 9,10,11) COMPLETE
-  cycle.completions = cycle.completions || {};
-  const doneNights = { '2026-09-09': route.slice(0,4), '2026-09-10': route.slice(4,8), '2026-09-11': route.slice(8,12) };
-  Object.entries(doneNights).forEach(([d, units]) => {
-    units.forEach(u => {
-      cycle.completions[u] = { date: d, completedAt: new Date(d+'T23:30:00').toISOString(), notes: 'Completado (reconstrucción sept)', by: 'admin' };
-    });
-  });
-
-  // 3669 lobby note
-  cycle.notes = cycle.notes || {};
-  cycle.notes['3669'] = { unit: '3669', date: '2026-09-15', notes: 'Lavado a presión + LOBBY', savedAt: new Date().toISOString() };
-
-  // Red boss-visit alerts on 14/15/16
-  cycle.nightAlerts = cycle.nightAlerts || {};
-  ['2026-09-14','2026-09-15','2026-09-16'].forEach(d => {
-    cycle.nightAlerts[d] = '⚠️ Viene el jefe a visitar las tiendas';
-  });
-
-  say(`✓ Septiembre reconstruido · 1-12 completas · noches del jefe 14/15/16 · ruta normal desde pos 13` +
-      (leftover > 0 ? ` · ⚠ ${leftover} sin cabida` : ''), leftover > 0 ? '#fbbf24' : undefined);
-
-  renderAll();
-  pushAction('replace', { cycleData: STATE.cycleData }).catch(err => {
-    console.error(err); say('⚠️ Guardado local, pero falló la nube', '#fbbf24');
-  });
-}
-// ─────────────────────────────────────────────────────────────────────────────
-
-function rebuildSeptember() {
-  const statusEl = document.getElementById('sep11Status');
-  const say = (msg, color) => { if (statusEl) statusEl.innerHTML = `<div style="font-size:12px;color:${color||'var(--signal)'};font-family:var(--font-mono);margin-top:4px;line-height:1.6">${msg}</div>`; };
-
-  const cycleStart = getCycleStart(parseDate('2026-09-11'));
-  const cid = cycleId(cycleStart);
-  ensureCycle(cycleStart);
-  const cycle = STATE.cycleData[cid];
-  if (!cycle) { say('❌ No se encontró el ciclo', '#ff6b7a'); return; }
-
-  const route = (cycle.route && cycle.route.length) ? cycle.route.slice() : buildRoute().map(r => r.unit);
-  if (route.length < 20) { say('❌ Ruta incompleta', '#ff6b7a'); return; }
-
-  const U14 = ['18574','24746','42937'];
-  const U16 = ['42939','42940'];
-  const urgentSet = new Set([...U14, ...U16]);
-
-  if (!confirm('¿Reconstruir todo septiembre limpio?\n\n' +
-    '• Sep 9: tiendas 1-4 (COMPLETAS)\n' +
-    '• Sep 10: tiendas 5-8 (COMPLETAS)\n' +
-    '• Sep 11: tiendas 9-12 (COMPLETAS)\n' +
-    '• Sep 14: 3 urgentes + 1 regular\n' +
-    '• Sep 16: 2 urgentes + 2 regulares\n' +
-    '• El resto se reparte 4 por noche, sin duplicados\n\n' +
-    'Las 5 urgentes se sacan de su lugar normal para no repetirse.')) return;
-
-  // The 12 "done" stores are the first 12 route positions
-  const donePos = route.slice(0, 12); // positions 1-12
-  // Regular pool = positions 13+ MINUS any urgent units (they go on their urgent nights)
-  const restPool = route.slice(12).filter(u => !urgentSet.has(u));
-
-  // Also make sure none of the done-12 are urgent units (they shouldn't be, but guard)
-  const doneClean = donePos.filter(u => !urgentSet.has(u));
-
-  // Snapshot for undo — capture the whole cycle window
-  const cycleEnd = new Date(cycleStart); cycleEnd.setDate(cycleEnd.getDate() + CYCLE_LENGTH_DAYS - 1);
-  const cycleEndKey = localDateKey(cycleEnd);
-  cycle.weatherShifts = cycle.weatherShifts || [];
-  const snap = {};
-  Object.keys(cycle.schedule).forEach(d => { snap[d] = [...cycle.schedule[d]]; });
-  cycle.weatherShifts.push({
-    shiftedDate: '2026-09-09',
-    appliedAt: new Date().toISOString(),
-    snapshot: snap,
-    label: 'Reconstrucción septiembre',
-  });
-
-  // Clear the whole cycle window first (so no stale entries linger)
-  { let cur = new Date(cycleStart);
-    while (localDateKey(cur) <= cycleEndKey) { cycle.schedule[localDateKey(cur)] = []; cur.setDate(cur.getDate()+1); } }
-
-  // Lay down the fixed done nights
-  cycle.schedule['2026-09-09'] = doneClean.slice(0, 4);
-  cycle.schedule['2026-09-10'] = doneClean.slice(4, 8);
-  cycle.schedule['2026-09-11'] = doneClean.slice(8, 12);
-
-  // Urgent nights + fills
-  let idx = 0;
-  cycle.schedule['2026-09-14'] = [...U14, restPool[idx++]].filter(Boolean);
-  cycle.schedule['2026-09-15'] = restPool.slice(idx, idx + 4); idx += 4;
-  cycle.schedule['2026-09-16'] = [...U16, restPool[idx++], restPool[idx++]].filter(Boolean);
-  cycle.schedule['2026-09-17'] = restPool.slice(idx, idx + 4); idx += 4;
-
-  // Remaining regulars onto Mon-Thu from Sep 21
-  const workNights = ['2026-09-21','2026-09-22','2026-09-23','2026-09-24',
-                      '2026-09-28','2026-09-29','2026-09-30','2026-10-01',
-                      '2026-10-05','2026-10-06'];
-  for (let i = 0; i < workNights.length && idx < restPool.length; i++) {
-    const isLast = i === workNights.length - 1;
-    const take = isLast ? (restPool.length - idx) : Math.min(STORES_PER_NIGHT, restPool.length - idx);
-    cycle.schedule[workNights[i]] = restPool.slice(idx, idx + take);
-    idx += take;
-  }
-
-  // Mark Sep 9/10/11 stores complete
-  cycle.completions = cycle.completions || {};
-  [...cycle.schedule['2026-09-09'], ...cycle.schedule['2026-09-10'], ...cycle.schedule['2026-09-11']].forEach(unit => {
-    cycle.completions[unit] = {
-      date: '2026-09-11',
-      completedAt: new Date('2026-09-11T02:00:00').toISOString(),
-      notes: 'Completado (reconstrucción septiembre)',
-      by: getDeviceId ? getDeviceId() : 'admin',
-    };
-  });
-
-  // Mark the 6 urgent as emergencies (⚡)
-  cycle.emergencies = cycle.emergencies || {};
-  [...U14, ...U16].forEach(u => {
-    cycle.emergencies[u] = { type: 'urgent', addedAt: new Date().toISOString(), notes: 'Puerta urgente' };
-  });
-
-  const leftover = restPool.length - idx;
-  say(`✓ Septiembre reconstruido. 1-12 completas · urgentes en Sep 14/16 · resto repartido` +
-      (leftover > 0 ? ` · ⚠ ${leftover} sin cabida` : ''), leftover > 0 ? '#fbbf24' : undefined);
-
-  renderAll();
-  renderWeatherShifts();
-  pushAction('replace', { cycleData: STATE.cycleData }).catch(()=>{});
-}
-// ─────────────────────────────────────────────────────────────────────────────
 
 function cleanCorruptData() {
   if (!confirm('¿Limpiar entradas duplicadas del horario? Las completadas, notas y urgencias NO se tocan.')) return;
