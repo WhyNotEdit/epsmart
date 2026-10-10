@@ -1725,6 +1725,10 @@ main{padding:14px var(--pad) 22px}
           <button class="btn btn-secondary" style="font-size:12px;color:#93c5fd;border-color:rgba(0,168,255,0.4)" onclick="setOctoberSchedule()">📅 Poner Horario de Octubre</button>
         </div>
         <div id="octoberStatus" style="margin-top:8px"></div>
+        <div class="btn-row" style="margin-top:8px">
+          <button class="btn btn-secondary" style="font-size:12px;color:#c4b5fd;border-color:rgba(167,139,250,0.4)" onclick="setOct21Reschedule()">🔁 Reajuste Oct 21+ (lobby/fills)</button>
+        </div>
+        <div id="oct21Status" style="margin-top:8px"></div>
         <div id="sep11Status" style="margin-top:8px"></div>
         <button class="btn btn-secondary btn-full" style="margin-top:8px" onclick="mgmtLock()">Bloquear y Salir</button>
       </div>
@@ -4784,6 +4788,89 @@ function resetCycle() {
 //   The 5 urgent units are pulled OUT of their normal route slots so they're
 //   never done twice. Everything else fills 4/night through the cycle.
 // ─── OCTOBER SCHEDULE (spans two cycles: current ends Oct 6, next starts Oct 7) ──
+// ─── OCT 21+ RESCHEDULE: pinned+fills, lobby tags, closest→farthest, bleed fix ──
+function setOct21Reschedule() {
+  const statusEl = document.getElementById('oct21Status');
+  const say = (m,c) => { if(statusEl) statusEl.innerHTML = `<div style="font-size:12px;color:${c||'var(--signal)'};font-family:var(--font-mono);margin-top:4px;line-height:1.6">${m}</div>`; };
+
+  const SCHED = {
+    '2026-10-21': ['42907', '4258', '27690', '31588'],
+    '2026-10-22': ['18554', '42982', '42966', '42911'],
+    '2026-10-23': ['31630', '3669', '36400'],
+    '2026-10-24': ['4467', '2936', '31772'],
+    '2026-10-25': ['29865', '29742', '39119', '42912'],
+    '2026-10-26': ['15451', '5555', '3684', '42905'],
+    '2026-10-27': ['42908', '42979', '243', '28507'],
+    '2026-10-28': ['31023', '17721', '18574', '3599'],
+    '2026-10-29': ['24746', '42940', '42974', '30524'],
+    '2026-10-30': ['5485', '42934', '20206', '20192'],
+    '2026-11-02': ['42909', '42906', '42939', '42964'],
+    '2026-11-03': ['42910', '17108', '30358', '20501'],
+    '2026-11-04': ['28066', '42975', '42978', '42938'],
+    '2026-11-05': ['16100', '42937', '42936', '42935'],
+  };
+  const LOBBY = {
+    "2026-10-23": ["3669"],
+    "2026-10-24": ["2936"],
+  };
+
+  if (!confirm('¿Aplicar el reajuste del 21 de oct en adelante?\n\n' +
+    '• Noches especiales Oct 21-25 (con fills)\n' +
+    '• 3669 y 2936 marcadas LOBBY (3 paradas ese día)\n' +
+    '• Orden: más cerca → más lejos del almacén\n' +
+    '• Resto del ciclo continúa normal (incluye viernes)\n' +
+    '• Limpia las completadas duplicadas entre períodos\n\n' +
+    'Reemplaza el horario del 21 de oct hasta el 5 de nov.')) return;
+
+  // Group dates by their cycle and write
+  const touched = new Set();
+  Object.entries(SCHED).forEach(([dateStr, units]) => {
+    const cs = getCycleStart(parseDate(dateStr));
+    ensureCycle(cs);
+    const cyc = STATE.cycleData[cycleId(cs)];
+    cyc.schedule = cyc.schedule || {};
+    cyc.schedule[dateStr] = units.slice();
+    touched.add(cycleId(cs));
+  });
+
+  // Lobby notes — show on the store panel (cycle.notes[unit])
+  Object.entries(LOBBY).forEach(([dateStr, units]) => {
+    const cs = getCycleStart(parseDate(dateStr));
+    const cyc = STATE.cycleData[cycleId(cs)];
+    cyc.notes = cyc.notes || {};
+    units.forEach(u => {
+      cyc.notes[u] = { unit:u, date:dateStr, notes:'🪟 LOBBY — incluye lobby (día de 3 paradas)', savedAt:new Date().toISOString() };
+    });
+    // red day banner too
+    cyc.nightAlerts = cyc.nightAlerts || {};
+    cyc.nightAlerts[dateStr] = '🪟 Día con LOBBY · ' + units.map(u=>'#'+u).join(', ');
+  });
+
+  // CROSS-PERIOD COMPLETION BLEED FIX:
+  // For every store freshly scheduled in this reajuste, clear any completion
+  // record keyed by its bare unit in the cycles we touched — so a store done
+  // in the previous period doesn't show green on these new dates.
+  const scheduledUnits = new Set(['15451', '16100', '17108', '17721', '18554', '18574', '20192', '20206', '20501', '243', '24746', '27690', '28066', '28507', '2936', '29742', '29865', '30358', '30524', '31023', '31588', '31630', '31772', '3599', '36400', '3669', '3684', '39119', '4258', '42905', '42906', '42907', '42908', '42909', '42910', '42911', '42912', '42934', '42935', '42936', '42937', '42938', '42939', '42940', '42964', '42966', '42974', '42975', '42978', '42979', '42982', '4467', '5485', '5555']);
+  touched.forEach(cid => {
+    const cyc = STATE.cycleData[cid];
+    if (!cyc || !cyc.completions) return;
+    Object.keys(cyc.completions).forEach(slot => {
+      const u = slot.includes('::') ? slot.split('::')[0] : slot;
+      // only clear if this completion is NOT tied to a date that still holds it done
+      if (scheduledUnits.has(u)) {
+        const comp = cyc.completions[slot];
+        const compDate = comp && comp.date;
+        // if the store's completion date is before Oct 21 (previous period), drop the bleed
+        if (!compDate || compDate < '2026-10-21') delete cyc.completions[slot];
+      }
+    });
+  });
+
+  say('✓ Reajuste aplicado · 3669 y 2936 con LOBBY · orden por distancia · duplicados limpiados');
+  renderAll();
+  pushAction('replace', { cycleData: STATE.cycleData }).catch(err => { console.error(err); say('⚠️ Guardado local, falló la nube', '#fbbf24'); });
+}
+
 function setOctoberSchedule() {
   const statusEl = document.getElementById('octoberStatus');
   const say = (msg, color) => { if (statusEl) statusEl.innerHTML = `<div style="font-size:12px;color:${color||'var(--signal)'};font-family:var(--font-mono);margin-top:4px;line-height:1.6">${msg}</div>`; };
