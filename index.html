@@ -4793,7 +4793,7 @@ function setOct21Reschedule() {
     "2026-10-19": ["20206", "42974", "30524", "20192"],
     "2026-10-20": ["42939", "5485", "42934", "42964"],
     "2026-10-21": ["27690", "31588", "31630", "42912"],
-    "2026-10-22": ["42982", "42966"],
+    "2026-10-22": ["18554", "42982", "42966", "42911"],
     "2026-10-23": ["3684", "3669", "36400"],
     "2026-10-24": ["4467", "2936", "31772"],
     "2026-10-25": ["29865", "29742", "15451", "39119"],
@@ -4809,7 +4809,7 @@ function setOct21Reschedule() {
   };
 
   if (!confirm('¿Poner el ciclo de octubre (actualizado)?\n\n' +
-    '• Lun 12: 42911 ya hecho (GPS) · 18554 queda sin hacer\n' +
+    '• Lun 12: 42911 hecho (GPS) · 18554 vuelve a Jue 22\n' +
     '• Mié 14 y Jue 15 → movidos a Vie 16 y Vie 30\n' +
     '• Cambios fijados Oct 21-25 · 3669 y 2936 LOBBY\n' +
     '• Orden: más cerca → más lejos\n' +
@@ -4850,7 +4850,7 @@ function setOct21Reschedule() {
     });
   });
 
-  say('✓ Ciclo octubre actualizado · 42911 Lun12 · 18554 sin hacer · Vie16/Vie30 ok · LOBBY ok');
+  say('✓ Ciclo octubre actualizado · 42911 Lun12+Jue22 · Jue22 fijado · Vie16/Vie30 ok · LOBBY ok');
   renderAll();
   pushAction('replace', { cycleData: STATE.cycleData }).catch(err => { console.error(err); say('⚠️ Guardado local, falló la nube', '#fbbf24'); });
 }
