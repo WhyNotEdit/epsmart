@@ -4785,14 +4785,15 @@ function setOct21Reschedule() {
   const SCHED = {
     "2026-10-07": [],
     "2026-10-08": [],
-    "2026-10-12": ["42907", "4258", "16100", "18554"],
+    "2026-10-12": ["42907", "4258", "16100", "42911"],
     "2026-10-13": ["5555", "42905", "42908", "42979"],
-    "2026-10-14": ["243", "28507", "31023", "17721"],
-    "2026-10-15": ["18574", "3599", "24746", "42940"],
+    "2026-10-14": [],
+    "2026-10-15": [],
+    "2026-10-16": ["243", "28507", "31023", "17721"],
     "2026-10-19": ["20206", "42974", "30524", "20192"],
     "2026-10-20": ["42939", "5485", "42934", "42964"],
     "2026-10-21": ["27690", "31588", "31630", "42912"],
-    "2026-10-22": ["18554", "42982", "42966", "42911"],
+    "2026-10-22": ["42982", "42966"],
     "2026-10-23": ["3684", "3669", "36400"],
     "2026-10-24": ["4467", "2936", "31772"],
     "2026-10-25": ["29865", "29742", "15451", "39119"],
@@ -4800,19 +4801,20 @@ function setOct21Reschedule() {
     "2026-10-27": ["30358", "20501", "28066", "42975"],
     "2026-10-28": ["42978", "42938", "42936", "42935"],
     "2026-10-29": ["42937"],
+    "2026-10-30": ["18574", "3599", "24746", "42940"],
   };
   const LOBBY = {
     "2026-10-23": ["3669"],
     "2026-10-24": ["2936"],
   };
 
-  if (!confirm('¿Poner el ciclo de octubre?\n\n' +
-    '• Lun 12: tiendas 53 y 54 (18554, 16100) + 2\n' +
+  if (!confirm('¿Poner el ciclo de octubre (actualizado)?\n\n' +
+    '• Lun 12: 42911 ya hecho (GPS) · 18554 queda sin hacer\n' +
+    '• Mié 14 y Jue 15 → movidos a Vie 16 y Vie 30\n' +
     '• Cambios fijados Oct 21-25 · 3669 y 2936 LOBBY\n' +
     '• Orden: más cerca → más lejos\n' +
-    '• Limpia Mié 7 y Jue 8 (quedan vacíos)\n' +
-    '• 18554 se hace Lun 12 Y Jue 22 (a propósito)\n\n' +
-    'Reemplaza el horario del 7 al 29 de octubre.')) return;
+    '• Limpia Mié 7 y Jue 8 (quedan vacíos)\n\n' +
+    'Reemplaza el horario del 7 al 30 de octubre.')) return;
 
   const touched = new Set();
   Object.entries(SCHED).forEach(([dateStr, units]) => {
@@ -4848,7 +4850,7 @@ function setOct21Reschedule() {
     });
   });
 
-  say('✓ Ciclo octubre puesto · 53/54 el Lun 12 · Mié7/Jue8 limpios · LOBBY ok');
+  say('✓ Ciclo octubre actualizado · 42911 Lun12 · 18554 sin hacer · Vie16/Vie30 ok · LOBBY ok');
   renderAll();
   pushAction('replace', { cycleData: STATE.cycleData }).catch(err => { console.error(err); say('⚠️ Guardado local, falló la nube', '#fbbf24'); });
 }
