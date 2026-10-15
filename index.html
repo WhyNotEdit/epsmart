@@ -4788,8 +4788,8 @@ function setOct21Reschedule() {
     "2026-10-12": ["42907", "4258", "16100", "42911"],
     "2026-10-13": ["5555", "42905", "42908", "42979"],
     "2026-10-14": [],
-    "2026-10-15": [],
-    "2026-10-16": ["243", "28507", "31023", "17721"],
+    "2026-10-15": ["243", "28507", "18574", "24746"],
+    "2026-10-16": [],
     "2026-10-19": ["20206", "42974", "30524", "20192"],
     "2026-10-20": ["42939", "5485", "42934", "42964"],
     "2026-10-21": ["27690", "31588", "31630", "42912"],
@@ -4801,7 +4801,7 @@ function setOct21Reschedule() {
     "2026-10-27": ["30358", "20501", "28066", "42975"],
     "2026-10-28": ["42978", "42938", "42936", "42935"],
     "2026-10-29": ["42937"],
-    "2026-10-30": ["18574", "3599", "24746", "42940"],
+    "2026-10-30": ["31023", "17721", "3599", "42940"],
   };
   const LOBBY = {
     "2026-10-23": ["3669"],
@@ -4809,11 +4809,10 @@ function setOct21Reschedule() {
   };
 
   if (!confirm('¿Poner el ciclo de octubre (actualizado)?\n\n' +
-    '• Lun 12: 42911 hecho (GPS) · 18554 vuelve a Jue 22\n' +
-    '• Mié 14 y Jue 15 → movidos a Vie 16 y Vie 30\n' +
-    '• Cambios fijados Oct 21-25 · 3669 y 2936 LOBBY\n' +
-    '• Orden: más cerca → más lejos\n' +
-    '• Limpia Mié 7 y Jue 8 (quedan vacíos)\n\n' +
+    '• Jue 15: entran las 4 de Vie 16 (16 queda vacío)\n' +
+    '• Swap: 18574 y 24746 a Jue 15 · 31023 y 17721 a Vie 30\n' +
+    '• Lun 19 y Mar 20 trabajan normal\n' +
+    '• Fijados Oct 21-25 SIN tocar · 3669 y 2936 LOBBY\n\n' +
     'Reemplaza el horario del 7 al 30 de octubre.')) return;
 
   const touched = new Set();
@@ -4850,7 +4849,7 @@ function setOct21Reschedule() {
     });
   });
 
-  say('✓ Ciclo octubre actualizado · 42911 Lun12+Jue22 · Jue22 fijado · Vie16/Vie30 ok · LOBBY ok');
+  say('✓ Horario actualizado · Jue15 (16 vacío) · swap 18574/24746 · Lun19 y Mar20 normal · Fijados 21-25 ok');
   renderAll();
   pushAction('replace', { cycleData: STATE.cycleData }).catch(err => { console.error(err); say('⚠️ Guardado local, falló la nube', '#fbbf24'); });
 }
