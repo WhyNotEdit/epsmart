@@ -1715,7 +1715,7 @@ main{padding:14px var(--pad) 22px}
           <button class="btn btn-secondary" style="font-size:12px;color:#fbbf24;border-color:rgba(251,191,36,0.3)" onclick="cleanCorruptData()">🧹 Limpiar Datos Corruptos</button>
         </div>
         <div class="btn-row" style="margin-top:8px">
-          <button class="btn btn-secondary" style="font-size:12px;color:#c4b5fd;border-color:rgba(167,139,250,0.4)" onclick="setOct21Reschedule()">📅 Poner Ciclo Octubre (12+)</button>
+          <button class="btn btn-secondary" style="font-size:12px;color:#c4b5fd;border-color:rgba(167,139,250,0.4)" onclick="setOct23Emergency()">🚨 Visitas Vie 23 / Sáb 24</button>
         </div>
         <div id="oct21Status" style="margin-top:8px"></div>
         <button class="btn btn-secondary btn-full" style="margin-top:8px" onclick="mgmtLock()">Bloquear y Salir</button>
@@ -4794,18 +4794,17 @@ function setOct21Reschedule() {
     "2026-10-20": ["42939", "5485", "42934", "42964"],
     "2026-10-21": ["27690", "31588", "31630", "42912"],
     "2026-10-22": ["18554", "42982", "42966", "42911"],
-    "2026-10-23": ["3684", "3669", "36400"],
-    "2026-10-24": ["4467", "2936", "31772"],
+    "2026-10-23": ["2936", "3669"],
+    "2026-10-24": ["4467", "31772", "36400"],
     "2026-10-25": ["29865", "29742", "15451", "39119"],
     "2026-10-26": ["42910", "17108", "42909", "42906"],
     "2026-10-27": ["30358", "20501", "28066", "42975"],
     "2026-10-28": ["42978", "42938", "42936", "42935"],
-    "2026-10-29": ["42937"],
+    "2026-10-29": ["3684", "42937"],
     "2026-10-30": ["31023", "17721", "3599", "42940"],
   };
   const LOBBY = {
-    "2026-10-23": ["3669"],
-    "2026-10-24": ["2936"],
+    "2026-10-23": ["2936", "3669"],
   };
 
   if (!confirm('¿Poner el ciclo de octubre (actualizado)?\n\n' +
@@ -4850,6 +4849,63 @@ function setOct21Reschedule() {
   });
 
   say('✓ Horario actualizado · Jue15 (16 vacío) · swap 18574/24746 · Lun19 y Mar20 normal · Fijados 21-25 ok');
+  renderAll();
+  pushAction('replace', { cycleData: STATE.cycleData }).catch(err => { console.error(err); say('⚠️ Guardado local, falló la nube', '#fbbf24'); });
+}
+// 🚨 Emergencia visitas: SOLO toca Vie 23, Sáb 24 y Jue 29. Todo lo demás se queda igual.
+function setOct23Emergency() {
+  const statusEl = document.getElementById('oct21Status');
+  const say = (m,c) => { if(statusEl) statusEl.innerHTML = `<div style="font-size:12px;color:${c||'var(--signal)'};font-family:var(--font-mono);margin-top:4px;line-height:1.6">${m}</div>`; };
+  const NEW = {
+    "2026-10-23": ["2936", "3669"],            // ambas con LOBBY
+    "2026-10-24": ["4467", "31772", "36400"],
+  };
+  const LOBBY_DAY = "2026-10-23", LOBBY_UNITS = ["2936", "3669"];
+  const SPILL_DAYS = ["2026-10-29", "2026-10-26", "2026-10-27", "2026-10-28", "2026-10-30"];
+  if (!confirm('¿Aplicar cambio de emergencia?\n\n' +
+    '• Vie 23 (hoy): 2936 🪟, 3669 🪟\n' +
+    '• Sáb 24: 4467, 31772, 36400\n' +
+    '• Las que salgan de esos días → Jue 29\n' +
+    '• Todos los demás días NO se tocan.')) return;
+
+  const newSet = new Set(Object.values(NEW).flat());
+  const cyc = STATE.cycleData[cycleId(getCycleStart(parseDate(LOBBY_DAY)))] || (ensureCycle(getCycleStart(parseDate(LOBBY_DAY))), STATE.cycleData[cycleId(getCycleStart(parseDate(LOBBY_DAY)))]);
+  cyc.schedule = cyc.schedule || {};
+
+  // 1) Stores that were on Fri 23 / Sat 24 but are not in the new list get bumped
+  const displaced = [];
+  Object.keys(NEW).forEach(d => (cyc.schedule[d] || []).forEach(slot => {
+    const u = slotUnit(slot);
+    if (!newSet.has(u) && !displaced.includes(u)) displaced.push(u);
+  }));
+
+  // 2) Remove the visit stores from any other day from today forward (no repeats)
+  Object.keys(cyc.schedule).forEach(d => {
+    if (d < LOBBY_DAY || NEW[d]) return;
+    cyc.schedule[d] = cyc.schedule[d].filter(slot => !newSet.has(slotUnit(slot)));
+  });
+
+  // 3) Set Fri 23 and Sat 24
+  Object.entries(NEW).forEach(([d, units]) => { cyc.schedule[d] = units.slice(); });
+
+  // 4) Bumped stores go to the first spill day with room (Thu 29 first), placed at the front (closer)
+  const placed = [];
+  displaced.forEach(u => {
+    const already = Object.keys(cyc.schedule).some(d => d >= LOBBY_DAY && cyc.schedule[d].some(s => slotUnit(s) === u));
+    if (already) return;
+    const day = SPILL_DAYS.find(d => (cyc.schedule[d] || []).length < 4) || SPILL_DAYS[0];
+    cyc.schedule[day] = [u].concat(cyc.schedule[day] || []);
+    placed.push('#' + u + ' → ' + day.slice(5));
+  });
+
+  // 5) Lobby markings: both on Fri 23; Sat 24 has no lobby now
+  cyc.notes = cyc.notes || {};
+  LOBBY_UNITS.forEach(u => { cyc.notes[u] = { unit:u, date:LOBBY_DAY, notes:'🪟 LOBBY — incluye lobby (visita)', savedAt:new Date().toISOString() }; });
+  cyc.nightAlerts = cyc.nightAlerts || {};
+  cyc.nightAlerts[LOBBY_DAY] = '🚨 VISITA · 🪟 LOBBY · #2936, #3669';
+  cyc.nightAlerts["2026-10-24"] = '🚨 VISITA · #4467, #31772, #36400';
+
+  say('✓ Emergencia aplicada · Vie23: 2936, 3669 · Sáb24: 4467, 31772, 36400' + (placed.length ? ' · ' + placed.join(', ') : ''));
   renderAll();
   pushAction('replace', { cycleData: STATE.cycleData }).catch(err => { console.error(err); say('⚠️ Guardado local, falló la nube', '#fbbf24'); });
 }
