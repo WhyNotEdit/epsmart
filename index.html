@@ -3073,10 +3073,22 @@ function getOperationalDate() {
 
 // True only during the active work window: 11:15 PM tonight → 11:00 AM tomorrow.
 // Between 11 AM and 11:15 PM the crew hasn't started, so tonight's stores stay hidden.
+// Early-start nights: on these dates the stores unlock at the given time instead of 11:15 PM.
+const EARLY_START = { "2026-10-24": [20, 45], "2026-10-25": [20, 45] };
+function earlyStartFor(d) { return EARLY_START[dateKey(d || new Date())] || null; }
+function workStartLabel(d) {
+  const es = earlyStartFor(d);
+  if (!es) return '11:15 PM';
+  const hh = es[0] > 12 ? es[0] - 12 : es[0];
+  return hh + ':' + String(es[1]).padStart(2, '0') + ' PM';
+}
 function isWorkWindowOpen() {
   const now = new Date();
   const h = now.getHours();
   const m = now.getMinutes();
+  // Early-start nights (e.g. visits): open from the set time
+  const es = earlyStartFor(now);
+  if (es && h >= 11 && (h * 60 + m) >= (es[0] * 60 + es[1])) return true;
   // Late night portion of the shift (after 11:15 PM)
   if (h === 23 && m >= 15) return true;
   if (h === 23 && m < 15) return false;
@@ -3498,7 +3510,7 @@ function renderTonight() {
     card.innerHTML = `
       <div class="empty">
         <div class="empty-icon">🌙</div>
-        <h3>Las paradas aparecen a las 11:15 PM</h3>
+        <h3>Las paradas aparecen a las ${workStartLabel(td)}</h3>
         <p>Esta noche · <strong style="color:white">${count} parada${count !== 1 ? 's' : ''}</strong><br>
           <span style="color:var(--ink-3);font-size:12px">El recorrido se desbloquea cuando empieza el turno</span>
         </p>
