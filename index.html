@@ -3071,31 +3071,27 @@ function getOperationalDate() {
   return now;
 }
 
-// True only during the active work window: 11:15 PM tonight → 11:00 AM tomorrow.
-// Between 11 AM and 11:15 PM the crew hasn't started, so tonight's stores stay hidden.
-// Early-start nights: on these dates the stores unlock at the given time instead of 11:15 PM.
+// True only during the active work window: start time tonight → 11:00 AM tomorrow.
+// Between 11 AM and the start time the crew hasn't started, so tonight's stores stay hidden.
+// Default start time (24h). Changed from 11:15 PM to 10:30 PM on Nov 5, 2026.
+const WORK_START = [22, 30];
+// Early-start nights: on these dates the stores unlock at the given time instead of WORK_START.
 const EARLY_START = { "2026-10-24": [20, 45], "2026-10-25": [20, 45] };
 function earlyStartFor(d) { return EARLY_START[dateKey(d || new Date())] || null; }
+function startFor(d) { return earlyStartFor(d) || WORK_START; }
 function workStartLabel(d) {
-  const es = earlyStartFor(d);
-  if (!es) return '11:15 PM';
-  const hh = es[0] > 12 ? es[0] - 12 : es[0];
-  return hh + ':' + String(es[1]).padStart(2, '0') + ' PM';
+  const [h, m] = startFor(d);
+  const hh = h > 12 ? h - 12 : (h === 0 ? 12 : h);
+  return hh + ':' + String(m).padStart(2, '0') + (h >= 12 ? ' PM' : ' AM');
 }
 function isWorkWindowOpen() {
   const now = new Date();
-  const h = now.getHours();
-  const m = now.getMinutes();
-  // Early-start nights (e.g. visits): open from the set time
-  const es = earlyStartFor(now);
-  if (es && h >= 11 && (h * 60 + m) >= (es[0] * 60 + es[1])) return true;
-  // Late night portion of the shift (after 11:15 PM)
-  if (h === 23 && m >= 15) return true;
-  if (h === 23 && m < 15) return false;
+  const mins = now.getHours() * 60 + now.getMinutes();
   // Early morning portion (before 11 AM) — still the shift that started last night
-  if (h < 11) return true;
-  // Daytime (11 AM – 11:15 PM) — not started yet
-  return false;
+  if (mins < 11 * 60) return true;
+  // Evening: open from tonight's start time (default 10:30 PM, or the early start)
+  const [h, m] = startFor(now);
+  return mins >= h * 60 + m;
 }
 
 function refreshOperationalDate() {
@@ -3111,7 +3107,7 @@ function refreshOperationalDate() {
     STATE._lastWorkWindow = isWorkWindowOpen();
     return;
   }
-  // Also re-render when the work window opens (11:15 PM) or closes (11 AM)
+  // Also re-render when the work window opens (start time) or closes (11 AM)
   // so tonight's stores appear/disappear automatically without a manual refresh.
   const win = isWorkWindowOpen();
   if (win !== STATE._lastWorkWindow) {
@@ -3502,7 +3498,7 @@ function renderTonight() {
   const card = document.getElementById('tonightCard');
 
   // Work-window gate: when viewing the CURRENT day (not pinned via calendar),
-  // hide tonight's stores until 11:15 PM. The crew hasn't started before then.
+  // hide tonight's stores until the start time (WORK_START). The crew hasn't started before then.
   if (!STATE.pinnedDate && targetStores && targetStores.length > 0 && !isWorkWindowOpen()) {
     const td = parseDate(targetKey);
     const count = targetStores.length;
@@ -3564,7 +3560,7 @@ function renderTonight() {
         </div>
       </div>
       <div class="tonight-time">
-        <strong>11:00 PM</strong>
+        <strong>${workStartLabel(td)}</strong>
         ${targetStores.length} paradas
       </div>
     </div>
