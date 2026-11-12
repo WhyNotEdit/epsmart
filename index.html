@@ -1640,6 +1640,23 @@ main{padding:14px var(--pad) 22px}
         <button class="btn btn-primary btn-full" onclick="emergencyReschedule()">⚡ Aplicar Cambio de Urgencia</button>
       </div>
 
+      <div class="mgmt-section" id="lobbyToolSection">
+        <h4>🪟 Noche con Lobby — 3 Paradas</h4>
+        <p style="font-size:12px;color:var(--ink-3);margin-bottom:14px;line-height:1.5">Cuando una tienda lleva lobby, esa noche solo se hacen 3 paradas. Elige la noche, toca la tienda con lobby y la app quita una parada y la manda a otra noche.</p>
+        <div class="field">
+          <label>Noche</label>
+          <input type="date" id="lobbyDate" oninput="renderLobbyTool(true)">
+        </div>
+        <div id="lobbyStops"></div>
+        <div class="field" id="lobbyDestWrap" style="display:none">
+          <label>¿A dónde va la que se quita?</label>
+          <select id="lobbyDest" onchange="renderLobbyPreview()" style="width:100%;padding:12px;border-radius:10px;background:var(--navy-2);color:white;border:1px solid var(--line-2);font-family:var(--font-mono);font-size:13px"></select>
+        </div>
+        <div id="lobbyPreview" style="font-size:12px;color:var(--blue-bright);font-family:var(--font-mono);margin:4px 0 12px;line-height:1.7"></div>
+        <button class="btn btn-primary btn-full" id="lobbyApplyBtn" onclick="applyLobbyNight()" style="display:none">🪟 Aplicar Noche con Lobby</button>
+        <div id="lobbyChangesList"></div>
+      </div>
+
       <div class="mgmt-section">
         <h4>Millaje del Ciclo</h4>
         <p style="font-size:12px;color:var(--ink-3);margin-bottom:14px;line-height:1.5">Distancia total que recorre el camión saliendo del almacén, completando todas las paradas, y regresando al almacén cada noche.</p>
@@ -3977,11 +3994,222 @@ function mgmtUnlock() {
     document.getElementById('mgmtLockedView').style.display = 'none';
     document.getElementById('mgmtPanel').style.display = 'block';
     renderActiveEmergencies();
+    renderLobbyTool(true);
     toast('Desbloqueado', 'success');
   } else {
     toast('Contraseña incorrecta', 'error');
     document.getElementById('mgmtPass').value = '';
   }
+}
+
+// ─── 🪟 LOBBY NIGHT TOOL ──────────────────────────────────────────────────────
+// A night with a lobby store only fits 3 stops. Pick the night, tap the lobby store,
+// choose which stop comes off (default: the last non-lobby stop) and where it goes
+// (default: first later night in the cycle with room). Fully undoable.
+const LOBBY_UI = { date: null, lobby: null, remove: null };
+function lobbyCapacity(cycle, d) {
+  const alert = (cycle.nightAlerts || {})[d] || '';
+  return /LOBBY/i.test(alert) ? 3 : STORES_PER_NIGHT;
+}
+function lobbyCycleFor(dateStr) {
+  const cs = getCycleStart(parseDate(dateStr));
+  ensureCycle(cs);
+  return STATE.cycleData[cycleId(cs)];
+}
+function lobbyRouteOrder(cycle, u) {
+  const i = (cycle.route || []).indexOf(u);
+  return i < 0 ? 999 : i;
+}
+function lobbyDestOptions(cycle, fromDate) {
+  return Object.keys(cycle.schedule).sort()
+    .filter(d => d > fromDate)
+    .map(d => ({ d, n: cycle.schedule[d].length, cap: lobbyCapacity(cycle, d) }));
+}
+function renderLobbyTool(resetPicks) {
+  const wrap = document.getElementById('lobbyStops');
+  if (!wrap) return;
+  const input = document.getElementById('lobbyDate');
+  if (!input.value) input.value = dateKey(getOperationalDate());
+  const d = input.value;
+  if (resetPicks || LOBBY_UI.date !== d) { LOBBY_UI.date = d; LOBBY_UI.lobby = null; LOBBY_UI.remove = null; }
+  const cycle = lobbyCycleFor(d);
+  const slots = (cycle.schedule[d] || []);
+  if (!slots.length) {
+    wrap.innerHTML = '<div style="font-size:12px;color:var(--ink-3);padding:6px 0 12px">No hay paradas esa noche.</div>';
+    document.getElementById('lobbyDestWrap').style.display = 'none';
+    document.getElementById('lobbyApplyBtn').style.display = 'none';
+    document.getElementById('lobbyPreview').innerHTML = '';
+    renderLobbyChanges();
+    return;
+  }
+  // Default removal: the last stop that isn't the lobby store
+  if (LOBBY_UI.lobby && !LOBBY_UI.remove && slots.length > 3) {
+    const others = slots.filter(sl => slotUnit(sl) !== LOBBY_UI.lobby);
+    LOBBY_UI.remove = others[others.length - 1];
+  }
+  let h = '<div style="font-size:11px;color:var(--ink-2);font-family:var(--font-mono);margin-bottom:6px">1) Toca la tienda con LOBBY · 2) Marca cuál se quita</div>';
+  h += '<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px">';
+  slots.forEach(sl => {
+    const u = slotUnit(sl);
+    const st = findStore(u) || {};
+    const pos = (cycle.route || []).indexOf(u) + 1;
+    const isLobby = LOBBY_UI.lobby === u;
+    const isRemove = LOBBY_UI.remove === sl;
+    const done = !!(cycle.completions || {})[sl];
+    h += `<div style="display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:10px;border:1px solid ${isLobby ? 'var(--warn)' : isRemove ? 'var(--danger)' : 'var(--line-2)'};background:${isRemove ? 'rgba(255,71,87,0.10)' : 'var(--navy-2)'}">
+      <div style="flex:1;min-width:0">
+        <div style="font-family:var(--font-mono);font-weight:700;color:white">#${u} <span style="color:var(--ink-3);font-weight:400">${pos > 0 ? '· pos ' + pos : ''}${done ? ' · ✓ lista' : ''}</span></div>
+        <div style="font-size:11px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${st.addr || ''}${st.city ? ', ' + st.city : ''}</div>
+      </div>
+      <button class="btn btn-secondary" style="padding:6px 10px;font-size:11px;${isLobby ? 'background:var(--warn);color:var(--navy-deep)' : ''}" onclick="lobbyPick('lobby','${sl}')">🪟 Lobby</button>
+      <button class="btn btn-secondary" style="padding:6px 10px;font-size:11px;${isRemove ? 'background:var(--danger);color:white' : ''}" ${isLobby ? 'disabled' : ''} onclick="lobbyPick('remove','${sl}')">Quitar</button>
+    </div>`;
+  });
+  h += '</div>';
+  wrap.innerHTML = h;
+
+  // Destination options
+  const destWrap = document.getElementById('lobbyDestWrap');
+  const sel = document.getElementById('lobbyDest');
+  if (LOBBY_UI.remove) {
+    const prev = sel.value;
+    const opts = lobbyDestOptions(cycle, d);
+    const auto = opts.find(o => o.n < o.cap);
+    let oh = `<option value="auto">Automático — ${auto ? 'primera noche con espacio (' + formatDate(parseDate(auto.d), 'EEE d MMM') + ')' : 'no hay espacio en este ciclo'}</option>`;
+    opts.forEach(o => { oh += `<option value="${o.d}">${formatDate(parseDate(o.d), 'EEE d MMM')} — ${o.n}/${o.cap} paradas${o.n >= o.cap ? ' (llena)' : ''}</option>`; });
+    sel.innerHTML = oh;
+    if ([...sel.options].some(o => o.value === prev)) sel.value = prev;
+    destWrap.style.display = 'block';
+  } else {
+    destWrap.style.display = 'none';
+  }
+  renderLobbyPreview();
+  renderLobbyChanges();
+}
+function lobbyPick(kind, slot) {
+  const u = slotUnit(slot);
+  if (kind === 'lobby') {
+    LOBBY_UI.lobby = (LOBBY_UI.lobby === u) ? null : u;
+    if (LOBBY_UI.remove && slotUnit(LOBBY_UI.remove) === u) LOBBY_UI.remove = null;
+  } else {
+    LOBBY_UI.remove = (LOBBY_UI.remove === slot) ? null : slot;
+  }
+  renderLobbyTool(false);
+}
+function lobbyResolveDest(cycle) {
+  const sel = document.getElementById('lobbyDest');
+  const v = sel ? sel.value : 'auto';
+  if (v && v !== 'auto') return v;
+  const auto = lobbyDestOptions(cycle, LOBBY_UI.date).find(o => o.n < o.cap);
+  return auto ? auto.d : null;
+}
+function renderLobbyPreview() {
+  const box = document.getElementById('lobbyPreview');
+  const btn = document.getElementById('lobbyApplyBtn');
+  if (!box) return;
+  const d = LOBBY_UI.date;
+  if (!d || !LOBBY_UI.lobby) { box.innerHTML = ''; btn.style.display = 'none'; return; }
+  const cycle = lobbyCycleFor(d);
+  const slots = cycle.schedule[d] || [];
+  const lines = [];
+  const after = slots.filter(sl => sl !== LOBBY_UI.remove).map(slotUnit);
+  lines.push(`${formatDate(parseDate(d), 'EEE d MMM')}: ${after.map(u => u === LOBBY_UI.lobby ? '#' + u + ' 🪟' : '#' + u).join(', ')} (${after.length} paradas)`);
+  if (LOBBY_UI.remove) {
+    const dest = lobbyResolveDest(cycle);
+    if (!dest) { lines.push('⚠️ No hay noche con espacio — elige una fecha'); }
+    else lines.push(`#${slotUnit(LOBBY_UI.remove)} → ${formatDate(parseDate(dest), 'EEE d MMM')}`);
+  } else if (slots.length > 3) {
+    lines.push('⚠️ Esa noche tiene ' + slots.length + ' paradas — marca cuál se quita');
+  }
+  box.innerHTML = lines.join('<br>');
+  btn.style.display = 'block';
+}
+function applyLobbyNight() {
+  const d = LOBBY_UI.date, lobbyUnit = LOBBY_UI.lobby, rmSlot = LOBBY_UI.remove;
+  if (!d || !lobbyUnit) { toast('Toca la tienda con lobby', 'error'); return; }
+  const cycle = lobbyCycleFor(d);
+  const slots = (cycle.schedule[d] || []).slice();
+  if (slots.length > 3 && !rmSlot) { toast('Esa noche tiene 4 paradas — marca cuál se quita', 'error'); return; }
+  const dest = rmSlot ? lobbyResolveDest(cycle) : null;
+  if (rmSlot && !dest) { toast('No hay noche con espacio — elige una fecha', 'error'); return; }
+  const rmUnit = rmSlot ? slotUnit(rmSlot) : null;
+  const msg = `¿Aplicar?\n\n• ${formatDate(parseDate(d), 'EEE d MMM')}: #${lobbyUnit} con LOBBY (3 paradas)` +
+    (rmUnit ? `\n• #${rmUnit} se mueve a ${formatDate(parseDate(dest), 'EEE d MMM')}` : '');
+  if (!confirm(msg)) return;
+
+  // Snapshot for undo
+  cycle.lobbyChanges = cycle.lobbyChanges || [];
+  const snap = {
+    date: d, lobbyUnit, removedUnit: rmUnit, dest, appliedAt: new Date().toISOString(),
+    schedule: { [d]: slots.slice() },
+    alert: (cycle.nightAlerts || {})[d] ?? null,
+    note: (cycle.notes || {})[lobbyUnit] ? JSON.parse(JSON.stringify(cycle.notes[lobbyUnit])) : null,
+    bumped: rmUnit && (cycle.bumped || {})[rmUnit] ? JSON.parse(JSON.stringify(cycle.bumped[rmUnit])) : null,
+  };
+  if (dest) snap.schedule[dest] = (cycle.schedule[dest] || []).slice();
+
+  // Apply: remove → destination (kept in route order), lobby marks
+  if (rmSlot) {
+    cycle.schedule[d] = slots.filter(sl => sl !== rmSlot);
+    const destSlots = (cycle.schedule[dest] || []).filter(sl => slotUnit(sl) !== rmUnit);
+    destSlots.push(rmUnit);
+    destSlots.sort((a, b) => lobbyRouteOrder(cycle, slotUnit(a)) - lobbyRouteOrder(cycle, slotUnit(b)));
+    cycle.schedule[dest] = destSlots;
+    cycle.bumped = cycle.bumped || {};
+    const prevOrig = (snap.bumped && snap.bumped.originalDate) || d;
+    cycle.bumped[rmUnit] = { originalDate: prevOrig, currentDate: dest, bumpedAt: new Date().toISOString(), causedBy: 'lobby' };
+  }
+  cycle.notes = cycle.notes || {};
+  cycle.notes[lobbyUnit] = { unit: lobbyUnit, date: d, notes: '🪟 LOBBY — incluye lobby (noche de 3 paradas)', savedAt: new Date().toISOString() };
+  cycle.nightAlerts = cycle.nightAlerts || {};
+  cycle.nightAlerts[d] = '🪟 Día con LOBBY · #' + lobbyUnit;
+  cycle.lobbyChanges.unshift(snap);
+
+  addInboxNote({ type: 'emergency', unit: lobbyUnit, date: d,
+    notes: '🪟 Lobby en #' + lobbyUnit + (rmUnit ? ` · #${rmUnit} movida a ${formatDate(parseDate(dest), 'EEE d MMM')}` : '') });
+
+  LOBBY_UI.lobby = null; LOBBY_UI.remove = null;
+  toast('🪟 Noche con lobby aplicada', 'success');
+  renderAll();
+  renderLobbyTool(false);
+  pushAction('replace', { cycleData: STATE.cycleData }).catch(() => {});
+}
+function undoLobbyChange(idx) {
+  const d = (document.getElementById('lobbyDate') || {}).value || dateKey(getOperationalDate());
+  const cycle = lobbyCycleFor(d);
+  const snap = (cycle.lobbyChanges || [])[idx];
+  if (!snap) return;
+  if (!confirm(`¿Deshacer el lobby de #${snap.lobbyUnit} (${formatDate(parseDate(snap.date), 'EEE d MMM')})?`)) return;
+  Object.entries(snap.schedule).forEach(([dd, sl]) => { cycle.schedule[dd] = sl; });
+  if (snap.alert === null) delete cycle.nightAlerts[snap.date]; else cycle.nightAlerts[snap.date] = snap.alert;
+  if (snap.note === null) delete cycle.notes[snap.lobbyUnit]; else cycle.notes[snap.lobbyUnit] = snap.note;
+  if (snap.removedUnit) {
+    if (snap.bumped === null) delete cycle.bumped[snap.removedUnit]; else cycle.bumped[snap.removedUnit] = snap.bumped;
+  }
+  cycle.lobbyChanges.splice(idx, 1);
+  toast('↩️ Lobby deshecho', 'success');
+  renderAll();
+  renderLobbyTool(true);
+  pushAction('replace', { cycleData: STATE.cycleData }).catch(() => {});
+}
+function renderLobbyChanges() {
+  const wrap = document.getElementById('lobbyChangesList');
+  if (!wrap) return;
+  const d = (document.getElementById('lobbyDate') || {}).value || dateKey(getOperationalDate());
+  const cycle = lobbyCycleFor(d);
+  const list = cycle.lobbyChanges || [];
+  if (!list.length) { wrap.innerHTML = ''; return; }
+  let h = '<div style="margin-top:12px">';
+  list.forEach((c, i) => {
+    h += `<div class="emerg-active-item" style="margin-bottom:8px">
+      <div class="emerg-active-info">
+        <div class="emerg-active-store">🪟 #${c.lobbyUnit} — ${formatDate(parseDate(c.date), 'EEE d MMM')}${c.removedUnit ? ' · #' + c.removedUnit + ' → ' + formatDate(parseDate(c.dest), 'EEE d MMM') : ''}</div>
+        <div class="emerg-active-date">${timeAgoEs(c.appliedAt)}</div>
+      </div>
+      <button class="emerg-active-clear" onclick="undoLobbyChange(${i})" aria-label="Deshacer">↩</button>
+    </div>`;
+  });
+  wrap.innerHTML = h + '</div>';
 }
 
 function renderActiveEmergencies() {
