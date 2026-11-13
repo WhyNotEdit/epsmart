@@ -404,6 +404,18 @@ main{padding:14px var(--pad) 22px}
   font-family:var(--font-mono);letter-spacing:0.02em;
 }
 
+/* Holiday day cell (e.g. Thanksgiving) */
+.cal-day.holiday{background:linear-gradient(160deg,rgba(255,140,40,0.22),rgba(180,70,20,0.18));box-shadow:inset 0 0 0 1px rgba(255,170,80,0.45)}
+.cal-holiday{margin-top:auto;display:flex;flex-direction:column;align-items:center;gap:1px;padding-bottom:2px}
+.cal-holiday-emoji{font-size:24px;line-height:1}
+.cal-holiday-label{font-size:8px;font-weight:700;color:#ffc58a;text-align:center;line-height:1.1;letter-spacing:0.02em}
+.holiday-card{text-align:center;padding:26px 16px;border-radius:16px;background:linear-gradient(160deg,rgba(255,140,40,0.20),rgba(150,60,20,0.18));border:1px solid rgba(255,170,80,0.45)}
+.holiday-card .h-emoji{font-size:64px;line-height:1;margin-bottom:10px}
+.holiday-card .h-title{font-size:24px;font-weight:800;color:#ffd7a8;letter-spacing:-0.01em}
+.holiday-card .h-sub{font-size:14px;color:#ffc58a;margin-top:4px}
+.holiday-card .h-off{display:inline-block;margin-top:12px;padding:6px 14px;border-radius:999px;background:rgba(255,170,80,0.18);border:1px solid rgba(255,170,80,0.5);color:white;font-family:var(--font-mono);font-size:12px;font-weight:700;letter-spacing:0.06em}
+.upcoming-card.holiday{border-color:rgba(255,170,80,0.5);background:linear-gradient(160deg,rgba(255,140,40,0.16),rgba(150,60,20,0.12))}
+
 /* Mini store tiles inside each day cell */
 .cal-tiles{
   display:grid;grid-template-columns:1fr 1fr;gap:2px;
@@ -3536,6 +3548,35 @@ function estimateMiles() {
   return Math.round(total);
 }
 
+// 🦃 Holidays: day off. Stores on that night move to `moveTo` automatically (once — after the
+// move the holiday night is empty, so running it again does nothing).
+const HOLIDAYS = {
+  "2026-11-26": { emoji: '🦃', title: 'Happy Thanksgiving', sub: '¡Feliz Día de Acción de Gracias!', short: 'Thanksgiving', moveTo: '2026-11-27' },
+};
+function holidayFor(dk) { return HOLIDAYS[dk] || null; }
+function applyHolidayMoves() {
+  let changed = false;
+  Object.entries(HOLIDAYS).forEach(([dk, h]) => {
+    if (!h.moveTo) return;
+    const cs = getCycleStart(parseDate(dk));
+    const cid = cycleId(cs);
+    const cycle = STATE.cycleData[cid];
+    if (!cycle || !cycle.schedule || !(cycle.schedule[dk] || []).length) return;
+    const moving = cycle.schedule[dk].slice();
+    const destCycle = STATE.cycleData[cycleId(getCycleStart(parseDate(h.moveTo)))] || cycle;
+    const dest = (destCycle.schedule[h.moveTo] || []).filter(sl => !moving.includes(sl));
+    destCycle.schedule[h.moveTo] = dest.concat(moving);
+    cycle.schedule[dk] = [];
+    destCycle.bumped = destCycle.bumped || {};
+    moving.forEach(sl => {
+      const u = slotUnit(sl);
+      if (!destCycle.bumped[u]) destCycle.bumped[u] = { originalDate: dk, currentDate: h.moveTo, bumpedAt: new Date().toISOString(), causedBy: 'holiday' };
+    });
+    changed = true;
+  });
+  return changed;
+}
+
 function renderTonight() {
   const cycle = STATE.cycleData[cycleId(STATE.currentCycleStart)];
   let targetKey = STATE.todayKey;
@@ -3544,6 +3585,20 @@ function renderTonight() {
 
   const tag = document.getElementById('tonightTag');
   const card = document.getElementById('tonightCard');
+
+  // 🦃 Holiday — day off
+  const hol = holidayFor(targetKey);
+  if (hol && (!targetStores || targetStores.length === 0)) {
+    tag.textContent = 'Día libre';
+    card.innerHTML = `
+      <div class="holiday-card">
+        <div class="h-emoji">${hol.emoji}</div>
+        <div class="h-title">${hol.title}</div>
+        <div class="h-sub">${hol.sub}</div>
+        <div class="h-off">DÍA LIBRE · NO SE TRABAJA</div>
+      </div>`;
+    return;
+  }
 
   // Work-window gate: when viewing the CURRENT day (not pinned via calendar),
   // hide tonight's stores until the start time (WORK_START). The crew hasn't started before then.
@@ -3637,7 +3692,7 @@ function renderTonight() {
           <div class="stop-addr">${store.city}, ${store.state} ${store.zip}</div>
           <div class="stop-rgm">Gerente · ${store.rgm}</div>
           ${isEmerg && emergRecord && emergRecord.notes ? `<div class="stop-emerg-note">⚡ ${escapeHtml(emergRecord.notes)}</div>` : ''}
-          ${isBumped && !isEmerg ? `<div class="stop-bumped-note">${cycle.bumped[unit].causedBy === 'wendys' ? '🍔 Wendy\'s agregada al ciclo' : '↻ Movida desde ' + formatDate(parseDate(cycle.bumped[unit].originalDate), 'EEE d MMM')}</div>` : ''}
+          ${isBumped && !isEmerg ? `<div class="stop-bumped-note">${cycle.bumped[unit].causedBy === 'wendys' ? '🍔 Wendy\'s agregada al ciclo' : (cycle.bumped[unit].causedBy === 'holiday' ? '🦃 Movida por Thanksgiving (' + formatDate(parseDate(cycle.bumped[unit].originalDate), 'EEE d MMM') + ')' : '↻ Movida desde ' + formatDate(parseDate(cycle.bumped[unit].originalDate), 'EEE d MMM'))}</div>` : ''}
         </div>
         <div class="stop-actions" onclick="event.stopPropagation()">
           <button class="icon-btn nav" onclick="openMap('${unit}')" aria-label="Navigate">
@@ -3656,7 +3711,11 @@ function renderTonight() {
 
 function renderUpcoming() {
   const cycle = STATE.cycleData[cycleId(STATE.currentCycleStart)];
-  const dates = Object.keys(cycle.schedule).sort().filter(d => d > STATE.todayKey && cycle.schedule[d].length > 0);
+  const curId = cycleId(STATE.currentCycleStart);
+  const holDates = Object.keys(HOLIDAYS).filter(d => d > STATE.todayKey && cycleId(getCycleStart(parseDate(d))) === curId);
+  const dates = Object.keys(cycle.schedule).filter(d => d > STATE.todayKey && cycle.schedule[d].length > 0)
+    .concat(holDates.filter(d => !(cycle.schedule[d] || []).length))
+    .filter((d, i, a) => a.indexOf(d) === i).sort();
   const next3 = dates.slice(0, 3);
   const list = document.getElementById('upcomingList');
 
@@ -3667,6 +3726,18 @@ function renderUpcoming() {
 
   let upHtml = '';
   next3.forEach(dk => {
+    const hol = holidayFor(dk);
+    if (hol && !(cycle.schedule[dk] || []).length) {
+      upHtml += `
+      <div class="upcoming-card holiday">
+        <div class="upcoming-card-head">
+          <div class="upcoming-date">${formatDate(parseDate(dk), 'EEE · d MMM')}</div>
+          <div class="upcoming-count">DÍA LIBRE</div>
+        </div>
+        <div style="font-size:15px;color:#ffd7a8;font-weight:700;padding:4px 0">${hol.emoji} ${hol.title}</div>
+      </div>`;
+      return;
+    }
     const stores = cycle.schedule[dk];
     const td = parseDate(dk);
     const doneCount = stores.filter(slot => cycle.completions[slot]).length;
@@ -3767,6 +3838,11 @@ function renderCalendar() {
     const cls = ['cal-day'];
     if (isWorkday) cls.push('workday');
     if (isToday) cls.push('today');
+    const hol = holidayFor(dk);
+    if (hol && !stores.length) {
+      cls.push('holiday');
+      tiles = `<div class="cal-holiday"><div class="cal-holiday-emoji">${hol.emoji}</div><div class="cal-holiday-label">${hol.short}</div></div>`;
+    }
 
     html += `<div class="${cls.join(' ')}" onclick="openDay('${dk}')"><div class="cal-day-num">${d}</div>${tiles}</div>`;
   }
@@ -3782,7 +3858,8 @@ function openDay(dk) {
   const stores = cycle.schedule[dk] || [];
 
   if (stores.length === 0) {
-    toast(`Sin trabajo el ${formatDate(dt, 'd MMM')}`);
+    const hol = holidayFor(dk);
+    toast(hol ? `${hol.emoji} ${hol.title} — día libre` : `Sin trabajo el ${formatDate(dt, 'd MMM')}`);
     return;
   }
 
@@ -5402,12 +5479,18 @@ async function pullState() {
           if (srv.pullShifts) STATE.cycleData[cid].pullShifts = srv.pullShifts;
           if (srv.notes) STATE.cycleData[cid].notes = srv.notes;
           if (srv.nightAlerts) STATE.cycleData[cid].nightAlerts = srv.nightAlerts;
+          if (srv.lobbyChanges) STATE.cycleData[cid].lobbyChanges = srv.lobbyChanges;
         }
       });
       SYNC.lastSyncedAt = data.updatedAt || new Date().toISOString();
 
       // If the server didn't have the current cycle yet, seed it now (first run ever)
       seedCycleToServerIfMissing(currentId, serverHadCurrent);
+
+      // 🦃 Move stores off holidays (runs only while a holiday night still has stores)
+      if (applyHolidayMoves()) {
+        pushAction('replace', { cycleData: STATE.cycleData }).catch(() => {});
+      }
     } else {
       // Server returned nothing at all — this is a brand-new database.
       // Seed the current cycle so it persists going forward.
