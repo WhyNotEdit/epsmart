@@ -1117,7 +1117,7 @@ main{padding:14px var(--pad) 22px}
 .contact-btn:active{background:rgba(0,232,160,0.2)}
 .contact-btn-email{background:rgba(0,168,255,0.1);color:var(--blue-bright);border:1px solid rgba(0,168,255,0.3)}
 .contact-btn-email:active{background:rgba(0,168,255,0.2)}
-.ssheet-map-btns{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.ssheet-map-btns{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
 .ssheet-map-btn{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 8px;border-radius:11px;background:var(--navy-2);border:1px solid var(--line-2);font-size:11px;color:var(--ink-2);text-decoration:none;font-weight:500;text-align:center;transition:all .15s}
 .ssheet-map-btn:active{background:var(--navy-1);color:white}
 .ssheet-map-icon{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;color:white;font-weight:700;font-size:15px;box-shadow:0 2px 8px rgba(0,0,0,0.3)}
@@ -1851,6 +1851,10 @@ main{padding:14px var(--pad) 22px}
       <a class="map-option" id="mapWaze" target="_blank">
         <div class="map-option-icon" style="background:linear-gradient(135deg,#33ccff,#0099cc)">W</div>
         <div>Waze</div>
+      </a>
+      <a class="map-option" id="mapTesla" href="#" onclick="event.preventDefault();sendToTesla(STATE._mapAddr)">
+        <div class="map-option-icon" style="background:linear-gradient(135deg,#e82127,#a3161b)">T</div>
+        <div>Tesla <span style="font-size:11px;color:var(--ink-3);font-weight:400">· enviar al carro</span></div>
       </a>
     </div>
   </div>
@@ -3370,10 +3374,36 @@ function openStoreSheet(unit) {
         <a class="ssheet-map-btn" href="https://www.waze.com/ul?q=${encodeURIComponent(fullAddr)}&navigate=yes" target="_blank">
           <div class="ssheet-map-icon" style="background:linear-gradient(135deg,#33ccff,#0099cc)">W</div>Waze
         </a>
+        <a class="ssheet-map-btn" href="#" onclick="event.preventDefault();sendToTesla(${JSON.stringify(fullAddr).replace(/"/g,'&quot;')})">
+          <div class="ssheet-map-icon" style="background:linear-gradient(135deg,#e82127,#a3161b)">T</div>Tesla
+        </a>
       </div>
     </div>
   `;
   document.getElementById('storeSheetOverlay').classList.add('show');
+}
+
+// 🚗 Tesla: a website can't open the car's navigation directly, so on the phone we use the
+// share menu → pick the Tesla app → the address goes to the car's screen.
+function sendToTesla(addr) {
+  if (!addr) return;
+  const inCar = /Tesla|QtCarBrowser/i.test(navigator.userAgent || '');
+  if (!inCar && navigator.share) {
+    navigator.share({ text: addr }).catch(err => {
+      if (err && err.name === 'AbortError') return;   // user closed the share menu
+      copyAddrForTesla(addr);
+    });
+    return;
+  }
+  copyAddrForTesla(addr, inCar);
+}
+function copyAddrForTesla(addr, inCar) {
+  const done = () => toast(inCar
+    ? '🚗 En el carro: usa tu teléfono → Tesla → app Tesla. Dirección copiada.'
+    : '🚗 Dirección copiada — pégala en la app Tesla para enviarla al carro', 'success');
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(addr).then(done).catch(() => toast(addr));
+  } else { toast(addr); }
 }
 
 function openMapForUnit(unit) {
@@ -3382,6 +3412,7 @@ function openMapForUnit(unit) {
   const fullAddr = `${store.addr}, ${store.city}, ${store.state} ${store.zip || ''}`.trim();
   const enc = encodeURIComponent(fullAddr);
   document.getElementById('mapModalAddr').textContent = fullAddr;
+  STATE._mapAddr = fullAddr;
   document.getElementById('mapApple').href = `https://maps.apple.com/?address=${enc}`;
   document.getElementById('mapGoogle').href = `https://www.google.com/maps/search/?api=1&query=${enc}`;
   document.getElementById('mapWaze').href = `https://www.waze.com/ul?q=${enc}&navigate=yes`;
@@ -3981,6 +4012,7 @@ function openMap(unit) {
   const enc = encodeURIComponent(fullAddr);
 
   document.getElementById('mapModalAddr').textContent = fullAddr;
+  STATE._mapAddr = fullAddr;
   document.getElementById('mapApple').href = `https://maps.apple.com/?address=${enc}`;
   document.getElementById('mapGoogle').href = `https://www.google.com/maps/search/?api=1&query=${enc}`;
   document.getElementById('mapWaze').href = `https://www.waze.com/ul?q=${enc}&navigate=yes`;
